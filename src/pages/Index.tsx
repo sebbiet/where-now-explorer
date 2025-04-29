@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from "sonner";
 import { Timer } from 'lucide-react';
@@ -36,6 +37,7 @@ const Index = () => {
   const [funFact, setFunFact] = useState("");
   const [isLoadingFunFact, setIsLoadingFunFact] = useState(false);
   const [countdown, setCountdown] = useState(30);
+  const [isRefreshingLocation, setIsRefreshingLocation] = useState(false);
 
   // Get current position using Geolocation API
   const getCurrentPosition = () => {
@@ -88,7 +90,12 @@ const Index = () => {
 
   // Fetch location data
   const fetchLocation = async () => {
-    setIsLoadingLocation(true);
+    // Only show loading spinner on initial load, not on refreshes
+    if (!Object.keys(locationData).length) {
+      setIsLoadingLocation(true);
+    } else {
+      setIsRefreshingLocation(true);
+    }
     
     try {
       const position = await getCurrentPosition();
@@ -104,6 +111,7 @@ const Index = () => {
       toast.error("Couldn't find your location. Please make sure location services are enabled.");
     } finally {
       setIsLoadingLocation(false);
+      setIsRefreshingLocation(false);
     }
   };
 
@@ -273,13 +281,15 @@ const Index = () => {
           <LoadingSpinner />
         ) : (
           <>
-            <LocationDisplay locationData={locationData} />
+            <div className={isRefreshingLocation ? "animate-pulse" : ""}>
+              <LocationDisplay locationData={locationData} />
+            </div>
             
             <div className="flex justify-center mt-6">
               <Button 
                 onClick={handleRefresh}
                 className="kid-button bg-sky text-white hover:bg-sky/80 flex items-center"
-                disabled={isLoadingLocation}
+                disabled={isLoadingLocation || isRefreshingLocation}
               >
                 <Timer className="w-5 h-5 mr-2" />
                 Refresh in {countdown}s
@@ -299,7 +309,9 @@ const Index = () => {
               />
             )}
             
-            <FunFactCard fact={funFact} isLoading={isLoadingFunFact} />
+            <div className={isRefreshingLocation ? "animate-pulse" : ""}>
+              <FunFactCard fact={funFact} isLoading={isLoadingFunFact} />
+            </div>
           </>
         )}
       </div>
