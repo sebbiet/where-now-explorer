@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from "sonner";
 import { Timer } from 'lucide-react';
@@ -127,7 +126,7 @@ const Index = () => {
     try {
       // First, geocode the destination to get its coordinates
       const geocodeResponse = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destination)}`,
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(destination)}&limit=1&addressdetails=1`,
         {
           headers: {
             "User-Agent": "AreWeThereYetApp/1.0",
@@ -142,12 +141,24 @@ const Index = () => {
       const places = await geocodeResponse.json();
       
       if (places.length === 0) {
+        toast.error("Place not found. Try a more specific name or address.");
         throw new Error("Place not found");
       }
       
       const destLat = parseFloat(places[0].lat);
       const destLon = parseFloat(places[0].lon);
-      const destName = places[0].display_name.split(',')[0];
+      
+      // Use the display_name or the place's name from OpenStreetMap
+      let destName = places[0].display_name.split(',')[0];
+      
+      // If a more specific place name exists, use that
+      if (places[0].address && places[0].address.attraction) {
+        destName = places[0].address.attraction;
+      } else if (places[0].address && places[0].address.amenity) {
+        destName = places[0].address.amenity;
+      } else if (places[0].address && places[0].address.tourism) {
+        destName = places[0].address.tourism;
+      }
       
       // Now calculate distance and time using OSRM
       const routeResponse = await fetch(
@@ -161,6 +172,7 @@ const Index = () => {
       const routeData = await routeResponse.json();
       
       if (routeData.code !== 'Ok' || !routeData.routes || routeData.routes.length === 0) {
+        toast.error("Couldn't find a driving route to that destination");
         throw new Error("Failed to find a route");
       }
       
@@ -187,7 +199,9 @@ const Index = () => {
       
     } catch (error) {
       console.error("Error calculating distance:", error);
-      toast.error("Couldn't calculate distance to that destination");
+      if (!error.message?.includes("Place not found")) {
+        toast.error("Couldn't calculate distance to that destination");
+      }
     } finally {
       setIsLoadingDestination(false);
     }

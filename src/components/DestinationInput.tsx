@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Navigation } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 interface DestinationInputProps {
   onDestinationSubmit: (destination: string) => void;
@@ -34,10 +35,14 @@ const DestinationInput: React.FC<DestinationInputProps> = ({
           type="text"
           value={destination}
           onChange={(e) => setDestination(e.target.value)}
-          placeholder="Enter destination (e.g. Disney World)"
+          placeholder="Enter a place name, landmark or address"
           className="w-full p-4 text-lg rounded-xl border-2 border-gray-200 dark:border-gray-600"
           disabled={isLoading}
         />
+        
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Try popular places (like "Disney World"), landmarks, cities, or complete addresses for best results
+        </p>
         
         <Button 
           type="submit"
