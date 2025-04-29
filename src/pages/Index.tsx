@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from "sonner";
-import { RefreshCw } from 'lucide-react';
+import { Timer } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import ThemeToggle from '@/components/ThemeToggle';
 import LocationPin from '@/components/LocationPin';
@@ -36,6 +35,7 @@ const Index = () => {
   const [isLoadingDestination, setIsLoadingDestination] = useState(false);
   const [funFact, setFunFact] = useState("");
   const [isLoadingFunFact, setIsLoadingFunFact] = useState(false);
+  const [countdown, setCountdown] = useState(30);
 
   // Get current position using Geolocation API
   const getCurrentPosition = () => {
@@ -220,18 +220,42 @@ const Index = () => {
     }
   }, []);
 
-  // Fetch location on initial load
+  // Fetch location on initial load and set up countdown timer
   useEffect(() => {
     fetchLocation();
     
-    // Set up auto-refresh every 10 seconds
+    // Set up auto-refresh every 30 seconds
     const intervalId = setInterval(() => {
       fetchLocation();
-    }, 10000);
+      setCountdown(30); // Reset countdown after refresh
+    }, 30000);
     
     // Clean up interval on component unmount
     return () => clearInterval(intervalId);
   }, []);
+  
+  // Countdown timer effect
+  useEffect(() => {
+    // Only run countdown when we have location data and aren't currently loading
+    if (!isLoadingLocation && Object.keys(locationData).length > 0) {
+      const countdownId = setInterval(() => {
+        setCountdown((prevCount) => {
+          if (prevCount <= 1) {
+            return 30; // Will be reset by the fetchLocation effect
+          }
+          return prevCount - 1;
+        });
+      }, 1000);
+      
+      return () => clearInterval(countdownId);
+    }
+  }, [isLoadingLocation, locationData]);
+
+  // Manual refresh handler that also resets the countdown
+  const handleRefresh = () => {
+    fetchLocation();
+    setCountdown(30);
+  };
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center py-6 px-4 bg-gradient-to-b from-soft-purple/30 to-soft-blue/20 dark:from-gray-900 dark:to-gray-800">
@@ -253,12 +277,12 @@ const Index = () => {
             
             <div className="flex justify-center mt-6">
               <Button 
-                onClick={fetchLocation}
+                onClick={handleRefresh}
                 className="kid-button bg-sky text-white hover:bg-sky/80 flex items-center"
                 disabled={isLoadingLocation}
               >
-                <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
-                Refresh Location
+                <Timer className="w-5 h-5 mr-2" />
+                Refresh in {countdown}s
               </Button>
             </div>
             
