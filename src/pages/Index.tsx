@@ -242,36 +242,29 @@ const Index = () => {
     }
   }, []);
 
-  // Fetch location on initial load and set up countdown timer
+  // Fetch location on initial load only
   useEffect(() => {
     fetchLocation();
-    
-    // Set up auto-refresh every 30 seconds
-    const intervalId = setInterval(() => {
-      fetchLocation();
-      setCountdown(30); // Reset countdown after refresh
-    }, 30000);
-    
-    // Clean up interval on component unmount
-    return () => clearInterval(intervalId);
   }, []);
   
-  // Countdown timer effect
+  // Set up auto-refresh timer separately
   useEffect(() => {
-    // Only run countdown when we have location data and aren't currently loading
-    if (!isLoadingLocation && Object.keys(locationData).length > 0) {
-      const countdownId = setInterval(() => {
-        setCountdown((prevCount) => {
-          if (prevCount <= 1) {
-            return 30; // Will be reset by the fetchLocation effect
-          }
-          return prevCount - 1;
-        });
-      }, 1000);
-      
-      return () => clearInterval(countdownId);
-    }
-  }, [isLoadingLocation, locationData]);
+    // Set up countdown timer
+    const countdownId = setInterval(() => {
+      setCountdown((prevCount) => {
+        if (prevCount <= 1) {
+          // When countdown reaches 0, trigger the fetch location 
+          // but don't reset the page
+          fetchLocation();
+          return 30;
+        }
+        return prevCount - 1;
+      });
+    }, 1000);
+    
+    // Clean up interval on component unmount
+    return () => clearInterval(countdownId);
+  }, []);
 
   // Manual refresh handler that also resets the countdown
   const handleRefresh = () => {
