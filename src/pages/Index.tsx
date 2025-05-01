@@ -37,7 +37,7 @@ const Index = () => {
   const [isLoadingFunFact, setIsLoadingFunFact] = useState(false);
   const [countdown, setCountdown] = useState(30);
   const [isRefreshingLocation, setIsRefreshingLocation] = useState(false);
-
+  
   // Get current position using Geolocation API
   const getCurrentPosition = () => {
     return new Promise<GeolocationPosition>((resolve, reject) => {
@@ -87,8 +87,43 @@ const Index = () => {
     }
   };
 
-  // Fetch location data
-  const fetchLocation = async () => {
+  // Generate a fun fact about the current location
+  const generateFunFact = useCallback(async (location: LocationData) => {
+    if (!location.city && !location.state && !location.country) {
+      return;
+    }
+    
+    const placeName = location.city || location.suburb || location.state || location.county || location.country;
+    if (!placeName) return;
+    
+    setIsLoadingFunFact(true);
+    
+    try {
+      // Using a mock API call for now since we can't connect to real AI model
+      // In real app, this would be an API call to OpenAI or similar service
+      setTimeout(() => {
+        const facts = [
+          `${placeName} has some of the friendliest squirrels in the world! They've been known to wave hello!`,
+          `Did you know that ${placeName} once had a parade where all the dogs wore tiny hats?`,
+          `The ice cream shops in ${placeName} once tried to create a flavor that tasted like sunshine!`,
+          `In ${placeName}, there's a legend about a magical playground where slides never give you static shocks!`,
+          `The clouds above ${placeName} sometimes form shapes that look like dinosaurs having a dance party!`,
+          `${placeName} is home to a tree where kids leave notes for fairies, and sometimes they write back!`
+        ];
+        
+        const randomFact = facts[Math.floor(Math.random() * facts.length)];
+        setFunFact(randomFact);
+        setIsLoadingFunFact(false);
+      }, 1500);
+    } catch (error) {
+      console.error("Error generating fun fact:", error);
+      setFunFact("Hmm, the fun fact machine seems to be on vacation today!");
+      setIsLoadingFunFact(false);
+    }
+  }, []);
+
+  // Fetch location data - this function now only updates location-related state
+  const fetchLocation = useCallback(async () => {
     // Only show loading spinner on initial load, not on refreshes
     if (!Object.keys(locationData).length) {
       setIsLoadingLocation(true);
@@ -112,7 +147,7 @@ const Index = () => {
       setIsLoadingLocation(false);
       setIsRefreshingLocation(false);
     }
-  };
+  }, [generateFunFact]);
 
   // Calculate distance to destination
   const calculateDistance = async (destination: string) => {
@@ -207,45 +242,10 @@ const Index = () => {
     }
   };
 
-  // Generate a fun fact about the current location
-  const generateFunFact = useCallback(async (location: LocationData) => {
-    if (!location.city && !location.state && !location.country) {
-      return;
-    }
-    
-    const placeName = location.city || location.suburb || location.state || location.county || location.country;
-    if (!placeName) return;
-    
-    setIsLoadingFunFact(true);
-    
-    try {
-      // Using a mock API call for now since we can't connect to real AI model
-      // In real app, this would be an API call to OpenAI or similar service
-      setTimeout(() => {
-        const facts = [
-          `${placeName} has some of the friendliest squirrels in the world! They've been known to wave hello!`,
-          `Did you know that ${placeName} once had a parade where all the dogs wore tiny hats?`,
-          `The ice cream shops in ${placeName} once tried to create a flavor that tasted like sunshine!`,
-          `In ${placeName}, there's a legend about a magical playground where slides never give you static shocks!`,
-          `The clouds above ${placeName} sometimes form shapes that look like dinosaurs having a dance party!`,
-          `${placeName} is home to a tree where kids leave notes for fairies, and sometimes they write back!`
-        ];
-        
-        const randomFact = facts[Math.floor(Math.random() * facts.length)];
-        setFunFact(randomFact);
-        setIsLoadingFunFact(false);
-      }, 1500);
-    } catch (error) {
-      console.error("Error generating fun fact:", error);
-      setFunFact("Hmm, the fun fact machine seems to be on vacation today!");
-      setIsLoadingFunFact(false);
-    }
-  }, []);
-
   // Fetch location on initial load only
   useEffect(() => {
     fetchLocation();
-  }, []);
+  }, [fetchLocation]);
   
   // Set up auto-refresh timer separately
   useEffect(() => {
@@ -264,7 +264,7 @@ const Index = () => {
     
     // Clean up interval on component unmount
     return () => clearInterval(countdownId);
-  }, []);
+  }, [fetchLocation]); // Add fetchLocation to dependency array
 
   // Manual refresh handler that also resets the countdown
   const handleRefresh = () => {
