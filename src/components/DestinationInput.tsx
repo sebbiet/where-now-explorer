@@ -67,10 +67,24 @@ const DestinationInput: React.FC<DestinationInputProps> = ({
       
       // Transform the response into a simpler format for suggestions
       const formattedSuggestions = data.map((item: any) => {
+        // Create a more user-friendly display name for the location
         let name = '';
         
-        // Get the most specific name available
+        // Build a more meaningful primary display name
         if (item.address) {
+          const addressParts = [];
+          
+          // Add house number if available
+          if (item.address.house_number) {
+            addressParts.push(item.address.house_number);
+          }
+          
+          // Add street/road if available
+          if (item.address.road) {
+            addressParts.push(item.address.road);
+          }
+          
+          // Add named place if available (attraction, amenity, etc.)
           if (item.address.attraction) {
             name = item.address.attraction;
           } else if (item.address.amenity) {
@@ -83,8 +97,11 @@ const DestinationInput: React.FC<DestinationInputProps> = ({
             name = item.address.leisure;
           } else if (item.address.shop) {
             name = item.address.shop;
+          } else if (addressParts.length > 0) {
+            // If we have address parts but no specific name, use the address
+            name = addressParts.join(' ');
           } else {
-            // If no specific name is found, use the first part of the display name
+            // Fall back to first part of display name
             name = item.display_name.split(',')[0];
           }
         } else {
@@ -93,7 +110,7 @@ const DestinationInput: React.FC<DestinationInputProps> = ({
         
         return {
           id: item.place_id,
-          name: name,
+          name: name, // More meaningful name for display
           displayName: item.display_name
         };
       });
@@ -109,7 +126,9 @@ const DestinationInput: React.FC<DestinationInputProps> = ({
   };
 
   const handleSuggestionSelect = (suggestion: SuggestionItem) => {
+    // Set the input value to something meaningful that includes more than just a number
     setInputValue(suggestion.name);
+    // Always use the full display name for the actual destination calculation
     setDestination(suggestion.displayName);
     setOpen(false);
   };
