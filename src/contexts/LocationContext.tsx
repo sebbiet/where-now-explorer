@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useCallback, ReactNode, useEffect } from 'react';
 import { toast } from "sonner";
 
@@ -14,15 +13,27 @@ export interface LocationData {
   longitude?: number;
 }
 
+export interface FunFactItem {
+  id: string;
+  fact: string;
+  location: string;
+  votes: number;
+  timestamp: number;
+}
+
 interface LocationContextType {
   locationData: LocationData;
   isLoadingLocation: boolean;
   isRefreshingLocation: boolean;
   funFact: string;
+  funFactId: string;
+  funFactVotes: number;
+  funFactHistory: FunFactItem[];
   isLoadingFunFact: boolean;
   countdown: number;
   fetchLocation: () => Promise<void>;
   handleRefresh: () => void;
+  voteFunFact: (factId: string) => void;
 }
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
@@ -31,6 +42,9 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
   const [locationData, setLocationData] = useState<LocationData>({});
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
   const [funFact, setFunFact] = useState("");
+  const [funFactId, setFunFactId] = useState("");
+  const [funFactVotes, setFunFactVotes] = useState(0);
+  const [funFactHistory, setFunFactHistory] = useState<FunFactItem[]>([]);
   const [isLoadingFunFact, setIsLoadingFunFact] = useState(false);
   const [countdown, setCountdown] = useState(30);
   const [isRefreshingLocation, setIsRefreshingLocation] = useState(false);
@@ -108,7 +122,30 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
         ];
         
         const randomFact = facts[Math.floor(Math.random() * facts.length)];
+        const newFactId = Date.now().toString();
         setFunFact(randomFact);
+        setFunFactId(newFactId);
+        setFunFactVotes(Math.floor(Math.random() * 20)); // Random initial votes for demo
+        
+        // Add to history if not already present (simplified check)
+        setFunFactHistory(prevHistory => {
+          const existingFactIndex = prevHistory.findIndex(item => item.fact === randomFact);
+          
+          if (existingFactIndex === -1) {
+            // Add new fact to history
+            return [...prevHistory, {
+              id: newFactId,
+              fact: randomFact,
+              location: placeName,
+              votes: 0,
+              timestamp: Date.now()
+            }];
+          }
+          
+          // Fact already exists, return unchanged history
+          return prevHistory;
+        });
+        
         setIsLoadingFunFact(false);
       }, 1500);
     } catch (error) {
@@ -117,6 +154,25 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
       setIsLoadingFunFact(false);
     }
   }, []);
+
+  const voteFunFact = (factId: string) => {
+    // Update votes for current fact if it matches
+    if (factId === funFactId) {
+      setFunFactVotes(prev => prev + 1);
+    }
+    
+    // Update votes in history
+    setFunFactHistory(prevHistory => 
+      prevHistory.map(item => 
+        item.id === factId 
+          ? { ...item, votes: item.votes + 1 } 
+          : item
+      )
+    );
+    
+    // In a real app, we would send this to a backend
+    console.log(`Voted for fact ${factId}`);
+  };
 
   // Fetch location data
   const fetchLocation = useCallback(async () => {
@@ -172,15 +228,38 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
     fetchLocation();
   }, []);
 
+  // Load fun fact history from localStorage on initial load
+  useEffect(() => {
+    const savedHistory = localStorage.getItem('funFactHistory');
+    if (savedHistory) {
+      try {
+        setFunFactHistory(JSON.parse(savedHistory));
+      } catch (e) {
+        console.error('Error parsing fun fact history:', e);
+      }
+    }
+  }, []);
+
+  // Save fun fact history to localStorage when it changes
+  useEffect(() => {
+    if (funFactHistory.length > 0) {
+      localStorage.setItem('funFactHistory', JSON.stringify(funFactHistory));
+    }
+  }, [funFactHistory]);
+
   const value = {
     locationData,
     isLoadingLocation,
     isRefreshingLocation,
     funFact,
+    funFactId,
+    funFactVotes,
+    funFactHistory,
     isLoadingFunFact,
     countdown,
     fetchLocation,
-    handleRefresh
+    handleRefresh,
+    voteFunFact
   };
 
   return (

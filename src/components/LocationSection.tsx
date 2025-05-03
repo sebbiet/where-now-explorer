@@ -13,10 +13,13 @@ const LocationSection = () => {
     locationData, 
     isLoadingLocation, 
     isRefreshingLocation, 
-    funFact, 
+    funFact,
+    funFactId,
+    funFactVotes,
     isLoadingFunFact,
     countdown, 
-    handleRefresh 
+    handleRefresh,
+    voteFunFact
   } = useLocation();
 
   if (isLoadingLocation) {
@@ -48,7 +51,13 @@ const LocationSection = () => {
       </div>
       
       <div className={isRefreshingLocation ? "animate-pulse" : ""}>
-        <FunFactCard fact={funFact} isLoading={isLoadingFunFact} />
+        <FunFactCard 
+          fact={funFact} 
+          isLoading={isLoadingFunFact} 
+          onVote={() => voteFunFact(funFactId)}
+          votes={funFactVotes}
+          factId={funFactId}
+        />
       </div>
     </div>
   );
