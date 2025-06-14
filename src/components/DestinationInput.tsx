@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigation, Search } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,7 @@ import {
   CommandList
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface DestinationInputProps {
   onDestinationSubmit: (destination: string) => void;
@@ -126,8 +126,8 @@ const DestinationInput: React.FC<DestinationInputProps> = ({
   };
 
   const handleSuggestionSelect = (suggestion: SuggestionItem) => {
-    // Set the input value to something meaningful that includes more than just a number
-    setInputValue(suggestion.name);
+    // Set the input value to the full display name
+    setInputValue(suggestion.displayName);
     // Always use the full display name for the actual destination calculation
     setDestination(suggestion.displayName);
     setOpen(false);
@@ -212,22 +212,5 @@ const DestinationInput: React.FC<DestinationInputProps> = ({
     </div>
   );
 };
-
-// Custom hook for debouncing input values
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-  
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-    
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [value, delay]);
-  
-  return debouncedValue;
-}
 
 export default DestinationInput;
