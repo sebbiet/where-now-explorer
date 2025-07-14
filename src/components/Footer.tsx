@@ -28,15 +28,7 @@ const Footer: React.FC = () => {
 
         <div className="relative z-10 text-center">
           <p className="text-lg md:text-xl text-gray-700 dark:text-white font-semibold flex items-center justify-center gap-2 flex-wrap">
-            Made with{' '}
-            <span 
-              className="text-red-500 animate-pulse text-2xl"
-              role="img" 
-              aria-label="heart"
-            >
-              ❤️
-            </span>{' '}
-            by{' '}
+            Made by{' '}
             <a
               href="http://sebastiantiller.com/"
               target="_blank"
@@ -44,7 +36,7 @@ const Footer: React.FC = () => {
               className="text-blue-600 dark:text-blue-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-300 font-bold underline decoration-2 underline-offset-4 hover:decoration-purple-500 focus:outline-none focus:ring-4 focus:ring-blue-400 focus:ring-offset-2 rounded-md px-2 py-1"
               aria-label="Visit Sebastian Tiller's personal website"
             >
-              sebish
+              @sebish
             </a>
           </p>
           
