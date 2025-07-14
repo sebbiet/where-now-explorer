@@ -8,6 +8,7 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    https: false, // Set to true if you need HTTPS for geolocation
   },
   plugins: [
     react(),

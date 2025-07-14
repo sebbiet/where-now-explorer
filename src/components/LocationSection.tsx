@@ -1,7 +1,5 @@
 
 import React, { memo } from 'react';
-import { Timer } from 'lucide-react';
-import { Button } from "@/components/ui/button";
 import LoadingSpinner from '@/components/LoadingSpinner';
 import LocationDisplay from '@/components/LocationDisplay';
 import LocationPin from '@/components/LocationPin';
@@ -34,14 +32,27 @@ const LocationSection = () => {
       </div>
       
       <div className="flex justify-center mt-6">
-        <Button 
+        <button 
           onClick={handleRefresh}
-          className="kid-button bg-sky text-white hover:bg-sky/80 flex items-center"
+          className={`
+            relative px-8 py-4 text-lg font-black text-white
+            bg-gradient-to-r from-sky via-sunshine to-grape
+            rounded-full shadow-xl transform transition-all duration-300
+            hover:scale-110 hover:shadow-2xl active:scale-95
+            disabled:opacity-50 disabled:cursor-not-allowed
+            ${isRefreshingLocation ? 'animate-pulse' : ''}
+          `}
           disabled={isLoadingLocation || isRefreshingLocation}
         >
-          <Timer className="w-5 h-5 mr-2" />
-          Refresh in {countdown}s
-        </Button>
+          <span className="flex items-center gap-2">
+            <span className="text-2xl animate-spin" style={{animationDuration: '3s'}}>🔄</span>
+            <span>Refresh in {countdown}s</span>
+            <span className="text-2xl">⏰</span>
+          </span>
+          
+          {/* Animated background effect */}
+          <div className="absolute inset-0 rounded-full bg-white opacity-0 hover:opacity-20 transition-opacity duration-300"></div>
+        </button>
       </div>
     </div>
   );

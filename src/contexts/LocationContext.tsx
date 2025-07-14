@@ -34,13 +34,32 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
   const getCurrentPosition = () => {
     return new Promise<GeolocationPosition>((resolve, reject) => {
       if (!navigator.geolocation) {
-        reject("Geolocation is not supported by your browser");
+        reject(new Error("UNSUPPORTED: Geolocation is not supported by your browser"));
       } else {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
-        });
+        navigator.geolocation.getCurrentPosition(
+          resolve, 
+          (error) => {
+            // Provide more specific error messages based on error code
+            switch(error.code) {
+              case error.PERMISSION_DENIED:
+                reject(new Error("PERMISSION_DENIED: Location access was denied. Please enable location permissions in your browser settings."));
+                break;
+              case error.POSITION_UNAVAILABLE:
+                reject(new Error("POSITION_UNAVAILABLE: Location information is unavailable. Please check your device's location settings."));
+                break;
+              case error.TIMEOUT:
+                reject(new Error("TIMEOUT: Location request timed out. Please try again."));
+                break;
+              default:
+                reject(new Error(`UNKNOWN: An unknown error occurred: ${error.message}`));
+            }
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+          }
+        );
       }
     });
   };
@@ -97,7 +116,23 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
       setLocationData(addressData);
     } catch (error) {
       console.error("Error getting location:", error);
-      toast.error("Couldn't find your location. Please make sure location services are enabled.");
+      
+      // Provide more helpful error messages based on the error type
+      if (error instanceof Error) {
+        if (error.message.startsWith("PERMISSION_DENIED")) {
+          toast.error("📍 Location access denied. Click the location icon in your browser's address bar to enable permissions.");
+        } else if (error.message.startsWith("POSITION_UNAVAILABLE")) {
+          toast.error("📍 Cannot determine your location. Please check if location services are enabled on your device.");
+        } else if (error.message.startsWith("TIMEOUT")) {
+          toast.error("📍 Location request timed out. Please try refreshing the page.");
+        } else if (error.message.startsWith("UNSUPPORTED")) {
+          toast.error("📍 Your browser doesn't support location services. Please try a modern browser.");
+        } else {
+          toast.error(`📍 ${error.message}`);
+        }
+      } else {
+        toast.error("📍 Couldn't find your location. Please make sure location services are enabled.");
+      }
     } finally {
       setIsLoadingLocation(false);
       setIsRefreshingLocation(false);

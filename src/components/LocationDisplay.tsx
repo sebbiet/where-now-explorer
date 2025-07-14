@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { MapPin } from 'lucide-react';
 
 interface LocationDisplayProps {
   locationData: {
@@ -17,47 +16,84 @@ const LocationDisplay: React.FC<LocationDisplayProps> = ({ locationData }) => {
   const { street, suburb, city, county, state, country } = locationData;
   
   return (
-    <div className="bubble bg-gradient-to-br from-white to-soft-purple dark:from-gray-800 dark:to-gray-700 w-full max-w-md animate-fade-in">
-      <div className="flex items-center justify-center mb-4">
-        <MapPin className="w-8 h-8 text-grape mr-2" />
-        <h2 className="text-2xl font-bold text-center">You are here!</h2>
+    <div className="w-full max-w-2xl animate-fade-in">
+      <div className="text-center mb-6">
+        <h2 className="text-3xl font-black bg-gradient-to-r from-grape to-sky bg-clip-text text-transparent">
+          You are here! 🎉
+        </h2>
       </div>
       
-      <div className="space-y-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {street && (
-          <p className="text-xl">
-            <span className="font-semibold text-gray-600 dark:text-gray-300">Street:</span> {street}
-          </p>
+          <div className="bg-gradient-to-br from-soft-yellow to-sunshine p-4 rounded-2xl shadow-lg transform hover:scale-105 transition-all duration-300">
+            <div className="flex items-center gap-3">
+              <span className="text-4xl">🏠</span>
+              <div>
+                <p className="text-sm font-bold text-gray-700 opacity-80">Street</p>
+                <p className="text-lg font-black text-gray-800">{street}</p>
+              </div>
+            </div>
+          </div>
         )}
         
         {suburb && (
-          <p className="text-xl">
-            <span className="font-semibold text-gray-600 dark:text-gray-300">Suburb:</span> {suburb}
-          </p>
+          <div className="bg-gradient-to-br from-soft-green to-emerald-300 p-4 rounded-2xl shadow-lg transform hover:scale-105 transition-all duration-300">
+            <div className="flex items-center gap-3">
+              <span className="text-4xl">🌳</span>
+              <div>
+                <p className="text-sm font-bold text-gray-700 opacity-80">Suburb</p>
+                <p className="text-lg font-black text-gray-800">{suburb}</p>
+              </div>
+            </div>
+          </div>
         )}
         
         {city && (
-          <p className="text-xl">
-            <span className="font-semibold text-gray-600 dark:text-gray-300">City:</span> {city}
-          </p>
+          <div className="bg-gradient-to-br from-soft-purple to-grape p-4 rounded-2xl shadow-lg transform hover:scale-105 transition-all duration-300">
+            <div className="flex items-center gap-3">
+              <span className="text-4xl">🏙️</span>
+              <div>
+                <p className="text-sm font-bold text-white opacity-80">City</p>
+                <p className="text-lg font-black text-white">{city}</p>
+              </div>
+            </div>
+          </div>
         )}
         
         {county && (
-          <p className="text-xl">
-            <span className="font-semibold text-gray-600 dark:text-gray-300">County:</span> {county}
-          </p>
+          <div className="bg-gradient-to-br from-soft-orange to-orange-400 p-4 rounded-2xl shadow-lg transform hover:scale-105 transition-all duration-300">
+            <div className="flex items-center gap-3">
+              <span className="text-4xl">🏛️</span>
+              <div>
+                <p className="text-sm font-bold text-white opacity-80">County</p>
+                <p className="text-lg font-black text-white">{county}</p>
+              </div>
+            </div>
+          </div>
         )}
         
         {state && (
-          <p className="text-xl">
-            <span className="font-semibold text-gray-600 dark:text-gray-300">State:</span> {state}
-          </p>
+          <div className="bg-gradient-to-br from-sky to-blue-500 p-4 rounded-2xl shadow-lg transform hover:scale-105 transition-all duration-300">
+            <div className="flex items-center gap-3">
+              <span className="text-4xl">📍</span>
+              <div>
+                <p className="text-sm font-bold text-white opacity-80">State</p>
+                <p className="text-lg font-black text-white">{state}</p>
+              </div>
+            </div>
+          </div>
         )}
         
         {country && (
-          <p className="text-xl">
-            <span className="font-semibold text-gray-600 dark:text-gray-300">Country:</span> {country}
-          </p>
+          <div className="bg-gradient-to-br from-pink-400 to-rose-500 p-4 rounded-2xl shadow-lg transform hover:scale-105 transition-all duration-300">
+            <div className="flex items-center gap-3">
+              <span className="text-4xl">🌍</span>
+              <div>
+                <p className="text-sm font-bold text-white opacity-80">Country</p>
+                <p className="text-lg font-black text-white">{country}</p>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
