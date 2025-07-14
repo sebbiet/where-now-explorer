@@ -18,7 +18,7 @@ export function registerSW() {
     }
 
     window.addEventListener('load', () => {
-      const swUrl = `${process.env.BASE_URL || '/'}sw.js`;
+      const swUrl = `${import.meta.env.BASE_URL}sw.js`;
 
       if (isLocalhost) {
         checkValidServiceWorker(swUrl);
