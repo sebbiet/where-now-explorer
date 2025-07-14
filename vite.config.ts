@@ -5,7 +5,8 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: mode === 'production' ? '/where-now-explorer/' : '/',
+  // Using custom domain (sebastiantiller.com), so base path is root
+  base: '/',
   server: {
     host: "::",
     port: 8080,
