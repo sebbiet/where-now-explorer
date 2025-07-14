@@ -22,4 +22,34 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    // Enable source maps for better debugging
+    sourcemap: mode === 'development',
+    // Optimize chunks for better caching
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Separate vendor chunks for better caching
+          'react-vendor': ['react', 'react-dom'],
+          'ui-vendor': ['@radix-ui/react-toast', '@radix-ui/react-tooltip'],
+          'query-vendor': ['@tanstack/react-query'],
+          'router-vendor': ['react-router-dom'],
+        },
+      },
+    },
+    // Optimize for production
+    target: 'esnext',
+    minify: 'esbuild',
+    // Warn on large chunks
+    chunkSizeWarningLimit: 1000,
+  },
+  // Performance optimizations
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      '@tanstack/react-query'
+    ],
+  },
 }));

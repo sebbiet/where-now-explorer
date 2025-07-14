@@ -2,6 +2,7 @@ import { GeocodingCacheService } from './geocodingCache.service';
 import { retryWithBackoff } from '@/utils/retry';
 import { rateLimiter } from './rateLimiter.service';
 import { sanitizeDestination, validateCoordinates, validateApiResponse } from '@/utils/sanitization';
+import { withPerformanceTracking } from '@/utils/performanceMonitor';
 
 export interface Address {
   road?: string;
@@ -103,12 +104,14 @@ export class GeocodingService {
         return response.json();
       };
       
-      const data = await retryWithBackoff(fetchData, {
-        maxAttempts: 3,
-        onRetry: (attempt, delay) => {
-          console.log(`Retrying reverse geocoding (attempt ${attempt}) after ${Math.round(delay)}ms`);
-        }
-      });
+      const data = await withPerformanceTracking('geocoding', () =>
+        retryWithBackoff(fetchData, {
+          maxAttempts: 3,
+          onRetry: (attempt, delay) => {
+            console.log(`Retrying reverse geocoding (attempt ${attempt}) after ${Math.round(delay)}ms`);
+          }
+        })
+      );
       
       // Validate API response structure
       if (!validateApiResponse(data, ['address'])) {
@@ -213,12 +216,14 @@ export class GeocodingService {
         return response.json();
       };
       
-      const data = await retryWithBackoff(fetchData, {
-        maxAttempts: 3,
-        onRetry: (attempt, delay) => {
-          console.log(`Retrying geocoding for "${query}" (attempt ${attempt}) after ${Math.round(delay)}ms`);
-        }
-      });
+      const data = await withPerformanceTracking('geocoding', () =>
+        retryWithBackoff(fetchData, {
+          maxAttempts: 3,
+          onRetry: (attempt, delay) => {
+            console.log(`Retrying geocoding for "${sanitizedQuery}" (attempt ${attempt}) after ${Math.round(delay)}ms`);
+          }
+        })
+      );
       
       if (!Array.isArray(data)) {
         throw new GeocodingError('Invalid response from geocoding service');
