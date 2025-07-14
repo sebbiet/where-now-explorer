@@ -66,7 +66,20 @@ const DestinationInput: React.FC<DestinationInputProps> = ({
       const data = await response.json();
       
       // Transform the response into a simpler format for suggestions
-      const formattedSuggestions = data.map((item: any) => {
+      const formattedSuggestions = data.map((item: {
+        place_id: string;
+        display_name: string;
+        address?: {
+          house_number?: string;
+          road?: string;
+          attraction?: string;
+          amenity?: string;
+          tourism?: string;
+          building?: string;
+          leisure?: string;
+          shop?: string;
+        };
+      }) => {
         // Create a more user-friendly display name for the location
         let name = '';
         

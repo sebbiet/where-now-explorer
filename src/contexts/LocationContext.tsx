@@ -1,5 +1,7 @@
 import React, { createContext, useState, useContext, useCallback, ReactNode, useEffect } from 'react';
 import { toast } from "sonner";
+import { GeolocationService, GeolocationError, GeolocationErrorCode } from '@/services/geolocation.service';
+import { GeocodingService, GeocodingError } from '@/services/geocoding.service';
 
 // Define interfaces for our data structures
 export interface LocationData {
@@ -30,73 +32,6 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
   const [countdown, setCountdown] = useState(30);
   const [isRefreshingLocation, setIsRefreshingLocation] = useState(false);
   
-  // Get current position using Geolocation API
-  const getCurrentPosition = () => {
-    return new Promise<GeolocationPosition>((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error("UNSUPPORTED: Geolocation is not supported by your browser"));
-      } else {
-        navigator.geolocation.getCurrentPosition(
-          resolve, 
-          (error) => {
-            // Provide more specific error messages based on error code
-            switch(error.code) {
-              case error.PERMISSION_DENIED:
-                reject(new Error("PERMISSION_DENIED: Location access was denied. Please enable location permissions in your browser settings."));
-                break;
-              case error.POSITION_UNAVAILABLE:
-                reject(new Error("POSITION_UNAVAILABLE: Location information is unavailable. Please check your device's location settings."));
-                break;
-              case error.TIMEOUT:
-                reject(new Error("TIMEOUT: Location request timed out. Please try again."));
-                break;
-              default:
-                reject(new Error(`UNKNOWN: An unknown error occurred: ${error.message}`));
-            }
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
-          }
-        );
-      }
-    });
-  };
-
-  // Get address details from coordinates using reverse geocoding
-  const getAddressFromCoords = async (latitude: number, longitude: number) => {
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`,
-        {
-          headers: {
-            "User-Agent": "AreWeThereYetApp/1.0",
-          }
-        }
-      );
-      
-      if (!response.ok) {
-        throw new Error("Failed to get address");
-      }
-      
-      const data = await response.json();
-      
-      return {
-        street: data.address.road,
-        suburb: data.address.suburb || data.address.neighbourhood,
-        city: data.address.city || data.address.town || data.address.village,
-        county: data.address.county,
-        state: data.address.state,
-        country: data.address.country,
-        latitude,
-        longitude
-      };
-    } catch (error) {
-      console.error("Error fetching address data:", error);
-      throw error;
-    }
-  };
 
 
   // Fetch location data
@@ -109,27 +44,34 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
     }
     
     try {
-      const position = await getCurrentPosition();
+      const position = await GeolocationService.getCurrentPosition();
       const { latitude, longitude } = position.coords;
       
-      const addressData = await getAddressFromCoords(latitude, longitude);
+      const addressData = await GeocodingService.reverseGeocode(latitude, longitude);
       setLocationData(addressData);
     } catch (error) {
       console.error("Error getting location:", error);
       
       // Provide more helpful error messages based on the error type
-      if (error instanceof Error) {
-        if (error.message.startsWith("PERMISSION_DENIED")) {
-          toast.error("📍 Location access denied. Click the location icon in your browser's address bar to enable permissions.");
-        } else if (error.message.startsWith("POSITION_UNAVAILABLE")) {
-          toast.error("📍 Cannot determine your location. Please check if location services are enabled on your device.");
-        } else if (error.message.startsWith("TIMEOUT")) {
-          toast.error("📍 Location request timed out. Please try refreshing the page.");
-        } else if (error.message.startsWith("UNSUPPORTED")) {
-          toast.error("📍 Your browser doesn't support location services. Please try a modern browser.");
-        } else {
-          toast.error(`📍 ${error.message}`);
+      if (error instanceof GeolocationError) {
+        switch (error.code) {
+          case GeolocationErrorCode.PERMISSION_DENIED:
+            toast.error("📍 Location access denied. Click the location icon in your browser's address bar to enable permissions.");
+            break;
+          case GeolocationErrorCode.POSITION_UNAVAILABLE:
+            toast.error("📍 Cannot determine your location. Please check if location services are enabled on your device.");
+            break;
+          case GeolocationErrorCode.TIMEOUT:
+            toast.error("📍 Location request timed out. Please try refreshing the page.");
+            break;
+          case GeolocationErrorCode.UNSUPPORTED:
+            toast.error("📍 Your browser doesn't support location services. Please try a modern browser.");
+            break;
+          default:
+            toast.error(`📍 ${error.message}`);
         }
+      } else if (error instanceof GeocodingError) {
+        toast.error("📍 Couldn't get your address. Please try again later.");
       } else {
         toast.error("📍 Couldn't find your location. Please make sure location services are enabled.");
       }
