@@ -12,10 +12,13 @@ import {
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useDebounce } from "@/hooks/useDebounce";
+import { getCountryCode, queryContainsCountry } from '@/lib/countryUtils';
+import { GeocodingService } from '@/services/geocoding.service';
 
 interface DestinationInputProps {
   onDestinationSubmit: (destination: string) => void;
   isLoading: boolean;
+  userCountry?: string;
 }
 
 interface SuggestionItem {
@@ -26,7 +29,8 @@ interface SuggestionItem {
 
 const DestinationInput: React.FC<DestinationInputProps> = ({ 
   onDestinationSubmit,
-  isLoading 
+  isLoading,
+  userCountry 
 }) => {
   const [destination, setDestination] = useState('');
   const [inputValue, setInputValue] = useState('');
@@ -50,20 +54,21 @@ const DestinationInput: React.FC<DestinationInputProps> = ({
     setIsSearching(true);
     
     try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1`,
-        {
-          headers: {
-            "User-Agent": "AreWeThereYetApp/1.0",
-          }
-        }
-      );
+      // Prepare geocoding options
+      const geocodeOptions: Parameters<typeof GeocodingService.geocode>[1] = {
+        limit: 5,
+        addressdetails: true
+      };
       
-      if (!response.ok) {
-        throw new Error("Failed to fetch suggestions");
+      // If user hasn't explicitly typed a country name and we know their country
+      if (userCountry && !queryContainsCountry(query)) {
+        const countryCode = getCountryCode(userCountry);
+        if (countryCode) {
+          geocodeOptions.countrycodes = [countryCode];
+        }
       }
       
-      const data = await response.json();
+      const data = await GeocodingService.geocode(query, geocodeOptions);
       
       // Transform the response into a simpler format for suggestions
       const formattedSuggestions = data.map((item: {
@@ -154,13 +159,31 @@ const DestinationInput: React.FC<DestinationInputProps> = ({
   };
 
   return (
-    <div className="bubble bg-white dark:bg-gray-800 w-full max-w-md mt-6">
-      <div className="flex items-center mb-4">
-        <Navigation className="w-6 h-6 text-sunshine mr-2" />
-        <h2 className="text-xl font-bold">Where are we going?</h2>
-      </div>
+    <div className="w-full max-w-4xl mt-6 relative backdrop-blur-2xl rounded-3xl p-8" style={{
+      background: 'rgba(255, 255, 255, 0.85)',
+      boxShadow: `
+        0 8px 32px rgba(0, 0, 0, 0.12),
+        0 2px 16px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8)
+      `,
+      border: '1px solid rgba(255, 255, 255, 0.3)'
+    }}>
+      {/* Dark mode overlay */}
+      <div className="absolute inset-0 rounded-3xl hidden dark:block pointer-events-none" style={{
+        background: 'rgba(30, 41, 59, 0.9)',
+        boxShadow: `
+          0 8px 32px rgba(0, 0, 0, 0.4),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1)
+        `
+      }}></div>
       
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="relative z-10">
+        <div className="flex items-center mb-8">
+          <Navigation className="w-10 h-10 text-yellow-500 dark:text-yellow-400 mr-4" />
+          <h2 className="text-3xl md:text-4xl font-black text-gray-800 dark:text-white">Where are we going?</h2>
+        </div>
+      
+      <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl mx-auto">
         <div className="relative w-full">
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
@@ -175,30 +198,30 @@ const DestinationInput: React.FC<DestinationInputProps> = ({
                     }
                   }}
                   placeholder="Start typing a place name, landmark or address"
-                  className="w-full p-4 text-lg rounded-xl border-2 border-gray-200 dark:border-gray-600 pr-10"
+                  className="w-full p-5 text-xl text-gray-800 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded-xl border-2 border-gray-300 dark:border-gray-600 focus:border-yellow-400 dark:focus:border-yellow-500 pr-12 bg-white/50 dark:bg-gray-800/50"
                   disabled={isLoading}
                 />
-                <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 h-6 w-6 text-gray-500 dark:text-gray-400" />
               </div>
             </PopoverTrigger>
-            <PopoverContent className="p-0 w-[calc(100vw-2rem)] max-w-md" align="start">
-              <Command>
-                <CommandList>
+            <PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)] bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 rounded-xl shadow-xl" align="start" sideOffset={5}>
+              <Command className="rounded-xl">
+                <CommandList className="max-h-96 overflow-auto">
                   {isSearching ? (
-                    <CommandEmpty>Searching...</CommandEmpty>
+                    <CommandEmpty className="py-6 text-center text-gray-600 dark:text-gray-400">Searching...</CommandEmpty>
                   ) : suggestions.length === 0 ? (
-                    <CommandEmpty>No results found.</CommandEmpty>
+                    <CommandEmpty className="py-6 text-center text-gray-600 dark:text-gray-400">No results found.</CommandEmpty>
                   ) : (
-                    <CommandGroup heading="Suggestions">
+                    <CommandGroup heading="Suggestions" className="p-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
                       {suggestions.map((suggestion) => (
                         <CommandItem
                           key={suggestion.id}
                           onSelect={() => handleSuggestionSelect(suggestion)}
-                          className="cursor-pointer py-3"
+                          className="cursor-pointer px-4 py-4 hover:bg-gray-100 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 last:border-b-0"
                         >
                           <div>
-                            <p className="font-medium">{suggestion.name}</p>
-                            <p className="text-xs text-gray-500 truncate">{suggestion.displayName}</p>
+                            <p className="font-bold text-base text-gray-800 dark:text-white">{suggestion.name}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{suggestion.displayName}</p>
                           </div>
                         </CommandItem>
                       ))}
@@ -210,18 +233,19 @@ const DestinationInput: React.FC<DestinationInputProps> = ({
           </Popover>
         </div>
         
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-base text-gray-600 dark:text-gray-300 font-medium">
           Type at least 3 letters to see suggestions. Try popular places, landmarks, cities, or addresses.
         </p>
         
         <Button 
           type="submit"
-          className="kid-button w-full bg-sunshine text-gray-800 hover:bg-sunshine/80"
+          className="kid-button w-full bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-800 hover:from-yellow-300 hover:to-orange-300 font-black text-xl py-5 shadow-lg hover:shadow-xl"
           disabled={isLoading || !destination.trim()}
         >
           Calculate Distance
         </Button>
       </form>
+      </div>
     </div>
   );
 };

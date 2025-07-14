@@ -82,6 +82,7 @@ const DestinationSection = () => {
       <DestinationInput 
         onDestinationSubmit={calculateDistance}
         isLoading={isLoadingDestination}
+        userCountry={locationData.country}
       />
       
       {destinationData && (
