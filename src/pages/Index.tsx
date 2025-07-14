@@ -10,24 +10,77 @@ const Index = () => {
 
   return (
     <LocationProvider>
-      <div className="min-h-screen relative overflow-hidden">
-        {/* Animated background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-sky via-sunshine to-grape dark:from-purple-900 dark:via-blue-900 dark:to-indigo-900">
-          {/* Floating shapes */}
-          <div className="absolute top-10 left-10 w-20 h-20 bg-soft-yellow rounded-full opacity-30 animate-pulse"></div>
-          <div className="absolute top-1/4 right-20 w-32 h-32 bg-soft-orange rounded-full opacity-20 animate-bounce" style={{animationDelay: '0.5s'}}></div>
-          <div className="absolute bottom-20 left-1/3 w-24 h-24 bg-soft-purple rounded-full opacity-25 animate-pulse" style={{animationDelay: '1s'}}></div>
-          <div className="absolute top-1/2 right-1/4 w-16 h-16 bg-soft-green rounded-full opacity-30 animate-bounce" style={{animationDelay: '1.5s'}}></div>
+      <div className="custom-background min-h-screen relative overflow-x-hidden w-full">
+        {/* Multi-layer animated background */}
+        <div className="absolute inset-0">
+          {/* Animated mesh gradient overlay */}
+          <div className="absolute inset-0 opacity-30 dark:opacity-20" style={{
+            background: `
+              radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.3) 0%, transparent 50%),
+              radial-gradient(circle at 80% 70%, rgba(251, 191, 36, 0.3) 0%, transparent 50%),
+              radial-gradient(circle at 40% 80%, rgba(167, 139, 250, 0.3) 0%, transparent 50%),
+              radial-gradient(circle at 90% 20%, rgba(34, 197, 94, 0.2) 0%, transparent 50%)
+            `
+          }}></div>
           
-          {/* Cloud shapes */}
-          <svg className="absolute top-20 right-10 w-40 h-20 opacity-20" viewBox="0 0 100 50">
-            <path d="M20,35 Q20,25 30,25 Q35,15 45,15 Q55,10 65,15 Q75,15 80,25 Q90,25 90,35 Q90,45 80,45 L20,45 Q10,45 10,35 Q10,25 20,25" fill="white" />
+          {/* Dynamic overlay for dark mode */}
+          <div className="absolute inset-0 hidden dark:block" style={{
+            background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(88, 28, 135, 0.9) 35%, rgba(30, 58, 138, 0.9) 70%, rgba(15, 23, 42, 0.95) 100%)'
+          }}></div>
+          {/* Animated bubble pattern */}
+          <div className="absolute inset-0 overflow-hidden">
+            {/* Large floating bubbles */}
+            <div className="absolute top-[10%] left-[5%] w-40 h-40 rounded-full animate-float blur-xl" style={{
+              background: 'radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, rgba(59, 130, 246, 0.1) 70%, transparent 100%)'
+            }}></div>
+            <div className="absolute top-[60%] right-[10%] w-60 h-60 rounded-full animate-float blur-xl" style={{
+              background: 'radial-gradient(circle, rgba(251, 191, 36, 0.4) 0%, rgba(251, 191, 36, 0.1) 70%, transparent 100%)',
+              animationDelay: '2s'
+            }}></div>
+            <div className="absolute bottom-[20%] left-[15%] w-48 h-48 rounded-full animate-float blur-xl" style={{
+              background: 'radial-gradient(circle, rgba(167, 139, 250, 0.4) 0%, rgba(167, 139, 250, 0.1) 70%, transparent 100%)',
+              animationDelay: '4s'
+            }}></div>
+            
+            {/* Medium floating bubbles */}
+            <div className="absolute top-[40%] left-[60%] w-32 h-32 bg-gradient-to-br from-green-200/30 to-emerald-300/25 dark:from-emerald-600/15 dark:to-emerald-800/15 rounded-full animate-float" style={{animationDelay: '1s'}}></div>
+            <div className="absolute top-[70%] left-[40%] w-36 h-36 bg-gradient-to-br from-orange-200/30 to-orange-300/25 dark:from-orange-600/15 dark:to-orange-800/15 rounded-full animate-float" style={{animationDelay: '3s'}}></div>
+            
+            {/* Small decorative stars */}
+            <div className="absolute top-[15%] right-[25%] text-4xl text-yellow-300/40 dark:text-yellow-400/20 animate-wiggle">⭐</div>
+            <div className="absolute bottom-[35%] right-[8%] text-3xl text-yellow-300/40 dark:text-yellow-400/20 animate-wiggle" style={{animationDelay: '1.5s'}}>✨</div>
+            <div className="absolute top-[55%] left-[8%] text-2xl text-yellow-300/40 dark:text-yellow-400/20 animate-wiggle" style={{animationDelay: '2.5s'}}>🌟</div>
+          </div>
+          
+          {/* Subtle cloud shapes */}
+          <svg className="absolute top-[5%] right-[20%] w-64 h-32 opacity-10 dark:opacity-5" viewBox="0 0 100 50">
+            <path d="M20,35 Q20,25 30,25 Q35,15 45,15 Q55,10 65,15 Q75,15 80,25 Q90,25 90,35 Q90,45 80,45 L20,45 Q10,45 10,35 Q10,25 20,25" fill="currentColor" className="text-white dark:text-gray-200" />
           </svg>
-          <svg className="absolute bottom-40 left-20 w-60 h-30 opacity-15" viewBox="0 0 100 50">
-            <path d="M20,35 Q20,25 30,25 Q35,15 45,15 Q55,10 65,15 Q75,15 80,25 Q90,25 90,35 Q90,45 80,45 L20,45 Q10,45 10,35 Q10,25 20,25" fill="white" />
+          <svg className="absolute bottom-[15%] left-[10%] w-80 h-40 opacity-10 dark:opacity-5 animate-float" style={{animationDelay: '5s'}} viewBox="0 0 100 50">
+            <path d="M20,35 Q20,25 30,25 Q35,15 45,15 Q55,10 65,15 Q75,15 80,25 Q90,25 90,35 Q90,45 80,45 L20,45 Q10,45 10,35 Q10,25 20,25" fill="currentColor" className="text-white dark:text-gray-200" />
+          </svg>
+          <svg className="absolute top-[45%] left-[50%] w-48 h-24 opacity-10 dark:opacity-5" viewBox="0 0 100 50">
+            <path d="M20,35 Q20,25 30,25 Q35,15 45,15 Q55,10 65,15 Q75,15 80,25 Q90,25 90,35 Q90,45 80,45 L20,45 Q10,45 10,35 Q10,25 20,25" fill="currentColor" className="text-white dark:text-gray-200" />
           </svg>
         </div>
         
+        {/* Responsive decorative elements for larger screens */}
+        <div className="hidden lg:block absolute inset-0 z-0">
+          {/* Left side decorations */}
+          <div className="absolute left-8 top-1/2 -translate-y-1/2">
+            <div className="text-8xl opacity-20 dark:opacity-10 animate-float">🚗</div>
+            <div className="text-6xl opacity-20 dark:opacity-10 mt-8 animate-float" style={{animationDelay: '2s'}}>🛣️</div>
+            <div className="text-5xl opacity-20 dark:opacity-10 mt-6 animate-float" style={{animationDelay: '4s'}}>🗺️</div>
+          </div>
+          
+          {/* Right side decorations */}
+          <div className="absolute right-8 top-1/2 -translate-y-1/2">
+            <div className="text-7xl opacity-20 dark:opacity-10 animate-float" style={{animationDelay: '1s'}}>🏆</div>
+            <div className="text-6xl opacity-20 dark:opacity-10 mt-8 animate-float" style={{animationDelay: '3s'}}>🎯</div>
+            <div className="text-5xl opacity-20 dark:opacity-10 mt-6 animate-float" style={{animationDelay: '5s'}}>🚩</div>
+          </div>
+        </div>
+
         <div className="container mx-auto px-4 py-8 relative z-10">
           {/* Header with theme toggle */}
           <div className="flex justify-end gap-2 mb-8">
@@ -109,12 +162,35 @@ const Index = () => {
             </div>
 
             {/* Tab Content */}
-            <div className="bg-gradient-to-br from-white/95 to-soft-purple/30 dark:from-gray-800/95 dark:to-purple-900/30 backdrop-blur-md rounded-3xl shadow-2xl p-8 border-4 border-white/50 dark:border-purple-400/30 transform hover:scale-[1.02] transition-transform duration-300">
-              {activeTab === "current" ? (
-                <LocationSection />
-              ) : (
-                <DestinationSection />
-              )}
+            <div className="relative backdrop-blur-2xl rounded-3xl p-8 transform hover:scale-[1.01] transition-all duration-700 animate-slide-up" style={{
+              background: 'rgba(255, 255, 255, 0.85)',
+              boxShadow: `
+                0 8px 32px rgba(0, 0, 0, 0.12),
+                0 2px 16px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8)
+              `,
+              border: '1px solid rgba(255, 255, 255, 0.3)'
+            }}>
+              {/* Glass morphism effect overlay */}
+              <div className="absolute inset-0 rounded-3xl pointer-events-none" style={{
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 100%)'
+              }}></div>
+              
+              {/* Dark mode overlay */}
+              <div className="absolute inset-0 rounded-3xl hidden dark:block pointer-events-none" style={{
+                background: 'rgba(30, 41, 59, 0.9)',
+                boxShadow: `
+                  0 8px 32px rgba(0, 0, 0, 0.4),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.1)
+                `
+              }}></div>
+              <div className="relative z-10">
+                {activeTab === "current" ? (
+                  <LocationSection />
+                ) : (
+                  <DestinationSection />
+                )}
+              </div>
             </div>
           </div>
         </div>

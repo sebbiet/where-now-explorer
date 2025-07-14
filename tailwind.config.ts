@@ -67,10 +67,46 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Child-friendly color palette
-				'sky': '#33C3F0',
-				'sunshine': '#FFD166',
-				'grape': '#9b87f5',
+				// Child-friendly color palette with variants
+				'sky': {
+					DEFAULT: '#33C3F0',
+					50: '#E6F7FF',
+					100: '#B3E9FF',
+					200: '#80DBFF',
+					300: '#4DCDFF',
+					400: '#33C3F0',
+					500: '#0FB3E0',
+					600: '#0A8DB8',
+					700: '#066690',
+					800: '#033E68',
+					900: '#011740'
+				},
+				'sunshine': {
+					DEFAULT: '#FFD166',
+					50: '#FFFAEB',
+					100: '#FFF2C7',
+					200: '#FFE699',
+					300: '#FFD166',
+					400: '#FFBC33',
+					500: '#FFA500',
+					600: '#CC8400',
+					700: '#996300',
+					800: '#664200',
+					900: '#332100'
+				},
+				'grape': {
+					DEFAULT: '#9b87f5',
+					50: '#F3F0FF',
+					100: '#E5DEFF',
+					200: '#D1C2FF',
+					300: '#B5A3FF',
+					400: '#9b87f5',
+					500: '#7C5CED',
+					600: '#5A3BE0',
+					700: '#4729C7',
+					800: '#351BA8',
+					900: '#241285'
+				},
 				'soft-purple': '#E5DEFF',
 				'soft-yellow': '#FEF7CD',
 				'soft-green': '#F2FCE2',
