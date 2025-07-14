@@ -24,7 +24,7 @@ const TabNavigation = memo(({ activeTab, onTabChange }: TabNavigationProps) => {
         <div className="relative flex" role="tablist" aria-label="Location and destination tabs">
           <button
             onClick={() => onTabChange("current")}
-            className={`relative z-10 px-8 py-5 rounded-full transition-all duration-300 flex items-center gap-3 font-black focus:outline-none focus:ring-4 focus:ring-sky-400 focus:ring-offset-2 ${
+            className={`relative z-10 px-8 py-4 rounded-full transition-all duration-300 flex items-center justify-center gap-3 font-black focus:outline-none focus:ring-4 focus:ring-sky-400 focus:ring-offset-2 min-w-[160px] ${
               activeTab === "current"
                 ? "text-white scale-105"
                 : "text-gray-700 dark:text-gray-300 hover:scale-105"
@@ -35,21 +35,21 @@ const TabNavigation = memo(({ activeTab, onTabChange }: TabNavigationProps) => {
             aria-controls="location-panel"
             id="location-tab"
           >
-            <span className="text-3xl drop-shadow-md" aria-hidden="true">📍</span>
-            <div>
-              <div className="text-lg leading-tight">Where</div>
-              <div className="text-sm opacity-90">Am I?</div>
+            <span className="text-2xl" aria-hidden="true">📍</span>
+            <div className="flex flex-col items-center">
+              <div className="text-base leading-tight">Where</div>
+              <div className="text-xs opacity-90">Am I?</div>
             </div>
             {activeTab === "current" && (
-              <div className="absolute -top-3 -right-2" aria-hidden="true">
-                <span className="text-xl animate-bounce">✨</span>
+              <div className="absolute -top-2 -right-1" aria-hidden="true">
+                <span className="text-lg animate-bounce">✨</span>
               </div>
             )}
           </button>
           
           <button
             onClick={() => onTabChange("destination")}
-            className={`relative z-10 px-8 py-5 rounded-full transition-all duration-300 flex items-center gap-3 font-black focus:outline-none focus:ring-4 focus:ring-purple-400 focus:ring-offset-2 ${
+            className={`relative z-10 px-8 py-4 rounded-full transition-all duration-300 flex items-center justify-center gap-3 font-black focus:outline-none focus:ring-4 focus:ring-purple-400 focus:ring-offset-2 min-w-[160px] ${
               activeTab === "destination"
                 ? "text-white scale-105"
                 : "text-gray-700 dark:text-gray-300 hover:scale-105"
@@ -60,14 +60,14 @@ const TabNavigation = memo(({ activeTab, onTabChange }: TabNavigationProps) => {
             aria-controls="destination-panel"
             id="destination-tab"
           >
-            <span className="text-3xl drop-shadow-md" aria-hidden="true">🏁</span>
-            <div>
-              <div className="text-lg leading-tight">Are We</div>
-              <div className="text-sm opacity-90">There Yet?</div>
+            <span className="text-2xl" aria-hidden="true">🏁</span>
+            <div className="flex flex-col items-center">
+              <div className="text-base leading-tight">Are We</div>
+              <div className="text-xs opacity-90">There Yet?</div>
             </div>
             {activeTab === "destination" && (
-              <div className="absolute -top-3 -right-2" aria-hidden="true">
-                <span className="text-xl animate-bounce">🌟</span>
+              <div className="absolute -top-2 -right-1" aria-hidden="true">
+                <span className="text-lg animate-bounce">🌟</span>
               </div>
             )}
           </button>
