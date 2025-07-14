@@ -1,32 +1,39 @@
 import React from 'react';
+import { glassMorphism, gradients } from '@/styles/constants';
 
 const Footer: React.FC = () => {
   return (
     <footer className="mt-16 mb-8">
-      <div className="relative backdrop-blur-2xl rounded-3xl p-6 transform hover:scale-[1.01] transition-all duration-700" style={{
-        background: 'rgba(255, 255, 255, 0.85)',
-        boxShadow: `
-          0 8px 32px rgba(0, 0, 0, 0.12),
-          0 2px 16px rgba(0, 0, 0, 0.08),
-          inset 0 1px 0 rgba(255, 255, 255, 0.8)
-        `,
-        border: '1px solid rgba(255, 255, 255, 0.3)'
-      }}>
+      <div 
+        className="relative backdrop-blur-2xl rounded-3xl p-6 transform hover:scale-[1.01] transition-all duration-700"
+        style={glassMorphism.light}
+      >
         {/* Glass morphism effect overlay */}
-        <div className="absolute inset-0 rounded-3xl pointer-events-none" style={{
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 100%)'
-        }}></div>
+        <div 
+          className="absolute inset-0 rounded-3xl pointer-events-none"
+          style={{ background: gradients.glassOverlay }}
+        />
         
         {/* Dark mode overlay */}
-        <div className="absolute inset-0 rounded-3xl hidden dark:block pointer-events-none" style={{
-          background: 'rgba(30, 41, 59, 0.9)',
-          boxShadow: `
-            0 8px 32px rgba(0, 0, 0, 0.4),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1)
-          `
-        }}></div>
+        <div 
+          className="absolute inset-0 rounded-3xl hidden dark:block pointer-events-none"
+          style={glassMorphism.dark}
+        />
 
         <div className="relative z-10 text-center">
+          {/* Story blurb */}
+          <div className="mb-6 max-w-2xl mx-auto">
+            <p className="text-base md:text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
+              <span className="text-2xl mr-2" role="img" aria-label="sparkles">✨</span>
+              I built this app to answer my son's VERY FREQUENT "Are we there yet?" and "Where are we?" questions. 
+              Turns out, kids are basically tiny GPS units that need constant location updates! 
+              This is meant to be a bit of fun and give you a rough guide to where you are in this big, 
+              beautiful world. Don't worry, I'm not tracking your adventures or collecting your data. 
+              Your location stays right with you!
+              <span className="text-2xl ml-2" role="img" aria-label="globe">🌍</span>
+            </p>
+          </div>
+          
           <p className="text-lg md:text-xl text-gray-700 dark:text-white font-semibold flex items-center justify-center gap-2 flex-wrap">
             Made by{' '}
             <a
