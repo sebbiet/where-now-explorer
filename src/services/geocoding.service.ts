@@ -1,4 +1,5 @@
 import { GeocodingCacheService } from './geocodingCache.service';
+import { retryWithBackoff } from '@/utils/retry';
 
 export interface Address {
   road?: string;
@@ -67,18 +68,29 @@ export class GeocodingService {
     try {
       const url = `${this.BASE_URL}/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`;
       
-      const response = await fetch(url, {
-        headers: this.DEFAULT_HEADERS
+      const fetchData = async () => {
+        const response = await fetch(url, {
+          headers: this.DEFAULT_HEADERS
+        });
+        
+        if (!response.ok) {
+          const error = new GeocodingError(
+            'Failed to get address from coordinates',
+            response.status
+          );
+          (error as any).status = response.status;
+          throw error;
+        }
+        
+        return response.json();
+      };
+      
+      const data = await retryWithBackoff(fetchData, {
+        maxAttempts: 3,
+        onRetry: (attempt, delay) => {
+          console.log(`Retrying reverse geocoding (attempt ${attempt}) after ${Math.round(delay)}ms`);
+        }
       });
-      
-      if (!response.ok) {
-        throw new GeocodingError(
-          'Failed to get address from coordinates',
-          response.status
-        );
-      }
-      
-      const data = await response.json();
       
       if (!data || !data.address) {
         throw new GeocodingError('Invalid response from geocoding service');
@@ -147,18 +159,29 @@ export class GeocodingService {
 
       const url = `${this.BASE_URL}/search?${params.toString()}`;
       
-      const response = await fetch(url, {
-        headers: this.DEFAULT_HEADERS
+      const fetchData = async () => {
+        const response = await fetch(url, {
+          headers: this.DEFAULT_HEADERS
+        });
+        
+        if (!response.ok) {
+          const error = new GeocodingError(
+            'Failed to geocode location',
+            response.status
+          );
+          (error as any).status = response.status;
+          throw error;
+        }
+        
+        return response.json();
+      };
+      
+      const data = await retryWithBackoff(fetchData, {
+        maxAttempts: 3,
+        onRetry: (attempt, delay) => {
+          console.log(`Retrying geocoding for "${query}" (attempt ${attempt}) after ${Math.round(delay)}ms`);
+        }
       });
-      
-      if (!response.ok) {
-        throw new GeocodingError(
-          'Failed to geocode location',
-          response.status
-        );
-      }
-      
-      const data = await response.json();
       
       if (!Array.isArray(data)) {
         throw new GeocodingError('Invalid response from geocoding service');

@@ -1,3 +1,5 @@
+import { retryWithBackoff } from '@/utils/retry';
+
 export interface RouteWaypoint {
   hint?: string;
   distance?: number;
@@ -83,16 +85,27 @@ export class RoutingService {
 
       const url = `${this.BASE_URL}/${profile}/${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}?${params}`;
       
-      const response = await fetch(url);
+      const fetchRoute = async () => {
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          const error = new RoutingError(
+            'Failed to calculate route',
+            response.status.toString()
+          );
+          (error as any).status = response.status;
+          throw error;
+        }
+        
+        return response.json();
+      };
       
-      if (!response.ok) {
-        throw new RoutingError(
-          'Failed to calculate route',
-          response.status.toString()
-        );
-      }
-      
-      const data: RouteResponse = await response.json();
+      const data: RouteResponse = await retryWithBackoff(fetchRoute, {
+        maxAttempts: 3,
+        onRetry: (attempt, delay) => {
+          console.log(`Retrying route calculation (attempt ${attempt}) after ${Math.round(delay)}ms`);
+        }
+      });
       
       if (data.code !== 'Ok') {
         throw new RoutingError(

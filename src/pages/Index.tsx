@@ -6,6 +6,7 @@ import LocationSection from "@/components/LocationSection";
 import DestinationSection from "@/components/DestinationSection";
 import ThemeToggle from "@/components/ThemeToggle";
 import DebugPanel from "@/components/DebugPanel";
+import OfflineNotification from "@/components/OfflineNotification";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<"current" | "destination">("current");
@@ -21,6 +22,9 @@ const Index = () => {
         >
           Skip to main content
         </a>
+        
+        {/* Offline notification */}
+        <OfflineNotification />
         {/* Multi-layer animated background */}
         <div className="absolute inset-0">
           {/* Animated mesh gradient overlay */}

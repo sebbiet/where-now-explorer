@@ -78,15 +78,51 @@ const DestinationSection = () => {
       console.error("Error calculating distance:", error);
       
       if (error instanceof GeocodingError) {
-        toast.error("Couldn't find that place. Please try a more specific name or address.");
+        toast.error(
+          "🗺️ Couldn't find that place",
+          {
+            description: "Try a more specific name or address",
+            action: {
+              label: "Clear & retry",
+              onClick: () => {
+                // Clear the destination data to start fresh
+                setDestinationData(null);
+              }
+            }
+          }
+        );
       } else if (error instanceof RoutingError) {
         if (error.code === 'NO_ROUTE') {
-          toast.error("Couldn't find a driving route to that destination");
+          toast.error(
+            "🚗 No route found",
+            {
+              description: "We couldn't find a driving route to that destination. It might be on an island or inaccessible by car.",
+              duration: 5000
+            }
+          );
         } else {
-          toast.error("Couldn't calculate distance to that destination");
+          toast.error(
+            "📏 Couldn't calculate distance",
+            {
+              description: "There was a problem calculating the route.",
+              action: {
+                label: "Try again",
+                onClick: () => calculateDistance(destination)
+              }
+            }
+          );
         }
       } else {
-        toast.error("Something went wrong. Please try again.");
+        toast.error(
+          "😕 Something went wrong",
+          {
+            description: "Don't worry, let's try again!",
+            action: {
+              label: "Retry",
+              onClick: () => calculateDistance(destination)
+            }
+          }
+        );
       }
     } finally {
       setIsLoadingDestination(false);
