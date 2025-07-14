@@ -4,6 +4,7 @@ import { usePreferences } from '@/contexts/PreferencesContext';
 import { useDestinationHistory } from '@/hooks/useDestinationHistory';
 import { GeocodingCacheService } from '@/services/geocodingCache.service';
 import { LoadingButton } from '@/utils/loadingStates';
+import ProductionStatus from './ProductionStatus';
 
 const DebugPanel: React.FC = () => {
   const { 
@@ -117,7 +118,14 @@ const DebugPanel: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-4 right-4 bg-black/90 text-white p-4 rounded-lg text-xs font-mono max-w-md max-h-96 overflow-auto z-50">
+    <div className="fixed bottom-4 right-4 z-50 space-y-4">
+      {/* Production Status */}
+      <div className="max-w-2xl">
+        <ProductionStatus />
+      </div>
+      
+      {/* Debug Panel */}
+      <div className="bg-black/90 text-white p-4 rounded-lg text-xs font-mono max-w-md max-h-96 overflow-auto">
       <h3 className="text-sm font-bold mb-2 text-yellow-400">🐛 Debug Panel</h3>
       
       <div className="space-y-2">
@@ -252,6 +260,7 @@ const DebugPanel: React.FC = () => {
           </button>
         </div>
       </div>
+    </div>
     </div>
   );
 };

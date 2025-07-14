@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
+import { logger } from '@/utils/logger';
 
 interface ErrorHandlerOptions {
   showToast?: boolean;
@@ -20,7 +21,9 @@ export const useErrorHandler = (defaultOptions?: ErrorHandlerOptions) => {
     setError(error);
 
     // Log error for debugging
-    console.error(message || 'An error occurred:', error);
+    logger.error(message || 'An error occurred', error, {
+      component: 'useErrorHandler'
+    });
 
     // Show toast if enabled
     if (opts.showToast !== false) {
@@ -43,7 +46,10 @@ export const useErrorHandler = (defaultOptions?: ErrorHandlerOptions) => {
                 clearError();
                 toast.success('Operation completed successfully', { id: toastId });
               } catch (retryError) {
-                console.error('Retry failed:', retryError);
+                logger.error('Retry failed', retryError as Error, {
+                  component: 'useErrorHandler',
+                  operation: 'retry'
+                });
                 toast.error('Retry failed. Please try again.', { id: toastId });
               } finally {
                 setIsRetrying(false);

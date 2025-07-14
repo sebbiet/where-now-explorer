@@ -5,6 +5,7 @@ import { GeocodingService, GeocodingError } from '@/services/geocoding.service';
 import { TraditionalLandService } from '@/services/traditionalLand.service';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { analytics } from '@/services/analytics.service';
+import { logger } from '@/utils/logger';
 
 // Define interfaces for our data structures
 export interface LocationData {
@@ -122,7 +123,10 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
         has_traditional_land_info: hasTradLandInfo,
       });
     } catch (error) {
-      console.error("[LocationContext] Error getting location:", error);
+      logger.error("Error getting location", error as Error, {
+        component: 'LocationContext',
+        operation: 'fetchLocation'
+      });
       
       // Provide more helpful error messages based on the error type
       if (error instanceof GeolocationError) {

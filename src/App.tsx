@@ -8,6 +8,8 @@ import { lazy, Suspense, useEffect } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { analytics } from "@/services/analytics.service";
+import { productionService } from "@/services/production.service";
+import { logger } from "@/utils/logger";
 
 // Lazy load page components for code splitting
 const Index = lazy(() => import("./pages/Index"));
@@ -16,10 +18,35 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const queryClient = new QueryClient();
 
 const App = () => {
+  // Initialize production services
+  useEffect(() => {
+    const initializeApp = async () => {
+      try {
+        await productionService.initialize();
+        logger.info('Application initialized successfully', {
+          component: 'App'
+        });
+      } catch (error) {
+        logger.error('Failed to initialize application', error as Error, {
+          component: 'App'
+        });
+      }
+    };
+
+    initializeApp();
+  }, []);
+
   // Set up global error handlers
   useEffect(() => {
     // Handle unhandled errors
     const handleError = (event: ErrorEvent) => {
+      logger.error('Unhandled error', new Error(event.message), {
+        component: 'App',
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno
+      });
+      
       analytics.trackError({
         error_type: 'unhandled_error',
         error_message: event.message,
@@ -29,6 +56,11 @@ const App = () => {
 
     // Handle unhandled promise rejections
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      logger.error('Unhandled promise rejection', new Error(event.reason), {
+        component: 'App',
+        reason: event.reason
+      });
+      
       analytics.trackError({
         error_type: 'unhandled_promise_rejection',
         error_message: event.reason?.message || String(event.reason),
