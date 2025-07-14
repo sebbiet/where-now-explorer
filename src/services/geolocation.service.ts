@@ -1,5 +1,6 @@
 import { BaseService, ServiceError } from './base.service';
 import { analytics } from './analytics.service';
+import { getErrorMessage } from '@/utils/errorMessages';
 
 export interface GeolocationPosition {
   coords: {
@@ -60,7 +61,7 @@ class GeolocationServiceImpl extends BaseService {
         if (!navigator.geolocation) {
           const error = new GeolocationError(
             GeolocationErrorCode.UNSUPPORTED,
-            'Geolocation is not supported by your browser'
+            getErrorMessage('LOCATION', 'NOT_SUPPORTED')
           );
           
           analytics.track('location_permission_error', {
@@ -123,7 +124,7 @@ class GeolocationServiceImpl extends BaseService {
       if (!navigator.geolocation) {
         const error = new GeolocationError(
           GeolocationErrorCode.UNSUPPORTED,
-          'Geolocation is not supported by your browser'
+          getErrorMessage('LOCATION', 'NOT_SUPPORTED')
         );
         onError(error);
         return -1;
@@ -172,21 +173,21 @@ class GeolocationServiceImpl extends BaseService {
     const errorMap: Record<number, { code: GeolocationErrorCode; message: string }> = {
       [error.PERMISSION_DENIED]: {
         code: GeolocationErrorCode.PERMISSION_DENIED,
-        message: 'Location access was denied. Please enable location permissions in your browser settings.'
+        message: getErrorMessage('LOCATION', 'PERMISSION_DENIED')
       },
       [error.POSITION_UNAVAILABLE]: {
         code: GeolocationErrorCode.POSITION_UNAVAILABLE,
-        message: 'Location information is unavailable. Please check your GPS settings.'
+        message: getErrorMessage('LOCATION', 'UNAVAILABLE')
       },
       [error.TIMEOUT]: {
         code: GeolocationErrorCode.TIMEOUT,
-        message: 'Location request timed out. Please try again.'
+        message: getErrorMessage('LOCATION', 'TIMEOUT')
       }
     };
 
     const errorInfo = errorMap[error.code] || {
       code: GeolocationErrorCode.UNKNOWN,
-      message: 'An unknown error occurred while getting your location.'
+      message: getErrorMessage('LOCATION', 'UNAVAILABLE')
     };
 
     return new GeolocationError(

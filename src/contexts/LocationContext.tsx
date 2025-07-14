@@ -122,7 +122,7 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
         has_traditional_land_info: hasTradLandInfo,
       });
     } catch (error) {
-      console.error("Error getting location:", error);
+      console.error("[LocationContext] Error getting location:", error);
       
       // Provide more helpful error messages based on the error type
       if (error instanceof GeolocationError) {

@@ -7,6 +7,7 @@ import { GeocodeResult, ReverseGeocodeResult } from './geocoding.service';
 import { BaseService, ServiceError, ValidationError } from './base.service';
 import { validateCoordinates } from '@/utils/sanitization';
 import { animations } from '@/styles/constants';
+import { getErrorMessage } from '@/utils/errorMessages';
 
 export interface GeocodingProvider {
   name: string;
@@ -162,7 +163,7 @@ class FallbackGeocodingServiceImpl extends BaseService {
       // Try fallback providers
       const providers = this.getAvailableProviders();
       if (providers.length === 0) {
-        throw new ServiceError('No geocoding providers available', 'NO_PROVIDERS');
+        throw new ServiceError(getErrorMessage('GEOCODING', 'SERVICE_UNAVAILABLE'), { code: 'NO_PROVIDERS' });
       }
 
       const fallbackProviders = providers.map(provider => ({
@@ -182,7 +183,7 @@ class FallbackGeocodingServiceImpl extends BaseService {
 
       return await this.executeWithFallbacks(
         async () => {
-          throw new ServiceError('Primary provider not available');
+          throw new ServiceError(getErrorMessage('GEOCODING', 'SERVICE_UNAVAILABLE'));
         },
         fallbackProviders
       );
@@ -202,7 +203,7 @@ class FallbackGeocodingServiceImpl extends BaseService {
     try {
       // Validate query
       if (!query || typeof query !== 'string' || !query.trim()) {
-        throw new ValidationError('Query must be a non-empty string');
+        throw new ValidationError(getErrorMessage('VALIDATION', 'REQUIRED_FIELD', { field: 'Search query' }));
       }
 
       // Try primary provider first if provided
@@ -220,7 +221,7 @@ class FallbackGeocodingServiceImpl extends BaseService {
       // Try fallback providers
       const providers = this.getAvailableProviders();
       if (providers.length === 0) {
-        throw new ServiceError('No geocoding providers available', 'NO_PROVIDERS');
+        throw new ServiceError(getErrorMessage('GEOCODING', 'SERVICE_UNAVAILABLE'), { code: 'NO_PROVIDERS' });
       }
 
       const fallbackProviders = providers.map(provider => ({
@@ -240,7 +241,7 @@ class FallbackGeocodingServiceImpl extends BaseService {
 
       return await this.executeWithFallbacks(
         async () => {
-          throw new ServiceError('Primary provider not available');
+          throw new ServiceError(getErrorMessage('GEOCODING', 'SERVICE_UNAVAILABLE'));
         },
         fallbackProviders
       );

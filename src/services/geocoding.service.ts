@@ -2,6 +2,7 @@ import { GeocodingCacheService } from './geocodingCache.service';
 import { sanitizeDestination, validateCoordinates, validateApiResponse } from '@/utils/sanitization';
 import { fallbackGeocoding } from './fallbackGeocoding.service';
 import { BaseService, ServiceError, ValidationError } from './base.service';
+import { getErrorMessage } from '@/utils/errorMessages';
 
 export interface Address {
   road?: string;
@@ -123,11 +124,11 @@ class GeocodingServiceImpl extends BaseService {
 
         // Validate API response structure
         if (!validateApiResponse(data, ['address'])) {
-          throw new ValidationError('Invalid response from geocoding service');
+          throw new ValidationError(getErrorMessage('GEOCODING', 'INVALID_RESPONSE'));
         }
 
         if (!data.address || typeof data.address !== 'object') {
-          throw new ValidationError('Invalid address data in response');
+          throw new ValidationError(getErrorMessage('GEOCODING', 'INVALID_RESPONSE'));
         }
 
         return data;
@@ -184,7 +185,7 @@ class GeocodingServiceImpl extends BaseService {
       const sanitizedQuery = sanitizeDestination(query);
       
       if (!sanitizedQuery.trim()) {
-        throw new ValidationError('Query cannot be empty');
+        throw new ValidationError(getErrorMessage('VALIDATION', 'REQUIRED_FIELD', { field: 'Search query' }));
       }
 
       // Check cache first
@@ -245,7 +246,7 @@ class GeocodingServiceImpl extends BaseService {
         { query: sanitizedQuery },
         async () => {
           if (!Array.isArray(data)) {
-            throw new ValidationError('Invalid response from geocoding service');
+            throw new ValidationError(getErrorMessage('GEOCODING', 'INVALID_RESPONSE'));
           }
 
           // Cache the result

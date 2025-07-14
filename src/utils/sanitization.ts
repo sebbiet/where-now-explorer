@@ -3,6 +3,8 @@
  * Provides functions to sanitize and validate user inputs
  */
 
+import { getErrorMessage } from './errorMessages';
+
 /**
  * Sanitize text input by removing potentially harmful characters
  */
@@ -38,23 +40,23 @@ export function sanitizeDestination(destination: string): string {
   
   // Additional validation for destination searches
   if (sanitized.length < 2) {
-    throw new Error('Destination must be at least 2 characters long');
+    throw new Error(getErrorMessage('VALIDATION', 'TOO_SHORT', { field: 'Destination' }));
   }
 
   if (sanitized.length > 200) {
-    throw new Error('Destination search is too long');
+    throw new Error(getErrorMessage('VALIDATION', 'TOO_LONG', { field: 'Destination search' }));
   }
 
   // Check for suspicious patterns
   const suspiciousPatterns = [
     /\.\./g, // Directory traversal
-    /[<>\"']/g, // HTML/XML characters
+    /[<>"']/g, // HTML/XML characters
     /\b(script|javascript|vbscript|onload|onerror)\b/gi, // Script injection
   ];
 
   for (const pattern of suspiciousPatterns) {
     if (pattern.test(sanitized)) {
-      throw new Error('Invalid characters in destination search');
+      throw new Error(getErrorMessage('VALIDATION', 'INVALID_CHARACTERS'));
     }
   }
 
@@ -101,7 +103,7 @@ export function sanitizeUrlParam(param: string): string {
 /**
  * Validate API response data structure
  */
-export function validateApiResponse(data: any, expectedFields: string[]): boolean {
+export function validateApiResponse(data: unknown, expectedFields: string[]): boolean {
   if (!data || typeof data !== 'object') {
     return false;
   }
@@ -129,18 +131,18 @@ export function sanitizeStorageKey(key: string): string {
     .slice(0, 100);
 }
 
-export function sanitizeStorageValue(value: any): string {
+export function sanitizeStorageValue(value: unknown): string {
   try {
     // Ensure the value can be safely serialized
     const serialized = JSON.stringify(value);
     
     // Limit size to prevent storage abuse
     if (serialized.length > 1024 * 100) { // 100KB limit
-      throw new Error('Storage value too large');
+      throw new Error(getErrorMessage('STORAGE', 'QUOTA_EXCEEDED'));
     }
 
     return serialized;
   } catch (error) {
-    throw new Error('Invalid storage value');
+    throw new Error(getErrorMessage('STORAGE', 'INVALID_DATA'));
   }
 }

@@ -93,7 +93,7 @@ const DestinationSection = () => {
       }
       
     } catch (error) {
-      console.error("Error calculating distance:", error);
+      console.error("[DestinationSection] Error calculating distance:", error);
       
       if (error instanceof GeocodingError) {
         // Track geocoding error
