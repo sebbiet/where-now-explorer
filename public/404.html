@@ -4,13 +4,16 @@
     <meta charset="UTF-8">
     <title>Redirecting...</title>
     <script>
-      // Single Page Apps for GitHub Pages with custom domain
+      // Single Page Apps for GitHub Pages
       // This script handles the redirect from 404 back to index.html
       // while preserving the route information in the URL
+      const pathSegmentsToKeep = 1; // for /where-now-explorer/
+
       const l = window.location;
       l.replace(
         l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-        '/#' + l.pathname
+        l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/#' +
+        l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/')
       );
     </script>
   </head>
