@@ -3,7 +3,8 @@
  * Provides alternative geocoding providers when primary service fails
  */
 
-import { GeocodeResult, ReverseGeocodeResult, GeocodingError } from './geocoding.service';
+import { GeocodeResult, ReverseGeocodeResult } from './geocoding.service';
+import { BaseService, ServiceError, ValidationError } from './base.service';
 import { validateCoordinates } from '@/utils/sanitization';
 import { animations } from '@/styles/constants';
 
@@ -57,7 +58,7 @@ class MockGeocodingProvider implements GeocodingProvider {
   }
 }
 
-export class FallbackGeocodingService {
+class FallbackGeocodingServiceImpl extends BaseService {
   private providers: GeocodingProvider[] = [];
   private providerStatus = new Map<string, {
     available: boolean;
@@ -69,6 +70,15 @@ export class FallbackGeocodingService {
   private static readonly MAX_FAILURES = 3;
 
   constructor() {
+    super('fallback-geocoding', {
+      rateLimitKey: 'fallback-geocoding',
+      maxRetries: 1, // Fallback service shouldn't retry as much
+      timeout: 15000,
+      enableMonitoring: true,
+      enableDeduplication: false, // Fallback already handles deduplication
+      enablePerformanceTracking: true
+    });
+
     // Initialize with mock providers - in production, these would be real providers
     this.addProvider(new MockGeocodingProvider('MapBox', 1));
     this.addProvider(new MockGeocodingProvider('Here', 2));
@@ -99,7 +109,7 @@ export class FallbackGeocodingService {
       if (!status) return false;
       
       // Check if we should re-evaluate availability
-      if (Date.now() - status.lastCheck > FallbackGeocodingService.STATUS_CHECK_INTERVAL) {
+      if (Date.now() - status.lastCheck > FallbackGeocodingServiceImpl.STATUS_CHECK_INTERVAL) {
         status.available = provider.isAvailable();
         status.lastCheck = Date.now();
         if (status.available) {
@@ -118,7 +128,7 @@ export class FallbackGeocodingService {
     const status = this.providerStatus.get(providerName);
     if (status) {
       status.failureCount++;
-      if (status.failureCount >= FallbackGeocodingService.MAX_FAILURES) {
+      if (status.failureCount >= FallbackGeocodingServiceImpl.MAX_FAILURES) {
         status.available = false;
         console.warn(`Provider ${providerName} marked as unavailable after ${status.failureCount} failures`);
       }
@@ -133,44 +143,52 @@ export class FallbackGeocodingService {
     lon: number,
     primaryProvider?: () => Promise<ReverseGeocodeResult>
   ): Promise<ReverseGeocodeResult> {
-    if (!validateCoordinates(lat, lon)) {
-      throw new GeocodingError('Invalid coordinates provided');
-    }
+    try {
+      // Validate coordinates
+      this.validateInput({ lat, lon }, {
+        lat: (latitude) => validateCoordinates(latitude, lon),
+        lon: (longitude) => validateCoordinates(lat, longitude)
+      });
 
-    // Try primary provider first if provided
-    if (primaryProvider) {
-      try {
-        return await primaryProvider();
-      } catch (error) {
-        console.warn('Primary geocoding provider failed, trying fallbacks', error);
+      // Try primary provider first if provided
+      if (primaryProvider) {
+        try {
+          return await primaryProvider();
+        } catch (error) {
+          console.warn('Primary geocoding provider failed, trying fallbacks', error);
+        }
       }
-    }
 
-    // Try fallback providers
-    const providers = this.getAvailableProviders();
-    const errors: Error[] = [];
+      // Try fallback providers
+      const providers = this.getAvailableProviders();
+      if (providers.length === 0) {
+        throw new ServiceError('No geocoding providers available', 'NO_PROVIDERS');
+      }
 
-    for (const provider of providers) {
-      try {
-        console.log(`Attempting reverse geocoding with ${provider.name}`);
-        const result = await provider.reverseGeocode(lat, lon);
-        
-        // Validate result
-        if (result && (result.city || result.country)) {
+      const fallbackProviders = providers.map(provider => ({
+        name: provider.name,
+        priority: provider.getPriority(),
+        execute: async () => {
+          const result = await provider.reverseGeocode(lat, lon);
+          
+          // Validate result
+          if (!result || (!result.city && !result.country)) {
+            throw new ValidationError(`Invalid result from ${provider.name}`);
+          }
+          
           return result;
         }
-      } catch (error) {
-        console.error(`${provider.name} reverse geocoding failed:`, error);
-        this.markProviderFailed(provider.name);
-        errors.push(error as Error);
-      }
-    }
+      }));
 
-    // All providers failed
-    throw new GeocodingError(
-      'All geocoding providers failed. ' + 
-      errors.map(e => e.message).join(', ')
-    );
+      return await this.executeWithFallbacks(
+        async () => {
+          throw new ServiceError('Primary provider not available');
+        },
+        fallbackProviders
+      );
+    } catch (error) {
+      this.handleError(error, 'reverseGeocodeWithFallback');
+    }
   }
 
   /**
@@ -181,43 +199,54 @@ export class FallbackGeocodingService {
     options?: any,
     primaryProvider?: () => Promise<GeocodeResult[]>
   ): Promise<GeocodeResult[]> {
-    // Try primary provider first if provided
-    if (primaryProvider) {
-      try {
-        const results = await primaryProvider();
-        if (results && results.length > 0) {
+    try {
+      // Validate query
+      if (!query || typeof query !== 'string' || !query.trim()) {
+        throw new ValidationError('Query must be a non-empty string');
+      }
+
+      // Try primary provider first if provided
+      if (primaryProvider) {
+        try {
+          const results = await primaryProvider();
+          if (results && results.length > 0) {
+            return results;
+          }
+        } catch (error) {
+          console.warn('Primary geocoding provider failed, trying fallbacks', error);
+        }
+      }
+
+      // Try fallback providers
+      const providers = this.getAvailableProviders();
+      if (providers.length === 0) {
+        throw new ServiceError('No geocoding providers available', 'NO_PROVIDERS');
+      }
+
+      const fallbackProviders = providers.map(provider => ({
+        name: provider.name,
+        priority: provider.getPriority(),
+        execute: async () => {
+          const results = await provider.geocode(query, options);
+          
+          // Validate results
+          if (!results || !Array.isArray(results) || results.length === 0) {
+            throw new ValidationError(`No results from ${provider.name}`);
+          }
+          
           return results;
         }
-      } catch (error) {
-        console.warn('Primary geocoding provider failed, trying fallbacks', error);
-      }
+      }));
+
+      return await this.executeWithFallbacks(
+        async () => {
+          throw new ServiceError('Primary provider not available');
+        },
+        fallbackProviders
+      );
+    } catch (error) {
+      this.handleError(error, 'geocodeWithFallback');
     }
-
-    // Try fallback providers
-    const providers = this.getAvailableProviders();
-    const errors: Error[] = [];
-
-    for (const provider of providers) {
-      try {
-        console.log(`Attempting geocoding with ${provider.name}`);
-        const results = await provider.geocode(query, options);
-        
-        // Validate results
-        if (results && results.length > 0) {
-          return results;
-        }
-      } catch (error) {
-        console.error(`${provider.name} geocoding failed:`, error);
-        this.markProviderFailed(provider.name);
-        errors.push(error as Error);
-      }
-    }
-
-    // All providers failed
-    throw new GeocodingError(
-      'All geocoding providers failed. ' + 
-      errors.map(e => e.message).join(', ')
-    );
   }
 
   /**
@@ -240,5 +269,31 @@ export class FallbackGeocodingService {
   }
 }
 
+// Create singleton instance
+const fallbackGeocodingInstance = new FallbackGeocodingServiceImpl();
+
 // Export singleton instance
-export const fallbackGeocoding = new FallbackGeocodingService();
+export const fallbackGeocoding = fallbackGeocodingInstance;
+
+// Export class for direct instantiation if needed
+export class FallbackGeocodingService {
+  static async reverseGeocodeWithFallback(
+    lat: number,
+    lon: number,
+    primaryProvider?: () => Promise<ReverseGeocodeResult>
+  ): Promise<ReverseGeocodeResult> {
+    return fallbackGeocodingInstance.reverseGeocodeWithFallback(lat, lon, primaryProvider);
+  }
+
+  static async geocodeWithFallback(
+    query: string,
+    options?: any,
+    primaryProvider?: () => Promise<GeocodeResult[]>
+  ): Promise<GeocodeResult[]> {
+    return fallbackGeocodingInstance.geocodeWithFallback(query, options, primaryProvider);
+  }
+
+  static getProviderHealth(): Record<string, any> {
+    return fallbackGeocodingInstance.getProviderHealth();
+  }
+}

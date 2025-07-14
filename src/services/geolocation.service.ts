@@ -1,3 +1,6 @@
+import { BaseService, ServiceError } from './base.service';
+import { analytics } from './analytics.service';
+
 export interface GeolocationPosition {
   coords: {
     latitude: number;
@@ -19,48 +22,116 @@ export enum GeolocationErrorCode {
   UNKNOWN = 'UNKNOWN'
 }
 
-export class GeolocationError extends Error {
+export class GeolocationError extends ServiceError {
   constructor(
     public code: GeolocationErrorCode,
-    message: string
+    message: string,
+    originalError?: Error
   ) {
-    super(message);
+    super(message, code, 400, originalError);
     this.name = 'GeolocationError';
   }
 }
 
-import { analytics } from './analytics.service';
-
-export class GeolocationService {
+class GeolocationServiceImpl extends BaseService {
   private static readonly DEFAULT_OPTIONS: PositionOptions = {
     enableHighAccuracy: true,
     timeout: 10000,
     maximumAge: 0
   };
 
-  static async getCurrentPosition(options?: PositionOptions): Promise<GeolocationPosition> {
-    const opts = { ...this.DEFAULT_OPTIONS, ...options };
+  constructor() {
+    super('geolocation', {
+      rateLimitKey: 'geolocation',
+      maxRetries: 2,
+      timeout: 15000,
+      enableMonitoring: true,
+      enableDeduplication: false, // Geolocation typically shouldn't be deduplicated
+      enablePerformanceTracking: true
+    });
+  }
 
-    return new Promise((resolve, reject) => {
+  async getCurrentPosition(options?: PositionOptions): Promise<GeolocationPosition> {
+    try {
+      const opts = { ...GeolocationServiceImpl.DEFAULT_OPTIONS, ...options };
+
+      return new Promise((resolve, reject) => {
+        // Check if geolocation is supported
+        if (!navigator.geolocation) {
+          const error = new GeolocationError(
+            GeolocationErrorCode.UNSUPPORTED,
+            'Geolocation is not supported by your browser'
+          );
+          
+          analytics.track('location_permission_error', {
+            error_type: 'unsupported',
+            error_message: error.message,
+          });
+          
+          reject(error);
+          return;
+        }
+
+        // Execute geolocation request
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            // Track successful location permission
+            analytics.trackLocationPermission(true);
+            
+            const result: GeolocationPosition = {
+              coords: {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                accuracy: position.coords.accuracy,
+                altitude: position.coords.altitude,
+                altitudeAccuracy: position.coords.altitudeAccuracy,
+                heading: position.coords.heading,
+                speed: position.coords.speed
+              },
+              timestamp: position.timestamp
+            };
+
+            resolve(result);
+          },
+          (error) => {
+            const transformedError = this.transformGeolocationError(error);
+            
+            // Track the error
+            analytics.track('location_permission_error', {
+              error_type: transformedError.code,
+              error_message: transformedError.message,
+            });
+
+            reject(transformedError);
+          },
+          opts
+        );
+      });
+    } catch (error) {
+      this.handleError(error, 'getCurrentPosition');
+    }
+  }
+
+  async watchPosition(
+    onPosition: (position: GeolocationPosition) => void,
+    onError: (error: GeolocationError) => void,
+    options?: PositionOptions
+  ): Promise<number> {
+    try {
+      const opts = { ...GeolocationServiceImpl.DEFAULT_OPTIONS, ...options };
+
       if (!navigator.geolocation) {
         const error = new GeolocationError(
           GeolocationErrorCode.UNSUPPORTED,
           'Geolocation is not supported by your browser'
         );
-        analytics.track('location_permission_error', {
-          error_type: 'unsupported',
-          error_message: error.message,
-        });
-        reject(error);
-        return;
+        onError(error);
+        return -1;
       }
 
-      navigator.geolocation.getCurrentPosition(
+      const watchId = navigator.geolocation.watchPosition(
         (position) => {
-          // Track successful location permission
-          analytics.trackLocationPermission(true);
-          
-          resolve({
+          const result: GeolocationPosition = {
             coords: {
               latitude: position.coords.latitude,
               longitude: position.coords.longitude,
@@ -71,105 +142,79 @@ export class GeolocationService {
               speed: position.coords.speed
             },
             timestamp: position.timestamp
-          });
+          };
+
+          onPosition(result);
         },
         (error) => {
-          const errorMap: Record<number, { code: GeolocationErrorCode; message: string }> = {
-            [error.PERMISSION_DENIED]: {
-              code: GeolocationErrorCode.PERMISSION_DENIED,
-              message: 'Location access was denied. Please enable location permissions in your browser settings.'
-            },
-            [error.POSITION_UNAVAILABLE]: {
-              code: GeolocationErrorCode.POSITION_UNAVAILABLE,
-              message: 'Location information is unavailable. Please check your device\'s location settings.'
-            },
-            [error.TIMEOUT]: {
-              code: GeolocationErrorCode.TIMEOUT,
-              message: 'Location request timed out. Please try again.'
-            }
-          };
-
-          const mappedError = errorMap[error.code] || {
-            code: GeolocationErrorCode.UNKNOWN,
-            message: `An unknown error occurred: ${error.message}`
-          };
-
-          // Track location permission errors
-          if (mappedError.code === GeolocationErrorCode.PERMISSION_DENIED) {
-            analytics.trackLocationPermission(false);
-          } else {
-            analytics.trackLocationPermissionError(error);
-          }
-
-          reject(new GeolocationError(mappedError.code, mappedError.message));
+          const transformedError = this.transformGeolocationError(error);
+          onError(transformedError);
         },
         opts
       );
-    });
+
+      return watchId;
+    } catch (error) {
+      this.handleError(error, 'watchPosition');
+    }
   }
 
-  static watchPosition(
-    successCallback: (position: GeolocationPosition) => void,
-    errorCallback?: (error: GeolocationError) => void,
-    options?: PositionOptions
-  ): number {
-    const opts = { ...this.DEFAULT_OPTIONS, ...options };
-
-    if (!navigator.geolocation) {
-      errorCallback?.(new GeolocationError(
-        GeolocationErrorCode.UNSUPPORTED,
-        'Geolocation is not supported by your browser'
-      ));
-      return -1;
+  clearWatch(watchId: number): void {
+    if (navigator.geolocation) {
+      navigator.geolocation.clearWatch(watchId);
     }
+  }
 
-    return navigator.geolocation.watchPosition(
-      (position) => {
-        successCallback({
-          coords: {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-            altitude: position.coords.altitude,
-            altitudeAccuracy: position.coords.altitudeAccuracy,
-            heading: position.coords.heading,
-            speed: position.coords.speed
-          },
-          timestamp: position.timestamp
-        });
+  /**
+   * Transform native geolocation errors to our custom error format
+   */
+  private transformGeolocationError(error: GeolocationPositionError): GeolocationError {
+    const errorMap: Record<number, { code: GeolocationErrorCode; message: string }> = {
+      [error.PERMISSION_DENIED]: {
+        code: GeolocationErrorCode.PERMISSION_DENIED,
+        message: 'Location access was denied. Please enable location permissions in your browser settings.'
       },
-      (error) => {
-        if (errorCallback) {
-          const errorMap: Record<number, { code: GeolocationErrorCode; message: string }> = {
-            [error.PERMISSION_DENIED]: {
-              code: GeolocationErrorCode.PERMISSION_DENIED,
-              message: 'Location access was denied. Please enable location permissions in your browser settings.'
-            },
-            [error.POSITION_UNAVAILABLE]: {
-              code: GeolocationErrorCode.POSITION_UNAVAILABLE,
-              message: 'Location information is unavailable. Please check your device\'s location settings.'
-            },
-            [error.TIMEOUT]: {
-              code: GeolocationErrorCode.TIMEOUT,
-              message: 'Location request timed out. Please try again.'
-            }
-          };
-
-          const mappedError = errorMap[error.code] || {
-            code: GeolocationErrorCode.UNKNOWN,
-            message: `An unknown error occurred: ${error.message}`
-          };
-
-          errorCallback(new GeolocationError(mappedError.code, mappedError.message));
-        }
+      [error.POSITION_UNAVAILABLE]: {
+        code: GeolocationErrorCode.POSITION_UNAVAILABLE,
+        message: 'Location information is unavailable. Please check your GPS settings.'
       },
-      opts
+      [error.TIMEOUT]: {
+        code: GeolocationErrorCode.TIMEOUT,
+        message: 'Location request timed out. Please try again.'
+      }
+    };
+
+    const errorInfo = errorMap[error.code] || {
+      code: GeolocationErrorCode.UNKNOWN,
+      message: 'An unknown error occurred while getting your location.'
+    };
+
+    return new GeolocationError(
+      errorInfo.code,
+      errorInfo.message,
+      error
     );
+  }
+}
+
+// Create singleton instance
+const geolocationServiceInstance = new GeolocationServiceImpl();
+
+// Export static-like interface for backward compatibility
+export class GeolocationService {
+  static async getCurrentPosition(options?: PositionOptions): Promise<GeolocationPosition> {
+    return geolocationServiceInstance.getCurrentPosition(options);
+  }
+
+  static async watchPosition(
+    onPosition: (position: GeolocationPosition) => void,
+    onError: (error: GeolocationError) => void,
+    options?: PositionOptions
+  ): Promise<number> {
+    return geolocationServiceInstance.watchPosition(onPosition, onError, options);
   }
 
   static clearWatch(watchId: number): void {
-    if (navigator.geolocation && watchId >= 0) {
-      navigator.geolocation.clearWatch(watchId);
-    }
+    return geolocationServiceInstance.clearWatch(watchId);
   }
 }

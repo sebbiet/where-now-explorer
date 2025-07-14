@@ -1,6 +1,5 @@
-import { retryWithBackoff } from '@/utils/retry';
+import { BaseService, ServiceError, ValidationError } from './base.service';
 import { deduplicateRoutingRequest } from '@/utils/requestDeduplication';
-import { withApiMonitoring } from './apiMonitor.service';
 import { offlineMode } from './offlineMode.service';
 
 export interface RouteWaypoint {
@@ -57,17 +56,29 @@ export enum RoutingProfile {
   CYCLING = 'cycling'
 }
 
-export class RoutingError extends Error {
-  constructor(message: string, public code?: string) {
-    super(message);
+// Keep RoutingError for backward compatibility
+export class RoutingError extends ServiceError {
+  constructor(message: string, code?: string) {
+    super(message, code || 'ROUTING_ERROR', 500);
     this.name = 'RoutingError';
   }
 }
 
-export class RoutingService {
+class RoutingServiceImpl extends BaseService {
   private static readonly BASE_URL = 'https://router.project-osrm.org/route/v1';
   
-  static async calculateRoute(
+  constructor() {
+    super('routing', {
+      rateLimitKey: 'routing',
+      maxRetries: 3,
+      timeout: 10000,
+      enableMonitoring: true,
+      enableDeduplication: true,
+      enablePerformanceTracking: true
+    });
+  }
+
+  async calculateRoute(
     origin: { latitude: number; longitude: number },
     destination: { latitude: number; longitude: number },
     profile: RoutingProfile = RoutingProfile.DRIVING,
@@ -78,13 +89,18 @@ export class RoutingService {
       geometries?: 'polyline' | 'polyline6' | 'geojson';
     }
   ): Promise<RouteResult> {
-    // Check offline cache first
-    if (!offlineMode.getOnlineStatus()) {
-      // For simplicity, we'll just check cache - in a real app, this would integrate with destination data
-      console.log('Offline mode: checking cached routes');
-    }
-
     try {
+      // Validate input coordinates
+      this.validateInput({ origin, destination }, {
+        origin: (o) => this.isValidCoordinates(o.latitude, o.longitude),
+        destination: (d) => this.isValidCoordinates(d.latitude, d.longitude)
+      });
+
+      // Check offline cache first
+      if (!offlineMode.getOnlineStatus()) {
+        console.log('Offline mode: checking cached routes');
+      }
+
       const params = new URLSearchParams({
         overview: (options?.overview ?? false).toString(),
         steps: (options?.steps ?? false).toString(),
@@ -92,57 +108,42 @@ export class RoutingService {
         geometries: options?.geometries || 'polyline'
       });
 
-      const url = `${this.BASE_URL}/${profile}/${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}?${params}`;
+      const url = `${RoutingServiceImpl.BASE_URL}/${profile}/${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}?${params}`;
       
-      const fetchRoute = async () => {
-        const monitoredFetch = withApiMonitoring('osrm-routing', async () => {
-          const response = await fetch(url);
-          
-          if (!response.ok) {
-            const error = new RoutingError(
-              'Failed to calculate route',
-              response.status.toString()
-            );
-            (error as any).status = response.status;
-            throw error;
-          }
-          
-          return response.json();
-        });
+      // Primary routing operation
+      const primaryOperation = async () => {
+        const data = await this.executeRequest<RouteResponse>(url);
         
-        return monitoredFetch();
+        if (data.code !== 'Ok') {
+          throw new RoutingError(
+            data.message || 'Failed to find a route',
+            data.code
+          );
+        }
+        
+        if (!data.routes || data.routes.length === 0) {
+          throw new RoutingError(
+            'No route found between the specified locations',
+            'NO_ROUTE'
+          );
+        }
+
+        return data;
       };
-      
-      const performRequest = async () => {
-        return retryWithBackoff(fetchRoute, {
-          maxAttempts: 3,
-          onRetry: (attempt, delay) => {
-            console.log(`Retrying route calculation (attempt ${attempt}) after ${Math.round(delay)}ms`);
-          }
-        });
-      };
-      
-      // Use deduplication
-      const data: RouteResponse = await deduplicateRoutingRequest(
-        origin,
-        destination,
-        profile,
-        performRequest
+
+      // Execute with deduplication
+      const data = await this.executeWithDeduplication(
+        'route',
+        { origin, destination, profile },
+        async () => {
+          return deduplicateRoutingRequest(
+            origin,
+            destination,
+            profile,
+            primaryOperation
+          );
+        }
       );
-      
-      if (data.code !== 'Ok') {
-        throw new RoutingError(
-          data.message || 'Failed to find a route',
-          data.code
-        );
-      }
-      
-      if (!data.routes || data.routes.length === 0) {
-        throw new RoutingError(
-          'No route found between the specified locations',
-          'NO_ROUTE'
-        );
-      }
       
       const route = data.routes[0];
       const distanceKm = route.distance / 1000;
@@ -155,26 +156,18 @@ export class RoutingService {
         formattedDuration: this.formatDuration(durationMinutes)
       };
     } catch (error) {
-      if (error instanceof RoutingError) {
-        throw error;
-      }
-      
-      if (error instanceof Error) {
-        throw new RoutingError(`Routing failed: ${error.message}`);
-      }
-      
-      throw new RoutingError('An unknown error occurred during routing');
+      this.handleError(error, 'calculateRoute');
     }
   }
 
-  static formatDistance(distanceKm: number): string {
+  formatDistance(distanceKm: number): string {
     if (distanceKm < 1) {
       return `${Math.round(distanceKm * 1000)} meters`;
     }
     return `${distanceKm.toFixed(1)} kilometers`;
   }
 
-  static formatDuration(durationMinutes: number): string {
+  formatDuration(durationMinutes: number): string {
     if (durationMinutes < 60) {
       return `${durationMinutes} minute${durationMinutes !== 1 ? 's' : ''}`;
     }
@@ -190,16 +183,65 @@ export class RoutingService {
     return result;
   }
 
-  static estimateArrivalTime(durationMinutes: number): Date {
+  estimateArrivalTime(durationMinutes: number): Date {
     const now = new Date();
     const arrivalTime = new Date(now.getTime() + durationMinutes * 60 * 1000);
     return arrivalTime;
   }
 
-  static formatArrivalTime(arrivalTime: Date): string {
+  formatArrivalTime(arrivalTime: Date): string {
     return arrivalTime.toLocaleTimeString([], { 
       hour: '2-digit', 
       minute: '2-digit' 
     });
+  }
+
+  /**
+   * Validate coordinates
+   */
+  private isValidCoordinates(latitude: number, longitude: number): boolean {
+    return (
+      typeof latitude === 'number' &&
+      typeof longitude === 'number' &&
+      latitude >= -90 && latitude <= 90 &&
+      longitude >= -180 && longitude <= 180 &&
+      !isNaN(latitude) && !isNaN(longitude)
+    );
+  }
+}
+
+// Create singleton instance
+const routingServiceInstance = new RoutingServiceImpl();
+
+// Export static-like interface for backward compatibility
+export class RoutingService {
+  static async calculateRoute(
+    origin: { latitude: number; longitude: number },
+    destination: { latitude: number; longitude: number },
+    profile: RoutingProfile = RoutingProfile.DRIVING,
+    options?: {
+      overview?: boolean;
+      steps?: boolean;
+      alternatives?: boolean;
+      geometries?: 'polyline' | 'polyline6' | 'geojson';
+    }
+  ): Promise<RouteResult> {
+    return routingServiceInstance.calculateRoute(origin, destination, profile, options);
+  }
+
+  static formatDistance(distanceKm: number): string {
+    return routingServiceInstance.formatDistance(distanceKm);
+  }
+
+  static formatDuration(durationMinutes: number): string {
+    return routingServiceInstance.formatDuration(durationMinutes);
+  }
+
+  static estimateArrivalTime(durationMinutes: number): Date {
+    return routingServiceInstance.estimateArrivalTime(durationMinutes);
+  }
+
+  static formatArrivalTime(arrivalTime: Date): string {
+    return routingServiceInstance.formatArrivalTime(arrivalTime);
   }
 }
