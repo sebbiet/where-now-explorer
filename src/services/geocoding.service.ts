@@ -43,6 +43,21 @@ export interface GeocodeResult {
   importance?: number;
 }
 
+export interface ReverseGeocodeOptions {
+  latitude: number;
+  longitude: number;
+  minimal?: boolean;
+}
+
+export interface GeocodeOptions {
+  query: string;
+  limit?: number;
+  addressdetails?: boolean;
+  countrycodes?: string[];
+  bounded?: boolean;
+  viewbox?: [number, number, number, number];
+}
+
 // Keep GeocodingError for backward compatibility
 export class GeocodingError extends ServiceError {
   constructor(message: string, statusCode?: number | string) {
@@ -69,14 +84,10 @@ class GeocodingServiceImpl extends BaseService {
     });
   }
 
-  async reverseGeocode(
-    latitude: number,
-    longitude: number,
-    options?: {
-      minimal?: boolean;
-    }
-  ): Promise<ReverseGeocodeResult> {
+  async reverseGeocode(options: ReverseGeocodeOptions): Promise<ReverseGeocodeResult> {
     try {
+      const { latitude, longitude, minimal } = options;
+      
       // Validate coordinates using BaseService validation
       this.validateInput({ latitude, longitude }, {
         latitude: (lat) => validateCoordinates(lat, longitude),
@@ -96,7 +107,7 @@ class GeocodingServiceImpl extends BaseService {
         lon: longitude.toString(),
         addressdetails: '1',
         'accept-language': 'en',
-        ...(options?.minimal && {
+        ...(minimal && {
           extratags: '0',
           namedetails: '0'
         })
@@ -165,17 +176,10 @@ class GeocodingServiceImpl extends BaseService {
     }
   }
 
-  async geocode(
-    query: string,
-    options?: {
-      limit?: number;
-      addressdetails?: boolean;
-      countrycodes?: string[];
-      bounded?: boolean;
-      viewbox?: [number, number, number, number];
-    }
-  ): Promise<GeocodeResult[]> {
+  async geocode(options: GeocodeOptions): Promise<GeocodeResult[]> {
     try {
+      const { query, limit = 1, addressdetails = true, countrycodes, bounded, viewbox } = options;
+      
       // Sanitize and validate input
       const sanitizedQuery = sanitizeDestination(query);
       
@@ -193,8 +197,8 @@ class GeocodingServiceImpl extends BaseService {
       const params = new URLSearchParams({
         format: 'json',
         q: sanitizedQuery,
-        limit: (options?.limit || 1).toString(),
-        addressdetails: (options?.addressdetails !== false ? 1 : 0).toString(),
+        limit: limit.toString(),
+        addressdetails: (addressdetails ? 1 : 0).toString(),
         'accept-language': 'en',
         // Optimize response size
         polygon_geojson: '0',
@@ -203,13 +207,13 @@ class GeocodingServiceImpl extends BaseService {
         polygon_text: '0'
       });
 
-      if (options?.countrycodes?.length) {
-        params.append('countrycodes', options.countrycodes.join(','));
+      if (countrycodes?.length) {
+        params.append('countrycodes', countrycodes.join(','));
       }
 
-      if (options?.bounded && options?.viewbox) {
+      if (bounded && viewbox) {
         params.append('bounded', '1');
-        params.append('viewbox', options.viewbox.join(','));
+        params.append('viewbox', viewbox.join(','));
       }
 
       const url = `${GeocodingServiceImpl.BASE_URL}/search?${params.toString()}`;
@@ -291,14 +295,37 @@ const geocodingServiceInstance = new GeocodingServiceImpl();
 
 // Export static-like interface for backward compatibility
 export class GeocodingService {
+  // New options-based interface
+  static async reverseGeocode(options: ReverseGeocodeOptions): Promise<ReverseGeocodeResult>;
+  // Backward compatibility interface
   static async reverseGeocode(
     latitude: number,
     longitude: number,
     options?: { minimal?: boolean }
+  ): Promise<ReverseGeocodeResult>;
+  
+  static async reverseGeocode(
+    optionsOrLatitude: ReverseGeocodeOptions | number,
+    longitude?: number,
+    legacyOptions?: { minimal?: boolean }
   ): Promise<ReverseGeocodeResult> {
-    return geocodingServiceInstance.reverseGeocode(latitude, longitude, options);
+    if (typeof optionsOrLatitude === 'object') {
+      // New interface - options object
+      return geocodingServiceInstance.reverseGeocode(optionsOrLatitude);
+    } else {
+      // Backward compatibility interface
+      const options: ReverseGeocodeOptions = {
+        latitude: optionsOrLatitude,
+        longitude: longitude!,
+        minimal: legacyOptions?.minimal
+      };
+      return geocodingServiceInstance.reverseGeocode(options);
+    }
   }
 
+  // New options-based interface
+  static async geocode(options: GeocodeOptions): Promise<GeocodeResult[]>;
+  // Backward compatibility interface
   static async geocode(
     query: string,
     options?: {
@@ -308,8 +335,29 @@ export class GeocodingService {
       bounded?: boolean;
       viewbox?: [number, number, number, number];
     }
+  ): Promise<GeocodeResult[]>;
+  
+  static async geocode(
+    queryOrOptions: GeocodeOptions | string,
+    legacyOptions?: {
+      limit?: number;
+      addressdetails?: boolean;
+      countrycodes?: string[];
+      bounded?: boolean;
+      viewbox?: [number, number, number, number];
+    }
   ): Promise<GeocodeResult[]> {
-    return geocodingServiceInstance.geocode(query, options);
+    if (typeof queryOrOptions === 'object') {
+      // New interface - options object
+      return geocodingServiceInstance.geocode(queryOrOptions);
+    } else {
+      // Backward compatibility interface
+      const options: GeocodeOptions = {
+        query: queryOrOptions,
+        ...legacyOptions
+      };
+      return geocodingServiceInstance.geocode(options);
+    }
   }
 
   static extractPlaceName(result: GeocodeResult): string {

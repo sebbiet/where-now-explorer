@@ -10,60 +10,99 @@ import { withApiMonitoring } from './apiMonitor.service';
 import { withPerformanceTracking } from '@/utils/performanceMonitor';
 import { deduplicateGeocodingRequest } from '@/utils/requestDeduplication';
 
+// Base error options interface
+export interface ServiceErrorOptions {
+  code?: string;
+  statusCode?: number;
+  originalError?: Error;
+}
+
+// Specific error options interfaces
+export interface NetworkErrorOptions {
+  statusCode: number;
+  originalError?: Error;
+}
+
+export interface ValidationErrorOptions {
+  field?: string;
+  originalError?: Error;
+}
+
+export interface RateLimitErrorOptions {
+  resetTime: number;
+  originalError?: Error;
+}
+
+export interface TimeoutErrorOptions {
+  timeout: number;
+  originalError?: Error;
+}
+
 // Base error classes for consistent error handling
 export class ServiceError extends Error {
-  constructor(
-    message: string,
-    public code?: string,
-    public statusCode?: number,
-    public originalError?: Error
-  ) {
+  public code?: string;
+  public statusCode?: number;
+  public originalError?: Error;
+
+  constructor(message: string, options: ServiceErrorOptions = {}) {
     super(message);
     this.name = 'ServiceError';
+    this.code = options.code;
+    this.statusCode = options.statusCode;
+    this.originalError = options.originalError;
   }
 }
 
 export class NetworkError extends ServiceError {
-  constructor(
-    message: string,
-    public statusCode: number,
-    originalError?: Error
-  ) {
-    super(message, 'NETWORK_ERROR', statusCode, originalError);
+  constructor(message: string, options: NetworkErrorOptions) {
+    super(message, {
+      code: 'NETWORK_ERROR',
+      statusCode: options.statusCode,
+      originalError: options.originalError
+    });
     this.name = 'NetworkError';
   }
 }
 
 export class ValidationError extends ServiceError {
-  constructor(
-    message: string,
-    public field?: string,
-    originalError?: Error
-  ) {
-    super(message, 'VALIDATION_ERROR', 400, originalError);
+  public field?: string;
+
+  constructor(message: string, options: ValidationErrorOptions = {}) {
+    super(message, {
+      code: 'VALIDATION_ERROR',
+      statusCode: 400,
+      originalError: options.originalError
+    });
     this.name = 'ValidationError';
+    this.field = options.field;
   }
 }
 
 export class RateLimitError extends ServiceError {
-  constructor(
-    message: string,
-    public resetTime: number,
-    originalError?: Error
-  ) {
-    super(message, 'RATE_LIMIT_EXCEEDED', 429, originalError);
+  public resetTime: number;
+
+  constructor(message: string, options: RateLimitErrorOptions) {
+    super(message, {
+      code: 'RATE_LIMIT_EXCEEDED',
+      statusCode: 429,
+      originalError: options.originalError
+    });
     this.name = 'RateLimitError';
+    this.resetTime = options.resetTime;
   }
 }
 
 export class TimeoutError extends ServiceError {
-  constructor(
-    message: string,
-    public timeout: number,
-    originalError?: Error
-  ) {
-    super(message, 'TIMEOUT', 408, originalError);
+  public timeout: number;
+
+  constructor(message: string, options: TimeoutErrorOptions) {
+    super(message, {
+      code: 'TIMEOUT',
+      statusCode: 408,
+      originalError: options.originalError
+    });
     this.name = 'TimeoutError';
+    this.timeout = options.timeout;
   }
 }
 
@@ -126,16 +165,20 @@ export abstract class BaseService {
     if (error instanceof TypeError && error.message.includes('fetch')) {
       throw new NetworkError(
         'Network request failed. Please check your internet connection.',
-        0,
-        error
+        {
+          statusCode: 0,
+          originalError: error
+        }
       );
     }
 
     if (error.name === 'AbortError') {
       throw new TimeoutError(
         'Request timed out. Please try again.',
-        this.config.timeout,
-        error
+        {
+          timeout: this.config.timeout,
+          originalError: error
+        }
       );
     }
 
@@ -143,15 +186,20 @@ export abstract class BaseService {
     if (error.status || error.statusCode) {
       const status = error.status || error.statusCode;
       const message = this.getHttpErrorMessage(status);
-      throw new NetworkError(message, status, error);
+      throw new NetworkError(message, {
+        statusCode: status,
+        originalError: error
+      });
     }
 
     // Default to generic service error
     throw new ServiceError(
       `${this.serviceName} operation failed: ${error.message || 'Unknown error'}`,
-      'UNKNOWN_ERROR',
-      500,
-      error
+      {
+        code: 'UNKNOWN_ERROR',
+        statusCode: 500,
+        originalError: error
+      }
     );
   }
 
@@ -163,7 +211,7 @@ export abstract class BaseService {
       const resetTime = rateLimiter.getTimeUntilReset(this.config.rateLimitKey);
       throw new RateLimitError(
         `Too many requests. Please wait ${Math.ceil(resetTime / 1000)} seconds.`,
-        resetTime
+        { resetTime }
       );
     }
     rateLimiter.recordRequest(this.config.rateLimitKey);
@@ -215,7 +263,7 @@ export abstract class BaseService {
       if (!response.ok) {
         const error = new NetworkError(
           this.getHttpErrorMessage(response.status),
-          response.status
+          { statusCode: response.status }
         );
         throw error;
       }
@@ -272,8 +320,10 @@ export abstract class BaseService {
     // All providers failed
     throw new ServiceError(
       `All ${this.serviceName} providers failed. Last errors: ${errors.map(e => e.message).join(', ')}`,
-      'ALL_PROVIDERS_FAILED',
-      500
+      {
+        code: 'ALL_PROVIDERS_FAILED',
+        statusCode: 500
+      }
     );
   }
 
@@ -300,7 +350,7 @@ export abstract class BaseService {
       if (!validator(input[field])) {
         throw new ValidationError(
           `Invalid ${field} provided`,
-          field
+          { field }
         );
       }
     }

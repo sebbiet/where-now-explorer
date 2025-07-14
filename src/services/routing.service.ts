@@ -56,6 +56,16 @@ export enum RoutingProfile {
   CYCLING = 'cycling'
 }
 
+export interface CalculateRouteOptions {
+  origin: { latitude: number; longitude: number };
+  destination: { latitude: number; longitude: number };
+  profile?: RoutingProfile;
+  overview?: boolean;
+  steps?: boolean;
+  alternatives?: boolean;
+  geometries?: 'polyline' | 'polyline6' | 'geojson';
+}
+
 // Keep RoutingError for backward compatibility
 export class RoutingError extends ServiceError {
   constructor(message: string, code?: string) {
@@ -78,18 +88,10 @@ class RoutingServiceImpl extends BaseService {
     });
   }
 
-  async calculateRoute(
-    origin: { latitude: number; longitude: number },
-    destination: { latitude: number; longitude: number },
-    profile: RoutingProfile = RoutingProfile.DRIVING,
-    options?: {
-      overview?: boolean;
-      steps?: boolean;
-      alternatives?: boolean;
-      geometries?: 'polyline' | 'polyline6' | 'geojson';
-    }
-  ): Promise<RouteResult> {
+  async calculateRoute(options: CalculateRouteOptions): Promise<RouteResult> {
     try {
+      const { origin, destination, profile = RoutingProfile.DRIVING } = options;
+      
       // Validate input coordinates
       this.validateInput({ origin, destination }, {
         origin: (o) => this.isValidCoordinates(o.latitude, o.longitude),
@@ -102,10 +104,10 @@ class RoutingServiceImpl extends BaseService {
       }
 
       const params = new URLSearchParams({
-        overview: (options?.overview ?? false).toString(),
-        steps: (options?.steps ?? false).toString(),
-        alternatives: (options?.alternatives ?? false).toString(),
-        geometries: options?.geometries || 'polyline'
+        overview: (options.overview ?? false).toString(),
+        steps: (options.steps ?? false).toString(),
+        alternatives: (options.alternatives ?? false).toString(),
+        geometries: options.geometries || 'polyline'
       });
 
       const url = `${RoutingServiceImpl.BASE_URL}/${profile}/${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}?${params}`;
@@ -215,18 +217,46 @@ const routingServiceInstance = new RoutingServiceImpl();
 
 // Export static-like interface for backward compatibility
 export class RoutingService {
+  // New options-based interface
+  static async calculateRoute(options: CalculateRouteOptions): Promise<RouteResult>;
+  // Backward compatibility interface
   static async calculateRoute(
     origin: { latitude: number; longitude: number },
     destination: { latitude: number; longitude: number },
+    profile?: RoutingProfile,
+    routingOptions?: {
+      overview?: boolean;
+      steps?: boolean;
+      alternatives?: boolean;
+      geometries?: 'polyline' | 'polyline6' | 'geojson';
+    }
+  ): Promise<RouteResult>;
+  
+  static async calculateRoute(
+    originOrOptions: CalculateRouteOptions | { latitude: number; longitude: number },
+    destination?: { latitude: number; longitude: number },
     profile: RoutingProfile = RoutingProfile.DRIVING,
-    options?: {
+    routingOptions?: {
       overview?: boolean;
       steps?: boolean;
       alternatives?: boolean;
       geometries?: 'polyline' | 'polyline6' | 'geojson';
     }
   ): Promise<RouteResult> {
-    return routingServiceInstance.calculateRoute(origin, destination, profile, options);
+    // Check if using new options-based interface
+    if (destination === undefined && 'origin' in originOrOptions) {
+      // New interface - options object
+      return routingServiceInstance.calculateRoute(originOrOptions as CalculateRouteOptions);
+    } else {
+      // Backward compatibility interface
+      const options: CalculateRouteOptions = {
+        origin: originOrOptions as { latitude: number; longitude: number },
+        destination: destination!,
+        profile,
+        ...routingOptions
+      };
+      return routingServiceInstance.calculateRoute(options);
+    }
   }
 
   static formatDistance(distanceKm: number): string {
