@@ -7,6 +7,7 @@ import DestinationSection from "@/components/DestinationSection";
 import ThemeToggle from "@/components/ThemeToggle";
 import DebugPanel from "@/components/DebugPanel";
 import OfflineNotification from "@/components/OfflineNotification";
+import Footer from "@/components/Footer";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<"current" | "destination">("current");
@@ -227,6 +228,9 @@ const Index = () => {
                 </div>
               </div>
             </div>
+
+            {/* Footer */}
+            <Footer />
           </main>
         </div>
         
