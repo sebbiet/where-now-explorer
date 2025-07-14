@@ -1,0 +1,141 @@
+/* Mobile-specific optimizations */
+
+/* Ensure minimum touch target size of 44x44px for all interactive elements */
+@media (max-width: 768px) {
+  /* Buttons should have minimum height and padding for touch */
+  button,
+  a[role="button"],
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 12px 16px;
+  }
+
+  /* Increase tap area for small buttons */
+  button:after,
+  a[role="button"]:after {
+    content: '';
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    bottom: -8px;
+    left: -8px;
+  }
+
+  /* Ensure proper spacing between touch targets */
+  .space-y-2 > * + * {
+    margin-top: 12px;
+  }
+
+  /* Make form inputs more touch-friendly */
+  input,
+  select,
+  textarea {
+    min-height: 48px;
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 12px 16px;
+  }
+
+  /* Increase click area for close buttons */
+  .close-button {
+    position: relative;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Better spacing for navigation items */
+  nav a,
+  nav button {
+    padding: 16px;
+    margin: 4px 0;
+  }
+}
+
+/* Landscape mode optimizations */
+@media (orientation: landscape) and (max-height: 600px) {
+  /* Reduce vertical padding and margins */
+  .py-8 {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  .my-8 {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Adjust title sizes for landscape */
+  .text-5xl {
+    font-size: 2.5rem;
+  }
+
+  .text-7xl {
+    font-size: 3.5rem;
+  }
+
+  /* Hide decorative elements in landscape to save space */
+  .decorative-landscape-hide {
+    display: none;
+  }
+
+  /* Reduce card padding */
+  .glassmorphic-card {
+    padding: 1.5rem;
+  }
+
+  /* Adjust footer spacing */
+  footer {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+  }
+}
+
+/* Small landscape devices (phones) */
+@media (orientation: landscape) and (max-height: 450px) {
+  /* Further reduce spacing */
+  .container {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  /* Hide non-essential decorative elements */
+  .animate-float,
+  .decorative-stars {
+    display: none;
+  }
+
+  /* Reduce tab navigation size */
+  .tab-navigation {
+    transform: scale(0.9);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  button,
+  a {
+    border: 2px solid currentColor;
+  }
+
+  .glassmorphic-card {
+    border: 2px solid currentColor;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .animate-float,
+  .animate-bounce,
+  .animate-wiggle,
+  .animate-pulse {
+    animation: none;
+  }
+}

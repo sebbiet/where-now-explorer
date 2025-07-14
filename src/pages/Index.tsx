@@ -1,6 +1,6 @@
 
 import { useState, lazy, Suspense } from "react";
-import { LocationProvider } from "@/contexts/LocationContext";
+import { LocationProvider, useLocation } from "@/contexts/LocationContext";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import LocationSection from "@/components/LocationSection";
 import DebugPanel from "@/components/DebugPanel";
@@ -14,16 +14,22 @@ import PageHeader from "@/components/PageHeader";
 import PageTitle from "@/components/PageTitle";
 import TabNavigation from "@/components/TabNavigation";
 import GlassmorphicCard from "@/components/GlassmorphicCard";
+import PullToRefresh from "@/components/PullToRefresh";
+import InstallPrompt from "@/components/InstallPrompt";
 
 // Lazy load destination features for better performance
 const DestinationSection = lazy(() => import("@/components/DestinationSection"));
 
-const Index = () => {
+// Inner component that has access to location context
+const IndexContent = () => {
   const [activeTab, setActiveTab] = useState<"current" | "destination">("current");
+  const { handleRefresh } = useLocation();
 
   return (
-    <PreferencesProvider>
-      <LocationProvider>
+    <PullToRefresh 
+      onRefresh={handleRefresh}
+      disabled={activeTab !== "current"}
+    >
       <div className="custom-background min-h-screen relative overflow-x-hidden w-full">
         {/* Skip to main content link for keyboard users */}
         <a
@@ -92,8 +98,21 @@ const Index = () => {
         
         {/* Debug Panel for development */}
         <DebugPanel />
+        
+        {/* PWA Install Prompt */}
+        <InstallPrompt />
       </div>
-    </LocationProvider>
+    </PullToRefresh>
+  );
+};
+
+// Main component that provides contexts
+const Index = () => {
+  return (
+    <PreferencesProvider>
+      <LocationProvider>
+        <IndexContent />
+      </LocationProvider>
     </PreferencesProvider>
   );
 };

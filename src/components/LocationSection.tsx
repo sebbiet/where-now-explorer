@@ -5,6 +5,7 @@ import LocationDisplay from '@/components/LocationDisplay';
 import LocationPin from '@/components/LocationPin';
 import TraditionalLandAcknowledgment from '@/components/TraditionalLandAcknowledgment';
 import { useLocation } from '@/contexts/LocationContext';
+import { haptic } from '@/utils/haptic';
 
 const LocationSection = () => {
   const { 
@@ -14,6 +15,11 @@ const LocationSection = () => {
     countdown, 
     handleRefresh
   } = useLocation();
+
+  const handleRefreshClick = () => {
+    haptic.light();
+    handleRefresh();
+  };
 
   if (isLoadingLocation) {
     return (
@@ -49,7 +55,7 @@ const LocationSection = () => {
       
       <div className="flex justify-center mt-8">
         <button 
-          onClick={handleRefresh}
+          onClick={handleRefreshClick}
           className={`
             relative px-10 py-5 text-xl font-black text-white
             bg-gradient-to-r from-sky via-sunshine to-grape

@@ -49,17 +49,17 @@ const AnimatedBackground = memo(() => {
         />
         
         {/* Small decorative stars */}
-        <div className="absolute top-[15%] right-[25%] text-4xl text-yellow-300/40 dark:text-yellow-400/20 animate-wiggle">
+        <div className="absolute top-[15%] right-[25%] text-4xl text-yellow-300/40 dark:text-yellow-400/20 animate-wiggle decorative-stars">
           ⭐
         </div>
         <div 
-          className="absolute bottom-[35%] right-[8%] text-3xl text-yellow-300/40 dark:text-yellow-400/20 animate-wiggle"
+          className="absolute bottom-[35%] right-[8%] text-3xl text-yellow-300/40 dark:text-yellow-400/20 animate-wiggle decorative-stars"
           style={{ animationDelay: '1.5s' }}
         >
           ✨
         </div>
         <div 
-          className="absolute top-[55%] left-[8%] text-2xl text-yellow-300/40 dark:text-yellow-400/20 animate-wiggle"
+          className="absolute top-[55%] left-[8%] text-2xl text-yellow-300/40 dark:text-yellow-400/20 animate-wiggle decorative-stars"
           style={{ animationDelay: '2.5s' }}
         >
           🌟

@@ -3,7 +3,7 @@ import { animations } from '@/styles/constants';
 
 const DecorativeElements = memo(() => {
   return (
-    <div className="hidden lg:block absolute inset-0 z-0">
+    <div className="hidden lg:block absolute inset-0 z-0 decorative-landscape-hide">
       {/* Left side decorations */}
       <div className="absolute left-8 top-1/2 -translate-y-1/2">
         <div className="text-8xl opacity-20 dark:opacity-10 animate-float">

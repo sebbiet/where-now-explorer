@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { haptic } from '@/utils/haptic';
 
 interface TabNavigationProps {
   activeTab: 'current' | 'destination';
@@ -6,6 +7,10 @@ interface TabNavigationProps {
 }
 
 const TabNavigation = memo(({ activeTab, onTabChange }: TabNavigationProps) => {
+  const handleTabChange = (tab: 'current' | 'destination') => {
+    haptic.selection();
+    onTabChange(tab);
+  };
   return (
     <div className="flex justify-center">
       <div className="relative bg-white dark:bg-gray-800 rounded-full p-2 shadow-2xl border-4 border-white dark:border-gray-700">
@@ -23,8 +28,8 @@ const TabNavigation = memo(({ activeTab, onTabChange }: TabNavigationProps) => {
         {/* Buttons */}
         <div className="relative flex" role="tablist" aria-label="Location and destination tabs">
           <button
-            onClick={() => onTabChange("current")}
-            className={`relative z-10 px-8 py-4 rounded-full transition-all duration-300 flex items-center justify-center gap-3 font-black focus:outline-none focus:ring-4 focus:ring-sky-400 focus:ring-offset-2 min-w-[160px] ${
+            onClick={() => handleTabChange("current")}
+            className={`relative z-10 px-8 py-4 rounded-full transition-all duration-300 flex items-center justify-center gap-3 font-black focus:outline-none focus:ring-4 focus:ring-sky-400 focus:ring-offset-2 min-w-[160px] active:scale-95 ${
               activeTab === "current"
                 ? "text-white scale-105"
                 : "text-gray-700 dark:text-gray-300 hover:scale-105"
@@ -48,8 +53,8 @@ const TabNavigation = memo(({ activeTab, onTabChange }: TabNavigationProps) => {
           </button>
           
           <button
-            onClick={() => onTabChange("destination")}
-            className={`relative z-10 px-8 py-4 rounded-full transition-all duration-300 flex items-center justify-center gap-3 font-black focus:outline-none focus:ring-4 focus:ring-purple-400 focus:ring-offset-2 min-w-[160px] ${
+            onClick={() => handleTabChange("destination")}
+            className={`relative z-10 px-8 py-4 rounded-full transition-all duration-300 flex items-center justify-center gap-3 font-black focus:outline-none focus:ring-4 focus:ring-purple-400 focus:ring-offset-2 min-w-[160px] active:scale-95 ${
               activeTab === "destination"
                 ? "text-white scale-105"
                 : "text-gray-700 dark:text-gray-300 hover:scale-105"

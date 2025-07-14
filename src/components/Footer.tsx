@@ -49,7 +49,7 @@ const Footer: React.FC = () => {
           
           <div className="mt-4 flex items-center justify-center gap-6">
             <a
-              href="http://sebastiantiller.com/"
+              href="https://www.sebastiantiller.com/"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-400 focus:ring-offset-2 rounded-lg px-3 py-2"
