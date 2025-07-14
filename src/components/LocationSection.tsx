@@ -28,6 +28,14 @@ const LocationSection = () => {
     <div className="w-full">
       <LocationPin />
       
+      {/* Screen reader announcement for location updates */}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {isRefreshingLocation && "Refreshing your location..."}
+        {!isLoadingLocation && !isRefreshingLocation && locationData.city && (
+          `Your current location is ${locationData.street ? locationData.street + ', ' : ''}${locationData.city}, ${locationData.country}`
+        )}
+      </div>
+      
       <div className={isRefreshingLocation ? "animate-pulse" : ""}>
         <LocationDisplay locationData={locationData} />
         
@@ -48,14 +56,17 @@ const LocationSection = () => {
             rounded-full shadow-xl transform transition-all duration-300
             hover:scale-110 hover:shadow-2xl active:scale-95
             disabled:opacity-50 disabled:cursor-not-allowed
+            focus:outline-none focus:ring-4 focus:ring-yellow-400 focus:ring-offset-2
             ${isRefreshingLocation ? 'animate-pulse' : ''}
           `}
           disabled={isLoadingLocation || isRefreshingLocation}
+          aria-label={`Refresh location. Next automatic refresh in ${countdown} seconds`}
+          aria-live="polite"
         >
           <span className="flex items-center gap-2">
-            <span className="text-2xl animate-spin" style={{animationDuration: '3s'}}>🔄</span>
+            <span className="text-2xl animate-spin" style={{animationDuration: '3s'}} role="img" aria-label="Refresh">🔄</span>
             <span>Refresh in {countdown}s</span>
-            <span className="text-2xl">⏰</span>
+            <span className="text-2xl" role="img" aria-label="Timer">⏰</span>
           </span>
           
           {/* Animated background effect */}

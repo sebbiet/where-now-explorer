@@ -183,7 +183,7 @@ const DestinationInput: React.FC<DestinationInputProps> = ({
           <h2 className="text-3xl md:text-4xl font-black text-gray-800 dark:text-white">Where are we going?</h2>
         </div>
       
-      <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl mx-auto">
+      <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl mx-auto" role="search" aria-label="Destination search form">
         <div className="relative w-full">
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
@@ -200,13 +200,18 @@ const DestinationInput: React.FC<DestinationInputProps> = ({
                   placeholder="Start typing a place name, landmark or address"
                   className="w-full p-5 text-xl text-gray-800 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded-xl border-2 border-gray-300 dark:border-gray-600 focus:border-yellow-400 dark:focus:border-yellow-500 pr-12 bg-white/50 dark:bg-gray-800/50"
                   disabled={isLoading}
+                  aria-label="Destination search"
+                  aria-describedby="search-instructions"
+                  aria-autocomplete="list"
+                  aria-controls="search-suggestions"
+                  aria-expanded={open}
                 />
                 <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 h-6 w-6 text-gray-500 dark:text-gray-400" />
               </div>
             </PopoverTrigger>
             <PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)] bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 rounded-xl shadow-xl" align="start" sideOffset={5}>
               <Command className="rounded-xl">
-                <CommandList className="max-h-96 overflow-auto">
+                <CommandList className="max-h-96 overflow-auto" id="search-suggestions" role="listbox">
                   {isSearching ? (
                     <CommandEmpty className="py-6 text-center text-gray-600 dark:text-gray-400">Searching...</CommandEmpty>
                   ) : suggestions.length === 0 ? (
@@ -218,6 +223,8 @@ const DestinationInput: React.FC<DestinationInputProps> = ({
                           key={suggestion.id}
                           onSelect={() => handleSuggestionSelect(suggestion)}
                           className="cursor-pointer px-4 py-4 hover:bg-gray-100 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                          role="option"
+                          aria-selected={false}
                         >
                           <div>
                             <p className="font-bold text-base text-gray-800 dark:text-white">{suggestion.name}</p>
@@ -233,7 +240,7 @@ const DestinationInput: React.FC<DestinationInputProps> = ({
           </Popover>
         </div>
         
-        <p className="text-base text-gray-600 dark:text-gray-300 font-medium">
+        <p id="search-instructions" className="text-base text-gray-600 dark:text-gray-300 font-medium">
           Type at least 3 letters to see suggestions. Try popular places, landmarks, cities, or addresses.
         </p>
         

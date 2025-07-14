@@ -11,6 +11,13 @@ const Index = () => {
   return (
     <LocationProvider>
       <div className="custom-background min-h-screen relative overflow-x-hidden w-full">
+        {/* Skip to main content link for keyboard users */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 bg-blue-600 text-white px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+        >
+          Skip to main content
+        </a>
         {/* Multi-layer animated background */}
         <div className="absolute inset-0">
           {/* Animated mesh gradient overlay */}
@@ -83,12 +90,12 @@ const Index = () => {
 
         <div className="container mx-auto px-4 py-8 relative z-10">
           {/* Header with theme toggle */}
-          <div className="flex justify-end gap-2 mb-8">
+          <header className="flex justify-end gap-2 mb-8">
             <ThemeToggle />
-          </div>
+          </header>
           
           {/* Main Content */}
-          <div className="max-w-4xl mx-auto space-y-8">
+          <main id="main-content" className="max-w-4xl mx-auto space-y-8">
             {/* Title */}
             <div className="text-center animate-fade-in">
               <h1 className="text-5xl md:text-7xl font-black text-gray-800 dark:text-white mb-4 transform -rotate-2 hover:rotate-0 transition-transform duration-300"
@@ -117,22 +124,27 @@ const Index = () => {
                 </div>
                 
                 {/* Buttons */}
-                <div className="relative flex">
+                <div className="relative flex" role="tablist" aria-label="Location and destination tabs">
                   <button
                     onClick={() => setActiveTab("current")}
-                    className={`relative z-10 px-8 py-5 rounded-full transition-all duration-300 flex items-center gap-3 font-black ${
+                    className={`relative z-10 px-8 py-5 rounded-full transition-all duration-300 flex items-center gap-3 font-black focus:outline-none focus:ring-4 focus:ring-sky-400 focus:ring-offset-2 ${
                       activeTab === "current"
                         ? "text-white scale-105"
                         : "text-gray-700 dark:text-gray-300 hover:scale-105"
                     }`}
+                    aria-label="Show current location"
+                    aria-pressed={activeTab === "current"}
+                    role="tab"
+                    aria-controls="location-panel"
+                    id="location-tab"
                   >
-                    <span className="text-3xl drop-shadow-md">📍</span>
+                    <span className="text-3xl drop-shadow-md" aria-hidden="true">📍</span>
                     <div>
                       <div className="text-lg leading-tight">Where</div>
                       <div className="text-sm opacity-90">Am I?</div>
                     </div>
                     {activeTab === "current" && (
-                      <div className="absolute -top-3 -right-2">
+                      <div className="absolute -top-3 -right-2" aria-hidden="true">
                         <span className="text-xl animate-bounce">✨</span>
                       </div>
                     )}
@@ -140,19 +152,24 @@ const Index = () => {
                   
                   <button
                     onClick={() => setActiveTab("destination")}
-                    className={`relative z-10 px-8 py-5 rounded-full transition-all duration-300 flex items-center gap-3 font-black ${
+                    className={`relative z-10 px-8 py-5 rounded-full transition-all duration-300 flex items-center gap-3 font-black focus:outline-none focus:ring-4 focus:ring-purple-400 focus:ring-offset-2 ${
                       activeTab === "destination"
                         ? "text-white scale-105"
                         : "text-gray-700 dark:text-gray-300 hover:scale-105"
                     }`}
+                    aria-label="Show destination calculator"
+                    aria-pressed={activeTab === "destination"}
+                    role="tab"
+                    aria-controls="destination-panel"
+                    id="destination-tab"
                   >
-                    <span className="text-3xl drop-shadow-md">🏁</span>
+                    <span className="text-3xl drop-shadow-md" aria-hidden="true">🏁</span>
                     <div>
                       <div className="text-lg leading-tight">Are We</div>
                       <div className="text-sm opacity-90">There Yet?</div>
                     </div>
                     {activeTab === "destination" && (
-                      <div className="absolute -top-3 -right-2">
+                      <div className="absolute -top-3 -right-2" aria-hidden="true">
                         <span className="text-xl animate-bounce">🌟</span>
                       </div>
                     )}
@@ -185,14 +202,25 @@ const Index = () => {
                 `
               }}></div>
               <div className="relative z-10">
-                {activeTab === "current" ? (
-                  <LocationSection />
-                ) : (
-                  <DestinationSection />
-                )}
+                <div
+                  id="location-panel"
+                  role="tabpanel"
+                  aria-labelledby="location-tab"
+                  hidden={activeTab !== "current"}
+                >
+                  {activeTab === "current" && <LocationSection />}
+                </div>
+                <div
+                  id="destination-panel"
+                  role="tabpanel"
+                  aria-labelledby="destination-tab"
+                  hidden={activeTab !== "destination"}
+                >
+                  {activeTab === "destination" && <DestinationSection />}
+                </div>
               </div>
             </div>
-          </div>
+          </main>
         </div>
       </div>
     </LocationProvider>
