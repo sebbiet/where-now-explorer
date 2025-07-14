@@ -3,6 +3,7 @@ import React, { memo } from 'react';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import LocationDisplay from '@/components/LocationDisplay';
 import LocationPin from '@/components/LocationPin';
+import TraditionalLandAcknowledgment from '@/components/TraditionalLandAcknowledgment';
 import { useLocation } from '@/contexts/LocationContext';
 
 const LocationSection = () => {
@@ -29,6 +30,13 @@ const LocationSection = () => {
       
       <div className={isRefreshingLocation ? "animate-pulse" : ""}>
         <LocationDisplay locationData={locationData} />
+        
+        {locationData.traditionalName && locationData.traditionalNation && (
+          <TraditionalLandAcknowledgment 
+            traditionalName={locationData.traditionalName}
+            traditionalNation={locationData.traditionalNation}
+          />
+        )}
       </div>
       
       <div className="flex justify-center mt-8">

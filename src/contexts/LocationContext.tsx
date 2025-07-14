@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useCallback, ReactNode, use
 import { toast } from "sonner";
 import { GeolocationService, GeolocationError, GeolocationErrorCode } from '@/services/geolocation.service';
 import { GeocodingService, GeocodingError } from '@/services/geocoding.service';
+import { TraditionalLandService } from '@/services/traditionalLand.service';
 
 // Define interfaces for our data structures
 export interface LocationData {
@@ -13,6 +14,8 @@ export interface LocationData {
   country?: string;
   latitude?: number;
   longitude?: number;
+  traditionalName?: string;
+  traditionalNation?: string;
 }
 
 interface LocationContextType {
@@ -48,7 +51,27 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
       const { latitude, longitude } = position.coords;
       
       const addressData = await GeocodingService.reverseGeocode(latitude, longitude);
-      setLocationData(addressData);
+      
+      // Check if in Australia and add traditional land info
+      if (TraditionalLandService.isAustralianLocation(addressData.country)) {
+        const traditionalInfo = TraditionalLandService.getTraditionalLandInfo(
+          addressData.city,
+          addressData.suburb,
+          addressData.state
+        );
+        
+        if (traditionalInfo) {
+          setLocationData({
+            ...addressData,
+            traditionalName: traditionalInfo.traditionalName,
+            traditionalNation: traditionalInfo.nation
+          });
+        } else {
+          setLocationData(addressData);
+        }
+      } else {
+        setLocationData(addressData);
+      }
     } catch (error) {
       console.error("Error getting location:", error);
       
