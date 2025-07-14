@@ -1,5 +1,7 @@
 
 import React from 'react';
+import { usePreferences } from '@/contexts/PreferencesContext';
+import { sanitizeLocationData } from '@/utils/privacy';
 
 interface LocationDisplayProps {
   locationData: {
@@ -13,7 +15,16 @@ interface LocationDisplayProps {
 }
 
 const LocationDisplay: React.FC<LocationDisplayProps> = ({ locationData }) => {
-  const { street, suburb, city, county, state, country } = locationData;
+  const { preferences } = usePreferences();
+  
+  // Apply privacy settings to location data
+  const sanitizedData = sanitizeLocationData(
+    locationData,
+    preferences.privacyMode,
+    preferences.hideExactCoordinates
+  );
+  
+  const { street, suburb, city, county, state, country } = sanitizedData;
   
   return (
     <div className="w-full max-w-4xl animate-fade-in">
@@ -21,6 +32,13 @@ const LocationDisplay: React.FC<LocationDisplayProps> = ({ locationData }) => {
         <h2 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-grape to-sky bg-clip-text text-transparent">
           You are here! 🎉
         </h2>
+        {preferences.privacyMode && (
+          <div className="mt-4 px-4 py-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+            <p className="text-sm text-blue-800 dark:text-blue-200">
+              🔒 Privacy mode is active - showing approximate location only
+            </p>
+          </div>
+        )}
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

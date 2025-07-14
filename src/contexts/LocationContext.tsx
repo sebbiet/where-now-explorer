@@ -19,6 +19,11 @@ export interface LocationData {
   traditionalNation?: string;
 }
 
+interface MockLocation {
+  latitude: number;
+  longitude: number;
+}
+
 interface LocationContextType {
   locationData: LocationData;
   isLoadingLocation: boolean;
@@ -26,6 +31,11 @@ interface LocationContextType {
   countdown: number;
   fetchLocation: () => Promise<void>;
   handleRefresh: () => void;
+  // Mock location for testing
+  useMockLocation: boolean;
+  mockLocation: MockLocation | null;
+  setMockLocation: (location: MockLocation | null) => void;
+  toggleMockLocation: () => void;
 }
 
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
@@ -38,7 +48,22 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
   const [isRefreshingLocation, setIsRefreshingLocation] = useState(false);
   const [isTabActive, setIsTabActive] = useState(true);
   
-
+  // Mock location state for testing (development only)
+  const [useMockLocation, setUseMockLocation] = useState(false);
+  const [mockLocation, setMockLocationState] = useState<MockLocation | null>(null);
+  
+  // Mock location helper functions (development only)
+  const setMockLocation = useCallback((location: MockLocation | null) => {
+    if (process.env.NODE_ENV === 'development') {
+      setMockLocationState(location);
+    }
+  }, []);
+  
+  const toggleMockLocation = useCallback(() => {
+    if (process.env.NODE_ENV === 'development') {
+      setUseMockLocation(prev => !prev);
+    }
+  }, []);
 
   // Fetch location data
   const fetchLocation = useCallback(async () => {
@@ -50,8 +75,18 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
     }
     
     try {
-      const position = await GeolocationService.getCurrentPosition();
-      const { latitude, longitude } = position.coords;
+      let latitude: number;
+      let longitude: number;
+      
+      // Use mock location if enabled in development
+      if (process.env.NODE_ENV === 'development' && useMockLocation && mockLocation) {
+        latitude = mockLocation.latitude;
+        longitude = mockLocation.longitude;
+      } else {
+        const position = await GeolocationService.getCurrentPosition();
+        latitude = position.coords.latitude;
+        longitude = position.coords.longitude;
+      }
       
       const addressData = await GeocodingService.reverseGeocode(latitude, longitude);
       
@@ -193,7 +228,12 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
     isRefreshingLocation,
     countdown,
     fetchLocation,
-    handleRefresh
+    handleRefresh,
+    // Mock location for testing (development only)
+    useMockLocation,
+    mockLocation,
+    setMockLocation,
+    toggleMockLocation
   };
 
   return (

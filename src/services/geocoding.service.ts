@@ -1,5 +1,7 @@
 import { GeocodingCacheService } from './geocodingCache.service';
 import { retryWithBackoff } from '@/utils/retry';
+import { rateLimiter } from './rateLimiter.service';
+import { sanitizeDestination, validateCoordinates, validateApiResponse } from '@/utils/sanitization';
 
 export interface Address {
   road?: string;
@@ -59,6 +61,22 @@ export class GeocodingService {
     latitude: number,
     longitude: number
   ): Promise<ReverseGeocodeResult> {
+    // Validate coordinates
+    if (!validateCoordinates(latitude, longitude)) {
+      throw new GeocodingError('Invalid coordinates provided', 'INVALID_INPUT');
+    }
+    
+    // Apply rate limiting
+    if (!rateLimiter.isAllowed('geocoding')) {
+      const resetTime = rateLimiter.getTimeUntilReset('geocoding');
+      throw new GeocodingError(
+        `Too many requests. Please wait ${Math.ceil(resetTime / 1000)} seconds.`,
+        'RATE_LIMIT_EXCEEDED'
+      );
+    }
+    
+    rateLimiter.recordRequest('geocoding');
+    
     // Check cache first
     const cached = GeocodingCacheService.getReverseGeocodeCache(latitude, longitude);
     if (cached) {
@@ -92,8 +110,13 @@ export class GeocodingService {
         }
       });
       
-      if (!data || !data.address) {
+      // Validate API response structure
+      if (!validateApiResponse(data, ['address'])) {
         throw new GeocodingError('Invalid response from geocoding service');
+      }
+      
+      if (!data.address || typeof data.address !== 'object') {
+        throw new GeocodingError('Invalid address data in response');
       }
       
       const result = {
@@ -134,8 +157,22 @@ export class GeocodingService {
       viewbox?: [number, number, number, number];
     }
   ): Promise<GeocodeResult[]> {
+    // Sanitize and validate input
+    const sanitizedQuery = sanitizeDestination(query);
+    
+    // Apply rate limiting
+    if (!rateLimiter.isAllowed('geocoding')) {
+      const resetTime = rateLimiter.getTimeUntilReset('geocoding');
+      throw new GeocodingError(
+        `Too many requests. Please wait ${Math.ceil(resetTime / 1000)} seconds.`,
+        'RATE_LIMIT_EXCEEDED'
+      );
+    }
+    
+    rateLimiter.recordRequest('geocoding');
+    
     // Check cache first
-    const cached = GeocodingCacheService.getGeocodeCache(query, options);
+    const cached = GeocodingCacheService.getGeocodeCache(sanitizedQuery, options);
     if (cached) {
       return cached;
     }
@@ -143,7 +180,7 @@ export class GeocodingService {
     try {
       const params = new URLSearchParams({
         format: 'json',
-        q: query,
+        q: sanitizedQuery,
         limit: (options?.limit || 1).toString(),
         addressdetails: (options?.addressdetails !== false ? 1 : 0).toString()
       });
@@ -188,7 +225,7 @@ export class GeocodingService {
       }
       
       // Cache the result
-      GeocodingCacheService.setGeocodeCache(query, options, data);
+      GeocodingCacheService.setGeocodeCache(sanitizedQuery, options, data);
       
       return data;
     } catch (error) {

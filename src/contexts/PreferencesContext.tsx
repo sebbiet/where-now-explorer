@@ -13,6 +13,8 @@ interface UserPreferences {
   // Privacy preferences
   saveDestinationHistory: boolean;
   shareApproximateLocation: boolean;
+  hideExactCoordinates: boolean;
+  privacyMode: boolean;
 }
 
 const defaultPreferences: UserPreferences = {
@@ -22,6 +24,8 @@ const defaultPreferences: UserPreferences = {
   defaultTab: 'current',
   saveDestinationHistory: true,
   shareApproximateLocation: false,
+  hideExactCoordinates: false,
+  privacyMode: false,
 };
 
 interface PreferencesContextType {

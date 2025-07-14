@@ -8,6 +8,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import DebugPanel from "@/components/DebugPanel";
 import OfflineNotification from "@/components/OfflineNotification";
 import Footer from "@/components/Footer";
+import MockLocationIndicator from "@/components/MockLocationIndicator";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<"current" | "destination">("current");
@@ -26,6 +27,9 @@ const Index = () => {
         
         {/* Offline notification */}
         <OfflineNotification />
+        
+        {/* Mock location indicator (development only) */}
+        <MockLocationIndicator />
         {/* Multi-layer animated background */}
         <div className="absolute inset-0">
           {/* Animated mesh gradient overlay */}
