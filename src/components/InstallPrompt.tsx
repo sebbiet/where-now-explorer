@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 import { haptic } from '@/utils/haptic';
 import { X } from 'lucide-react';
+import { LoadingButton } from '@/utils/loadingStates';
 
 const InstallPrompt: React.FC = () => {
   const { isInstallable, isInstalled, promptInstall } = useInstallPrompt();
   const [isDismissed, setIsDismissed] = useState(false);
   const [showBanner, setShowBanner] = useState(false);
+  const [isInstalling, setIsInstalling] = useState(false);
 
   useEffect(() => {
     // Check if user has previously dismissed the prompt
@@ -26,10 +28,16 @@ const InstallPrompt: React.FC = () => {
   }, [isInstallable, isInstalled]);
 
   const handleInstall = async () => {
+    setIsInstalling(true);
     haptic.medium();
-    const success = await promptInstall();
-    if (success) {
-      setShowBanner(false);
+    
+    try {
+      const success = await promptInstall();
+      if (success) {
+        setShowBanner(false);
+      }
+    } finally {
+      setIsInstalling(false);
     }
   };
 
@@ -71,15 +79,18 @@ const InstallPrompt: React.FC = () => {
             </p>
             
             <div className="flex gap-2">
-              <button
+              <LoadingButton
+                isLoading={isInstalling}
+                loadingText="Installing..."
                 onClick={handleInstall}
                 className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold rounded-lg hover:scale-105 transition-transform focus:outline-none focus:ring-4 focus:ring-blue-400"
               >
                 Install App
-              </button>
+              </LoadingButton>
               <button
                 onClick={handleDismiss}
-                className="px-4 py-2 text-gray-600 dark:text-gray-300 font-medium hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                disabled={isInstalling}
+                className="px-4 py-2 text-gray-600 dark:text-gray-300 font-medium hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
               >
                 Not Now
               </button>

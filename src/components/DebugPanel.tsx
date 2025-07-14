@@ -3,6 +3,7 @@ import { useLocation } from '@/contexts/LocationContext';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { useDestinationHistory } from '@/hooks/useDestinationHistory';
 import { GeocodingCacheService } from '@/services/geocodingCache.service';
+import { LoadingButton } from '@/utils/loadingStates';
 
 const DebugPanel: React.FC = () => {
   const { 
@@ -22,6 +23,11 @@ const DebugPanel: React.FC = () => {
   const [inputLat, setInputLat] = useState('');
   const [inputLng, setInputLng] = useState('');
   
+  // Loading states
+  const [isClearing, setIsClearing] = useState(false);
+  const [isSettingLocation, setIsSettingLocation] = useState(false);
+  const [loadingPreset, setLoadingPreset] = useState<string | null>(null);
+  
   // Preset test locations
   const presetLocations = [
     { name: 'Sydney Opera House', lat: -33.8568, lng: 151.2153 },
@@ -36,45 +42,68 @@ const DebugPanel: React.FC = () => {
     return null;
   }
 
-  const clearAllData = () => {
-    localStorage.clear();
-    GeocodingCacheService.clearCache();
-    window.location.reload();
-  };
-
-  const handleSetCustomLocation = () => {
-    const lat = parseFloat(inputLat);
-    const lng = parseFloat(inputLng);
-    
-    if (isNaN(lat) || isNaN(lng)) {
-      alert('Please enter valid latitude and longitude values');
-      return;
-    }
-    
-    if (lat < -90 || lat > 90) {
-      alert('Latitude must be between -90 and 90');
-      return;
-    }
-    
-    if (lng < -180 || lng > 180) {
-      alert('Longitude must be between -180 and 180');
-      return;
-    }
-    
-    setMockLocation({ latitude: lat, longitude: lng });
-    // Enable mock location if not already enabled
-    if (!useMockLocation) {
-      toggleMockLocation();
+  const clearAllData = async () => {
+    setIsClearing(true);
+    try {
+      localStorage.clear();
+      GeocodingCacheService.clearCache();
+      // Add a small delay to show the loading state
+      await new Promise(resolve => setTimeout(resolve, 500));
+      window.location.reload();
+    } finally {
+      setIsClearing(false);
     }
   };
 
-  const handlePresetLocation = (lat: number, lng: number) => {
-    setMockLocation({ latitude: lat, longitude: lng });
-    setInputLat(lat.toString());
-    setInputLng(lng.toString());
-    // Enable mock location if not already enabled
-    if (!useMockLocation) {
-      toggleMockLocation();
+  const handleSetCustomLocation = async () => {
+    setIsSettingLocation(true);
+    try {
+      const lat = parseFloat(inputLat);
+      const lng = parseFloat(inputLng);
+      
+      if (isNaN(lat) || isNaN(lng)) {
+        alert('Please enter valid latitude and longitude values');
+        return;
+      }
+      
+      if (lat < -90 || lat > 90) {
+        alert('Latitude must be between -90 and 90');
+        return;
+      }
+      
+      if (lng < -180 || lng > 180) {
+        alert('Longitude must be between -180 and 180');
+        return;
+      }
+      
+      // Add a small delay to show the loading state
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      setMockLocation({ latitude: lat, longitude: lng });
+      // Enable mock location if not already enabled
+      if (!useMockLocation) {
+        toggleMockLocation();
+      }
+    } finally {
+      setIsSettingLocation(false);
+    }
+  };
+
+  const handlePresetLocation = async (name: string, lat: number, lng: number) => {
+    setLoadingPreset(name);
+    try {
+      // Add a small delay to show the loading state
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      setMockLocation({ latitude: lat, longitude: lng });
+      setInputLat(lat.toString());
+      setInputLng(lng.toString());
+      // Enable mock location if not already enabled
+      if (!useMockLocation) {
+        toggleMockLocation();
+      }
+    } finally {
+      setLoadingPreset(null);
     }
   };
 
@@ -154,12 +183,14 @@ const DebugPanel: React.FC = () => {
                   className="bg-gray-800 text-white px-2 py-1 rounded text-xs w-20"
                   step="any"
                 />
-                <button
+                <LoadingButton
+                  isLoading={isSettingLocation}
+                  loadingText="Setting..."
                   onClick={handleSetCustomLocation}
                   className="bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded text-xs"
                 >
                   Set
-                </button>
+                </LoadingButton>
               </div>
             </div>
             
@@ -167,13 +198,15 @@ const DebugPanel: React.FC = () => {
               <div className="text-gray-400 text-xs">Quick Locations:</div>
               <div className="grid grid-cols-1 gap-1">
                 {presetLocations.map((location) => (
-                  <button
+                  <LoadingButton
                     key={location.name}
-                    onClick={() => handlePresetLocation(location.lat, location.lng)}
+                    isLoading={loadingPreset === location.name}
+                    loadingText="Loading..."
+                    onClick={() => handlePresetLocation(location.name, location.lat, location.lng)}
                     className="bg-purple-600 hover:bg-purple-700 px-2 py-1 rounded text-xs text-left"
                   >
                     {location.name}
-                  </button>
+                  </LoadingButton>
                 ))}
               </div>
             </div>
@@ -203,12 +236,14 @@ const DebugPanel: React.FC = () => {
         </details>
 
         <div className="mt-4 space-x-2">
-          <button
+          <LoadingButton
+            isLoading={isClearing}
+            loadingText="Clearing..."
             onClick={clearAllData}
             className="bg-red-600 hover:bg-red-700 px-2 py-1 rounded text-xs"
           >
             Clear All Data
-          </button>
+          </LoadingButton>
           <button
             onClick={() => window.location.reload()}
             className="bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded text-xs"

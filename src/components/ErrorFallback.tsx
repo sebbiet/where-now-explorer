@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { LoadingButton } from '@/utils/loadingStates';
 
 interface ErrorFallbackProps {
   error: Error;
@@ -9,6 +10,28 @@ interface ErrorFallbackProps {
 }
 
 const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetError, context = 'general' }) => {
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [isRestarting, setIsRestarting] = useState(false);
+
+  const handleRetry = async () => {
+    setIsRetrying(true);
+    try {
+      await resetError();
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
+  const handleRestart = async () => {
+    setIsRestarting(true);
+    try {
+      window.location.reload();
+    } finally {
+      // Not needed since page will reload, but good practice
+      setIsRestarting(false);
+    }
+  };
+
   // Kid-friendly error messages based on context
   const getErrorMessage = () => {
     if (error.message.includes('geolocation') || error.message.includes('location')) {
@@ -106,24 +129,27 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetError, contex
           {/* Action buttons */}
           <div className="flex flex-wrap gap-4 justify-center">
             {errorInfo.actions.includes('retry') && (
-              <Button
-                onClick={resetError}
+              <LoadingButton
+                isLoading={isRetrying}
+                loadingText="Retrying..."
+                onClick={handleRetry}
                 className="bg-gradient-to-r from-green-400 to-emerald-400 text-gray-800 hover:from-green-300 hover:to-emerald-300 font-black shadow-lg hover:shadow-xl"
               >
                 <RefreshCw className="w-5 h-5 mr-2" />
                 Try Again
-              </Button>
+              </LoadingButton>
             )}
             
             {errorInfo.actions.includes('home') && (
-              <Button
-                onClick={() => window.location.reload()}
-                variant="outline"
-                className="font-bold"
+              <LoadingButton
+                isLoading={isRestarting}
+                loadingText="Restarting..."
+                onClick={handleRestart}
+                className="font-bold border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
               >
                 <Home className="w-5 h-5 mr-2" />
                 Start Over
-              </Button>
+              </LoadingButton>
             )}
             
             {errorInfo.actions.includes('settings') && (
@@ -131,6 +157,7 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetError, contex
                 onClick={handleOpenSettings}
                 variant="outline"
                 className="font-bold"
+                disabled={isRetrying || isRestarting}
               >
                 <AlertTriangle className="w-5 h-5 mr-2" />
                 Check Settings
