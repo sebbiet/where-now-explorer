@@ -37,11 +37,11 @@ const Footer: React.FC = () => {
           <p className="text-lg md:text-xl text-gray-700 dark:text-white font-semibold flex items-center justify-center gap-2 flex-wrap">
             Made by{' '}
             <a
-              href="http://sebastiantiller.com/"
+              href="https://x.com/sebish"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-600 dark:text-blue-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors duration-300 font-bold underline decoration-2 underline-offset-4 hover:decoration-purple-500 focus:outline-none focus:ring-4 focus:ring-blue-400 focus:ring-offset-2 rounded-md px-2 py-1"
-              aria-label="Visit Sebastian Tiller's personal website"
+              className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-400 focus:ring-offset-2 rounded-lg px-3 py-2"
+              aria-label="Follow on X (formerly Twitter)"
             >
               @sebish
             </a>
