@@ -1,5 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import ErrorFallback from './ErrorFallback';
+import { analytics } from '@/services/analytics.service';
 
 interface Props {
   children: ReactNode;
@@ -23,6 +24,13 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
+    
+    // Track error in analytics
+    analytics.trackError({
+      error_type: 'react_error_boundary',
+      error_message: error.message,
+      error_source: errorInfo.componentStack || 'unknown'
+    });
   }
 
   private resetError = () => {

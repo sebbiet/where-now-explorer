@@ -29,6 +29,8 @@ export class GeolocationError extends Error {
   }
 }
 
+import { analytics } from './analytics.service';
+
 export class GeolocationService {
   private static readonly DEFAULT_OPTIONS: PositionOptions = {
     enableHighAccuracy: true,
@@ -41,15 +43,23 @@ export class GeolocationService {
 
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
-        reject(new GeolocationError(
+        const error = new GeolocationError(
           GeolocationErrorCode.UNSUPPORTED,
           'Geolocation is not supported by your browser'
-        ));
+        );
+        analytics.track('location_permission_error', {
+          error_type: 'unsupported',
+          error_message: error.message,
+        });
+        reject(error);
         return;
       }
 
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          // Track successful location permission
+          analytics.trackLocationPermission(true);
+          
           resolve({
             coords: {
               latitude: position.coords.latitude,
@@ -83,6 +93,13 @@ export class GeolocationService {
             code: GeolocationErrorCode.UNKNOWN,
             message: `An unknown error occurred: ${error.message}`
           };
+
+          // Track location permission errors
+          if (mappedError.code === GeolocationErrorCode.PERMISSION_DENIED) {
+            analytics.trackLocationPermission(false);
+          } else {
+            analytics.trackLocationPermissionError(error);
+          }
 
           reject(new GeolocationError(mappedError.code, mappedError.message));
         },

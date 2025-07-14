@@ -4,6 +4,7 @@ import { GeolocationService, GeolocationError, GeolocationErrorCode } from '@/se
 import { GeocodingService, GeocodingError } from '@/services/geocoding.service';
 import { TraditionalLandService } from '@/services/traditionalLand.service';
 import { usePreferences } from '@/contexts/PreferencesContext';
+import { analytics } from '@/services/analytics.service';
 
 // Define interfaces for our data structures
 export interface LocationData {
@@ -93,6 +94,7 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
       });
       
       // Check if in Australia and add traditional land info
+      let hasTradLandInfo = false;
       if (TraditionalLandService.isAustralianLocation(addressData.country)) {
         const traditionalInfo = TraditionalLandService.getTraditionalLandInfo(
           addressData.city,
@@ -101,6 +103,7 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
         );
         
         if (traditionalInfo) {
+          hasTradLandInfo = true;
           setLocationData({
             ...addressData,
             traditionalName: traditionalInfo.traditionalName,
@@ -112,6 +115,12 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setLocationData(addressData);
       }
+      
+      // Track successful location update
+      analytics.trackLocationUpdated({
+        update_type: Object.keys(locationData).length === 0 ? 'initial' : 'refresh',
+        has_traditional_land_info: hasTradLandInfo,
+      });
     } catch (error) {
       console.error("Error getting location:", error);
       
@@ -180,6 +189,13 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
 
   // Manual refresh handler that also resets the countdown
   const handleRefresh = () => {
+    // Track manual refresh
+    analytics.trackLocationRefresh({
+      update_type: 'refresh',
+      refresh_type: 'manual',
+      countdown_remaining: countdown,
+    });
+    
     fetchLocation();
     setCountdown(preferences.autoRefreshInterval);
   };

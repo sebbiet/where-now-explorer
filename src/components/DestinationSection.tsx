@@ -8,6 +8,7 @@ import { useDestinationHistory } from '@/hooks/useDestinationHistory';
 import { toast } from "sonner";
 import { GeocodingService, GeocodingError } from '@/services/geocoding.service';
 import { RoutingService, RoutingError } from '@/services/routing.service';
+import { analytics } from '@/services/analytics.service';
 
 interface DestinationData {
   name: string;
@@ -31,6 +32,9 @@ const DestinationSection = () => {
 
     setIsLoadingDestination(true);
     
+    // Track destination search started
+    analytics.trackDestinationSearchStarted(destination.length);
+    
     try {
       // First, geocode the destination to get its coordinates
       const places = await GeocodingService.geocode(destination, {
@@ -50,6 +54,12 @@ const DestinationSection = () => {
       // Extract the place name
       const destName = GeocodingService.extractPlaceName(place);
       
+      // Track that a destination was found and selected
+      analytics.trackDestinationSuggestionSelected({
+        destination_query: destination,
+        destination_type: place.type || 'unknown'
+      });
+      
       // Calculate route
       const routeResult = await RoutingService.calculateRoute(
         { latitude: locationData.latitude, longitude: locationData.longitude },
@@ -63,6 +73,14 @@ const DestinationSection = () => {
       };
       
       setDestinationData(result);
+      
+      // Track successful destination calculation
+      analytics.trackDestinationCalculated({
+        distance_km: routeResult.distance / 1000,
+        duration_minutes: Math.round(routeResult.duration / 60),
+        destination_type: place.type || 'unknown',
+        destination_query: destination
+      });
       
       // Save to history if enabled
       if (preferences.saveDestinationHistory) {
@@ -78,6 +96,13 @@ const DestinationSection = () => {
       console.error("Error calculating distance:", error);
       
       if (error instanceof GeocodingError) {
+        // Track geocoding error
+        analytics.trackDestinationCalculationError({
+          error_type: 'geocoding_error',
+          error_message: error.message,
+          destination_query: destination
+        });
+        
         toast.error(
           "🗺️ Couldn't find that place",
           {
@@ -92,6 +117,13 @@ const DestinationSection = () => {
           }
         );
       } else if (error instanceof RoutingError) {
+        // Track routing error
+        analytics.trackDestinationCalculationError({
+          error_type: 'routing_error',
+          error_message: error.message,
+          destination_query: destination
+        });
+        
         if (error.code === 'NO_ROUTE') {
           toast.error(
             "🚗 No route found",
@@ -113,6 +145,13 @@ const DestinationSection = () => {
           );
         }
       } else {
+        // Track unknown error
+        analytics.trackDestinationCalculationError({
+          error_type: 'unknown_error',
+          error_message: error instanceof Error ? error.message : 'Unknown error',
+          destination_query: destination
+        });
+        
         toast.error(
           "😕 Something went wrong",
           {

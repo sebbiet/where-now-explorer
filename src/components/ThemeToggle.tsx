@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { analytics } from '@/services/analytics.service';
 
 const ThemeToggle = () => {
   // Check if user prefers dark mode
@@ -22,6 +23,14 @@ const ThemeToggle = () => {
 
   const handleToggle = () => {
     setIsAnimating(true);
+    
+    // Track theme toggle
+    const newTheme = isDarkMode ? 'light' : 'dark';
+    analytics.trackThemeToggle({
+      new_theme: newTheme,
+      system_preference: prefersDark ? 'dark' : 'light'
+    });
+    
     setTimeout(() => {
       setIsDarkMode(!isDarkMode);
       setIsAnimating(false);

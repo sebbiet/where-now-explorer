@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { haptic } from '@/utils/haptic';
+import { analytics } from '@/services/analytics.service';
 
 interface TabNavigationProps {
   activeTab: 'current' | 'destination';
@@ -9,6 +10,14 @@ interface TabNavigationProps {
 const TabNavigation = memo(({ activeTab, onTabChange }: TabNavigationProps) => {
   const handleTabChange = (tab: 'current' | 'destination') => {
     haptic.selection();
+    
+    // Track tab switching
+    analytics.trackTabSwitch({
+      from_tab: activeTab,
+      to_tab: tab,
+      interaction_method: 'click'
+    });
+    
     onTabChange(tab);
   };
   return (
