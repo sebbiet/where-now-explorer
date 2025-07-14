@@ -174,14 +174,40 @@ export default {
 				}
 			},
 			animation: {
-				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out',
-				'bounce': 'bounce 1s ease-in-out infinite',
-				'fade-in': 'fade-in 0.5s ease-out',
-				'pulse-gentle': 'pulse-gentle 2s ease-in-out infinite',
-				'wiggle': 'wiggle 1s ease-in-out infinite',
-				'float': 'float 3s ease-in-out infinite',
-				'zoom': 'zoom 2s ease-in-out infinite'
+				'accordion-down': 'accordion-down var(--duration-swift) ease-out',
+				'accordion-up': 'accordion-up var(--duration-swift) ease-out',
+				'bounce': 'bounce var(--duration-measured) ease-in-out infinite',
+				'fade-in': 'fade-in var(--duration-moderate) ease-out',
+				'pulse-gentle': 'pulse-gentle var(--duration-extended) ease-in-out infinite',
+				'wiggle': 'wiggle var(--duration-measured) ease-in-out infinite',
+				'float': 'float var(--duration-prolonged) ease-in-out infinite',
+				'zoom': 'zoom var(--duration-extended) ease-in-out infinite'
+			},
+			transitionDuration: {
+				'instant': 'var(--duration-instant)',
+				'fast': 'var(--duration-fast)',
+				'swift': 'var(--duration-swift)',
+				'normal': 'var(--duration-normal)',
+				'moderate': 'var(--duration-moderate)',
+				'slow': 'var(--duration-slow)',
+				'deliberate': 'var(--duration-deliberate)',
+				'leisurely': 'var(--duration-leisurely)',
+				'measured': 'var(--duration-measured)',
+				'extended': 'var(--duration-extended)',
+				'prolonged': 'var(--duration-prolonged)',
+				'lengthy': 'var(--duration-lengthy)',
+				'epic': 'var(--duration-epic)'
+			},
+			transitionDelay: {
+				'instant': 'var(--delay-instant)',
+				'minimal': 'var(--delay-minimal)',
+				'short': 'var(--delay-short)',
+				'medium': 'var(--delay-medium)',
+				'moderate': 'var(--delay-moderate)',
+				'standard': 'var(--delay-standard)',
+				'long': 'var(--delay-long)',
+				'extended': 'var(--delay-extended)',
+				'prolonged': 'var(--delay-prolonged)'
 			}
 		}
 	},

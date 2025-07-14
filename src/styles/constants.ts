@@ -52,28 +52,77 @@ export const shadows = {
 
 // Animations
 export const animations = {
-  // Transition durations
-  fast: '150ms',
-  normal: '300ms',
-  slow: '500ms',
-  verySlow: '700ms',
+  // Transition durations (in milliseconds)
+  durations: {
+    instant: '100ms',      // 100ms - tap effects, immediate responses
+    fast: '150ms',         // 150ms - quick interactions
+    swift: '200ms',        // 200ms - UI state changes
+    normal: '300ms',       // 300ms - standard transitions
+    moderate: '500ms',     // 500ms - content transitions
+    slow: '600ms',         // 600ms - complex animations
+    deliberate: '700ms',   // 700ms - emphasis animations
+    leisurely: '800ms',    // 800ms - slide animations
+    measured: '1000ms',    // 1s - major transitions
+    extended: '2000ms',    // 2s - loading spinners
+    prolonged: '3000ms',   // 3s - ambient animations
+    lengthy: '6000ms',     // 6s - floating effects
+    epic: '20000ms'        // 20s - continuous background animations
+  },
   
   // Animation delays
   delays: {
-    short: '1s',
-    medium: '2s',
-    long: '3s',
-    veryLong: '4s',
-    extraLong: '5s'
+    instant: '0ms',
+    minimal: '500ms',      // 0.5s - quick sequential animations
+    short: '1000ms',       // 1s - standard delays
+    medium: '1500ms',      // 1.5s - staggered animations
+    moderate: '2000ms',    // 2s - medium delays
+    standard: '2500ms',    // 2.5s - content reveals
+    long: '3000ms',        // 3s - notification dismissals
+    extended: '4000ms',    // 4s - longer sequences
+    prolonged: '5000ms'    // 5s - cleanup operations
+  },
+  
+  // Animation durations for Framer Motion (in seconds)
+  framerDurations: {
+    tap: 0.1,              // 100ms - press effects
+    swipe: 0.3,            // 300ms - swipe gestures
+    bubble: 0.5,           // 500ms - bubble animations
+    ripple: 0.6            // 600ms - ripple effects
+  },
+  
+  // Common timeout durations (in milliseconds)
+  timeouts: {
+    debounce: 100,         // 100ms - input debouncing
+    feedback: 1000,        // 1s - user feedback delays
+    notification: 3000,    // 3s - notification auto-dismiss
+    cleanup: 5000,         // 5s - resource cleanup
+    polling: 300000        // 5 minutes - API cache cleanup
   },
   
   // Easing functions
   easing: {
     bounce: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
     smooth: 'cubic-bezier(0.4, 0, 0.2, 1)',
-    sharp: 'cubic-bezier(0.4, 0, 0.6, 1)'
+    sharp: 'cubic-bezier(0.4, 0, 0.6, 1)',
+    linear: 'linear',
+    easeOut: 'ease-out',
+    easeInOut: 'ease-in-out'
   }
 } as const;
+
+// Helper function to get animation duration in various formats
+export const getAnimationDuration = (duration: keyof typeof animations.durations) => ({
+  ms: parseInt(animations.durations[duration]),
+  css: animations.durations[duration],
+  seconds: parseInt(animations.durations[duration]) / 1000
+});
+
+// Helper function to get delay in various formats
+export const getAnimationDelay = (delay: keyof typeof animations.delays) => ({
+  ms: parseInt(animations.delays[delay]),
+  css: animations.delays[delay],
+  seconds: parseInt(animations.delays[delay]) / 1000
+});
 
 // Glass morphism styles
 export const glassMorphism = {

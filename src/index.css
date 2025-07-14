@@ -67,6 +67,32 @@
     --ring: 222.2 84% 4.9%;
 
     --radius: 1rem;
+    
+    /* Animation durations */
+    --duration-instant: 100ms;
+    --duration-fast: 150ms;
+    --duration-swift: 200ms;
+    --duration-normal: 300ms;
+    --duration-moderate: 500ms;
+    --duration-slow: 600ms;
+    --duration-deliberate: 700ms;
+    --duration-leisurely: 800ms;
+    --duration-measured: 1000ms;
+    --duration-extended: 2000ms;
+    --duration-prolonged: 3000ms;
+    --duration-lengthy: 6000ms;
+    --duration-epic: 20000ms;
+    
+    /* Animation delays */
+    --delay-instant: 0ms;
+    --delay-minimal: 500ms;
+    --delay-short: 1000ms;
+    --delay-medium: 1500ms;
+    --delay-moderate: 2000ms;
+    --delay-standard: 2500ms;
+    --delay-long: 3000ms;
+    --delay-extended: 4000ms;
+    --delay-prolonged: 5000ms;
   }
 
   .dark {
@@ -127,26 +153,27 @@
   }
   
   .kid-button {
-    @apply rounded-2xl text-lg font-semibold px-6 py-3 transition-all duration-300
+    @apply rounded-2xl text-lg font-semibold px-6 py-3 transition-all
            shadow-md hover:shadow-lg active:scale-95 focus:outline-none focus:ring-4;
+    transition-duration: var(--duration-normal);
   }
 }
 
 @layer utilities {
   .animate-float {
-    animation: float 6s ease-in-out infinite;
+    animation: float var(--duration-lengthy) ease-in-out infinite;
   }
   
   .animate-wiggle {
-    animation: wiggle 3s ease-in-out infinite;
+    animation: wiggle var(--duration-prolonged) ease-in-out infinite;
   }
   
   .animate-fade-in {
-    animation: fadeIn 1s ease-out;
+    animation: fadeIn var(--duration-measured) ease-out;
   }
   
   .animate-slide-up {
-    animation: slideUp 0.8s ease-out;
+    animation: slideUp var(--duration-leisurely) ease-out;
   }
   
   .custom-background {

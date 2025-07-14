@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { WifiOff, Wifi } from 'lucide-react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { animations } from '@/styles/constants';
 
 const OfflineNotification: React.FC = () => {
   const { isOnline, wasOffline } = useOnlineStatus();
@@ -14,7 +15,7 @@ const OfflineNotification: React.FC = () => {
     } else if (wasOffline) {
       setShow(false);
       setShowBackOnline(true);
-      const timer = setTimeout(() => setShowBackOnline(false), 3000);
+      const timer = setTimeout(() => setShowBackOnline(false), animations.timeouts.notification);
       return () => clearTimeout(timer);
     } else {
       setShow(false);
@@ -27,9 +28,10 @@ const OfflineNotification: React.FC = () => {
     <>
       {/* Offline notification */}
       <div
-        className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-500 ${
+        className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 transition-all ${
           show ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
         }`}
+        style={{ transitionDuration: animations.durations.moderate }}
       >
         <div className="bg-red-500 text-white px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 animate-bounce">
           <WifiOff className="w-6 h-6" />
@@ -42,9 +44,10 @@ const OfflineNotification: React.FC = () => {
 
       {/* Back online notification */}
       <div
-        className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-500 ${
+        className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 transition-all ${
           showBackOnline ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
         }`}
+        style={{ transitionDuration: animations.durations.moderate }}
       >
         <div className="bg-green-500 text-white px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3">
           <Wifi className="w-6 h-6" />

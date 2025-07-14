@@ -25,7 +25,7 @@ const TabNavigation = memo(({ activeTab, onTabChange }: TabNavigationProps) => {
       <div className="relative bg-white dark:bg-gray-800 rounded-full p-2 shadow-2xl border-4 border-white dark:border-gray-700">
         {/* Sliding background indicator */}
         <div
-          className={`absolute top-2 h-[calc(100%-16px)] w-[calc(50%-4px)] bg-gradient-to-r rounded-full transition-all duration-500 ease-in-out ${
+          className={`absolute top-2 h-[calc(100%-16px)] w-[calc(50%-4px)] bg-gradient-to-r rounded-full transition-all duration-moderate ease-in-out ${
             activeTab === "current"
               ? "left-2 from-sky to-blue-500"
               : "left-[calc(50%+4px)] from-grape to-pink-500"
@@ -38,7 +38,7 @@ const TabNavigation = memo(({ activeTab, onTabChange }: TabNavigationProps) => {
         <div className="relative flex" role="tablist" aria-label="Location and destination tabs">
           <button
             onClick={() => handleTabChange("current")}
-            className={`relative z-10 px-8 py-4 rounded-full transition-all duration-300 flex items-center justify-center gap-3 font-black focus:outline-none focus:ring-4 focus:ring-sky-400 focus:ring-offset-2 min-w-[160px] active:scale-95 ${
+            className={`relative z-10 px-8 py-4 rounded-full transition-all duration-normal flex items-center justify-center gap-3 font-black focus:outline-none focus:ring-4 focus:ring-sky-400 focus:ring-offset-2 min-w-[160px] active:scale-95 ${
               activeTab === "current"
                 ? "text-white scale-105"
                 : "text-gray-700 dark:text-gray-300 hover:scale-105"
@@ -63,7 +63,7 @@ const TabNavigation = memo(({ activeTab, onTabChange }: TabNavigationProps) => {
           
           <button
             onClick={() => handleTabChange("destination")}
-            className={`relative z-10 px-8 py-4 rounded-full transition-all duration-300 flex items-center justify-center gap-3 font-black focus:outline-none focus:ring-4 focus:ring-purple-400 focus:ring-offset-2 min-w-[160px] active:scale-95 ${
+            className={`relative z-10 px-8 py-4 rounded-full transition-all duration-normal flex items-center justify-center gap-3 font-black focus:outline-none focus:ring-4 focus:ring-purple-400 focus:ring-offset-2 min-w-[160px] active:scale-95 ${
               activeTab === "destination"
                 ? "text-white scale-105"
                 : "text-gray-700 dark:text-gray-300 hover:scale-105"

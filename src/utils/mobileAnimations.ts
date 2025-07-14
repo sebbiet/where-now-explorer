@@ -3,25 +3,27 @@
  * Provides optimized animations for touch interactions
  */
 
+import { animations } from '@/styles/constants';
+
 export const mobileAnimations = {
   // Touch ripple effect
   touchRipple: {
     initial: { scale: 0, opacity: 0.5 },
     animate: { scale: 2.5, opacity: 0 },
-    transition: { duration: 0.6, ease: 'easeOut' }
+    transition: { duration: animations.framerDurations.ripple, ease: 'easeOut' }
   },
 
   // Swipe animations
   swipeLeft: {
     initial: { x: 0, opacity: 1 },
     animate: { x: -100, opacity: 0 },
-    transition: { duration: 0.3, ease: 'easeInOut' }
+    transition: { duration: animations.framerDurations.swipe, ease: 'easeInOut' }
   },
 
   swipeRight: {
     initial: { x: 0, opacity: 1 },
     animate: { x: 100, opacity: 0 },
-    transition: { duration: 0.3, ease: 'easeInOut' }
+    transition: { duration: animations.framerDurations.swipe, ease: 'easeInOut' }
   },
 
   // Pull down animation
@@ -38,7 +40,7 @@ export const mobileAnimations = {
   // Tap scale animation
   tapScale: {
     whileTap: { scale: 0.95 },
-    transition: { duration: 0.1 }
+    transition: { duration: animations.framerDurations.tap }
   },
 
   // Bounce in animation
@@ -61,19 +63,24 @@ export const mobileAnimations = {
       scale: [0, 1.2, 1],
       rotate: [0, 15, -15, 0]
     },
-    transition: { duration: 0.5 }
+    transition: { duration: animations.framerDurations.bubble }
   }
 };
 
 // CSS classes for mobile animations
 export const mobileAnimationClasses = {
-  tap: 'active:scale-95 transition-transform duration-100',
+  tap: `active:scale-95 transition-transform`,
   swipeable: 'touch-pan-y',
   draggable: 'touch-none select-none',
   bounce: 'animate-bounce-in',
   fadeIn: 'animate-fade-in',
   slideUp: 'animate-slide-up'
 };
+
+// Helper to get CSS transition duration for tap animations
+export const getTapTransitionStyle = () => ({
+  transitionDuration: animations.durations.instant
+});
 
 // Touch gesture detection
 export const detectSwipe = (

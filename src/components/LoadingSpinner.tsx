@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { animations } from '@/styles/constants';
 
 const LoadingSpinner: React.FC = () => {
   return (
@@ -10,7 +11,7 @@ const LoadingSpinner: React.FC = () => {
         <div className="absolute inset-0 rounded-full border-8 border-t-sky border-r-sunshine border-b-grape border-l-soft-purple animate-spin"></div>
         
         {/* Inner spinning ring (opposite direction) */}
-        <div className="absolute inset-2 rounded-full border-4 border-t-soft-orange border-r-soft-green border-b-soft-yellow border-l-soft-purple animate-spin" style={{animationDirection: 'reverse', animationDuration: '2s'}}></div>
+        <div className="absolute inset-2 rounded-full border-4 border-t-soft-orange border-r-soft-green border-b-soft-yellow border-l-soft-purple animate-spin" style={{animationDirection: 'reverse', animationDuration: animations.durations.extended}}></div>
         
         {/* Center globe emoji */}
         <div className="absolute inset-0 flex items-center justify-center">
@@ -18,7 +19,7 @@ const LoadingSpinner: React.FC = () => {
         </div>
         
         {/* Orbiting dots */}
-        <div className="absolute inset-0 animate-spin" style={{animationDuration: '3s'}}>
+        <div className="absolute inset-0 animate-spin" style={{animationDuration: animations.durations.prolonged}}>
           <div className="absolute top-0 left-1/2 w-3 h-3 bg-sky rounded-full -translate-x-1/2 -translate-y-1/2"></div>
           <div className="absolute bottom-0 left-1/2 w-3 h-3 bg-sunshine rounded-full -translate-x-1/2 translate-y-1/2"></div>
           <div className="absolute left-0 top-1/2 w-3 h-3 bg-grape rounded-full -translate-x-1/2 -translate-y-1/2"></div>

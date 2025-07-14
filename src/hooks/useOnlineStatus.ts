@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { animations } from '@/styles/constants';
 
 export function useOnlineStatus() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -11,7 +12,7 @@ export function useOnlineStatus() {
       if (!isOnline) {
         setWasOffline(true);
         // Clear the flag after a delay to show "back online" message
-        setTimeout(() => setWasOffline(false), 5000);
+        setTimeout(() => setWasOffline(false), animations.timeouts.cleanup);
       }
     };
 

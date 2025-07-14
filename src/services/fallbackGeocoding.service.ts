@@ -5,6 +5,7 @@
 
 import { GeocodeResult, ReverseGeocodeResult, GeocodingError } from './geocoding.service';
 import { validateCoordinates } from '@/utils/sanitization';
+import { animations } from '@/styles/constants';
 
 export interface GeocodingProvider {
   name: string;
@@ -22,7 +23,7 @@ class MockGeocodingProvider implements GeocodingProvider {
 
   async reverseGeocode(lat: number, lon: number): Promise<ReverseGeocodeResult> {
     // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, animations.timeouts.debounce));
     
     return {
       street: 'Fallback Street',
@@ -36,7 +37,7 @@ class MockGeocodingProvider implements GeocodingProvider {
 
   async geocode(query: string): Promise<GeocodeResult[]> {
     // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, animations.timeouts.debounce));
     
     return [{
       lat: '-33.8688',
@@ -64,7 +65,7 @@ export class FallbackGeocodingService {
     failureCount: number;
   }>();
   
-  private static readonly STATUS_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutes
+  private static readonly STATUS_CHECK_INTERVAL = animations.timeouts.polling; // 5 minutes
   private static readonly MAX_FAILURES = 3;
 
   constructor() {
