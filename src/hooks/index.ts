@@ -9,6 +9,7 @@ export { useTabVisibility } from './useTabVisibility';
 export { useErrorHandler } from './useErrorHandler';
 export { useOnlineStatus } from './useOnlineStatus';
 export { useLocalStorage } from './useLocalStorage';
+export { useTheme } from './useTheme';
 
 // Feature hooks
 export { useLocationSearch } from './useLocationSearch';

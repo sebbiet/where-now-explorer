@@ -1,7 +1,10 @@
 
 import React from 'react';
+import { useTheme } from '@/hooks/useTheme';
 
 const LocationPin: React.FC = () => {
+  const { isDarkMode } = useTheme();
+  
   return (
     <div className="flex justify-center mb-8 relative">
       {/* Cute character/mascot */}
@@ -38,6 +41,25 @@ const LocationPin: React.FC = () => {
           {/* Cheeks */}
           <circle cx="30" cy="55" r="8" fill="#FFA0C9" opacity="0.5" />
           <circle cx="90" cy="55" r="8" fill="#FFA0C9" opacity="0.5" />
+          
+          {/* Sunglasses - only visible in light mode */}
+          {!isDarkMode && (
+            <g>
+              {/* Sunglasses frame */}
+              <path 
+                d="M35 42 Q45 40 55 42 L55 50 Q45 52 35 50 Z M65 42 Q75 40 85 42 L85 50 Q75 52 65 50 Z M55 46 L65 46" 
+                fill="none" 
+                stroke="#1a1a1a" 
+                strokeWidth="3.5"
+              />
+              {/* Left lens */}
+              <ellipse cx="45" cy="46" rx="13" ry="10" fill="#1a1a1a" />
+              <ellipse cx="43" cy="44" rx="3" ry="4" fill="#4a90e2" opacity="0.5" />
+              {/* Right lens */}
+              <ellipse cx="75" cy="46" rx="13" ry="10" fill="#1a1a1a" />
+              <ellipse cx="73" cy="44" rx="3" ry="4" fill="#4a90e2" opacity="0.5" />
+            </g>
+          )}
           
           {/* Location pin at bottom */}
           <path d="M60 130 L55 140 L60 135 L65 140 Z" fill="#9b87f5" />
