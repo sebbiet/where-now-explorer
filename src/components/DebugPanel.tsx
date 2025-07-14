@@ -62,17 +62,27 @@ const DebugPanel: React.FC = () => {
     }
     
     setMockLocation({ latitude: lat, longitude: lng });
+    // Enable mock location if not already enabled
+    if (!useMockLocation) {
+      toggleMockLocation();
+    }
   };
 
   const handlePresetLocation = (lat: number, lng: number) => {
     setMockLocation({ latitude: lat, longitude: lng });
     setInputLat(lat.toString());
     setInputLng(lng.toString());
+    // Enable mock location if not already enabled
+    if (!useMockLocation) {
+      toggleMockLocation();
+    }
   };
 
   const handleResetToGPS = () => {
     setMockLocation(null);
-    toggleMockLocation();
+    if (useMockLocation) {
+      toggleMockLocation();
+    }
     setInputLat('');
     setInputLng('');
   };

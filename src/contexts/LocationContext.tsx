@@ -174,7 +174,7 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
       setIsLoadingLocation(false);
       setIsRefreshingLocation(false);
     }
-  }, []);
+  }, [locationData, useMockLocation, mockLocation]);
 
   // Manual refresh handler that also resets the countdown
   const handleRefresh = () => {
@@ -207,6 +207,14 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     fetchLocation();
   }, []);
+
+  // Refetch location when mock location settings change
+  useEffect(() => {
+    // Skip initial mount
+    if (locationData.latitude !== undefined) {
+      fetchLocation();
+    }
+  }, [useMockLocation, mockLocation]);
 
   // Handle tab visibility changes
   useEffect(() => {
