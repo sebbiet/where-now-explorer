@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { GeolocationService, GeolocationError, GeolocationErrorCode } from '@/services/geolocation.service';
 import { GeocodingService, GeocodingError } from '@/services/geocoding.service';
 import { TraditionalLandService } from '@/services/traditionalLand.service';
+import { usePreferences } from '@/contexts/PreferencesContext';
 
 // Define interfaces for our data structures
 export interface LocationData {
@@ -30,10 +31,12 @@ interface LocationContextType {
 const LocationContext = createContext<LocationContextType | undefined>(undefined);
 
 export const LocationProvider = ({ children }: { children: ReactNode }) => {
+  const { preferences } = usePreferences();
   const [locationData, setLocationData] = useState<LocationData>({});
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
-  const [countdown, setCountdown] = useState(30);
+  const [countdown, setCountdown] = useState(preferences.autoRefreshInterval);
   const [isRefreshingLocation, setIsRefreshingLocation] = useState(false);
+  const [isTabActive, setIsTabActive] = useState(true);
   
 
 
@@ -107,28 +110,46 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
   // Manual refresh handler that also resets the countdown
   const handleRefresh = () => {
     fetchLocation();
-    setCountdown(30);
+    setCountdown(preferences.autoRefreshInterval);
   };
 
   // Set up auto-refresh timer
   useEffect(() => {
     const countdownId = setInterval(() => {
-      setCountdown((prevCount) => {
-        if (prevCount <= 1) {
-          // When countdown reaches 0, trigger the fetch location
-          fetchLocation();
-          return 30;
-        }
-        return prevCount - 1;
-      });
+      // Only update countdown when tab is active
+      if (isTabActive) {
+        setCountdown((prevCount) => {
+          if (prevCount <= 1) {
+            // When countdown reaches 0, trigger the fetch location
+            if (preferences.enableLocationTracking) {
+              fetchLocation();
+            }
+            return preferences.autoRefreshInterval;
+          }
+          return prevCount - 1;
+        });
+      }
     }, 1000);
     
     return () => clearInterval(countdownId);
-  }, [fetchLocation]);
+  }, [fetchLocation, isTabActive, preferences.autoRefreshInterval, preferences.enableLocationTracking]);
 
   // Initial location fetch
   useEffect(() => {
     fetchLocation();
+  }, []);
+
+  // Handle tab visibility changes
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsTabActive(!document.hidden);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
 

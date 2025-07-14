@@ -3,6 +3,8 @@ import React, { useState, memo } from 'react';
 import DestinationInput from '@/components/DestinationInput';
 import DestinationResult from '@/components/DestinationResult';
 import { useLocation } from '@/contexts/LocationContext';
+import { usePreferences } from '@/contexts/PreferencesContext';
+import { useDestinationHistory } from '@/hooks/useDestinationHistory';
 import { toast } from "sonner";
 import { GeocodingService, GeocodingError } from '@/services/geocoding.service';
 import { RoutingService, RoutingError } from '@/services/routing.service';
@@ -15,6 +17,8 @@ interface DestinationData {
 
 const DestinationSection = () => {
   const { locationData } = useLocation();
+  const { preferences } = usePreferences();
+  const { addToHistory } = useDestinationHistory();
   const [destinationData, setDestinationData] = useState<DestinationData | null>(null);
   const [isLoadingDestination, setIsLoadingDestination] = useState(false);
 
@@ -52,11 +56,23 @@ const DestinationSection = () => {
         { latitude: destLat, longitude: destLon }
       );
       
-      setDestinationData({
+      const result = {
         name: destName,
         distance: routeResult.formattedDistance,
         duration: routeResult.formattedDuration
-      });
+      };
+      
+      setDestinationData(result);
+      
+      // Save to history if enabled
+      if (preferences.saveDestinationHistory) {
+        addToHistory({
+          name: destName,
+          displayName: place.display_name,
+          distance: routeResult.formattedDistance,
+          duration: routeResult.formattedDuration
+        });
+      }
       
     } catch (error) {
       console.error("Error calculating distance:", error);

@@ -1,15 +1,18 @@
 
 import { useState } from "react";
 import { LocationProvider } from "@/contexts/LocationContext";
+import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import LocationSection from "@/components/LocationSection";
 import DestinationSection from "@/components/DestinationSection";
 import ThemeToggle from "@/components/ThemeToggle";
+import DebugPanel from "@/components/DebugPanel";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<"current" | "destination">("current");
 
   return (
-    <LocationProvider>
+    <PreferencesProvider>
+      <LocationProvider>
       <div className="custom-background min-h-screen relative overflow-x-hidden w-full">
         {/* Skip to main content link for keyboard users */}
         <a
@@ -222,8 +225,12 @@ const Index = () => {
             </div>
           </main>
         </div>
+        
+        {/* Debug Panel for development */}
+        <DebugPanel />
       </div>
     </LocationProvider>
+    </PreferencesProvider>
   );
 };
 

@@ -1,3 +1,5 @@
+import { GeocodingCacheService } from './geocodingCache.service';
+
 export interface Address {
   road?: string;
   suburb?: string;
@@ -56,6 +58,12 @@ export class GeocodingService {
     latitude: number,
     longitude: number
   ): Promise<ReverseGeocodeResult> {
+    // Check cache first
+    const cached = GeocodingCacheService.getReverseGeocodeCache(latitude, longitude);
+    if (cached) {
+      return cached;
+    }
+
     try {
       const url = `${this.BASE_URL}/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`;
       
@@ -76,7 +84,7 @@ export class GeocodingService {
         throw new GeocodingError('Invalid response from geocoding service');
       }
       
-      return {
+      const result = {
         street: data.address.road,
         suburb: data.address.suburb || data.address.neighbourhood,
         city: data.address.city || data.address.town || data.address.village,
@@ -86,6 +94,11 @@ export class GeocodingService {
         latitude,
         longitude
       };
+
+      // Cache the result
+      GeocodingCacheService.setReverseGeocodeCache(latitude, longitude, result);
+
+      return result;
     } catch (error) {
       if (error instanceof GeocodingError) {
         throw error;
@@ -109,6 +122,12 @@ export class GeocodingService {
       viewbox?: [number, number, number, number];
     }
   ): Promise<GeocodeResult[]> {
+    // Check cache first
+    const cached = GeocodingCacheService.getGeocodeCache(query, options);
+    if (cached) {
+      return cached;
+    }
+
     try {
       const params = new URLSearchParams({
         format: 'json',
@@ -144,6 +163,9 @@ export class GeocodingService {
       if (!Array.isArray(data)) {
         throw new GeocodingError('Invalid response from geocoding service');
       }
+      
+      // Cache the result
+      GeocodingCacheService.setGeocodeCache(query, options, data);
       
       return data;
     } catch (error) {
