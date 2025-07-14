@@ -38,8 +38,7 @@ const ThemeToggle = () => {
       <div className={`absolute inset-0 flex items-center justify-center transition-all duration-500 ${
         isDarkMode ? 'opacity-0 scale-50 rotate-180' : 'opacity-100 scale-100 rotate-0'
       }`}>
-        <span className="text-4xl">☀️</span>
-        {/* Sun rays */}
+        {/* Sun rays - behind the sun emoji */}
         <div className="absolute inset-0">
           {[...Array(8)].map((_, i) => (
             <div
@@ -53,6 +52,8 @@ const ThemeToggle = () => {
             />
           ))}
         </div>
+        {/* Sun emoji - in front of the rays */}
+        <span className="text-4xl relative z-10">☀️</span>
       </div>
       
       {/* Moon */}

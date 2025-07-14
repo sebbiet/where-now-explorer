@@ -3,16 +3,17 @@ import React from 'react';
 
 const LocationPin: React.FC = () => {
   return (
-    <div className="flex justify-center mb-6 relative">
+    <div className="flex justify-center mb-8 relative">
       {/* Cute character/mascot */}
       <div className="relative animate-bounce">
         {/* Main balloon body */}
         <svg 
-          width="120" 
-          height="140" 
+          width="140" 
+          height="160" 
           viewBox="0 0 120 140" 
           fill="none" 
           xmlns="http://www.w3.org/2000/svg"
+          className="drop-shadow-2xl"
         >
           {/* Balloon string */}
           <path d="M60 90 Q60 120 60 130" stroke="#9b87f5" strokeWidth="2" fill="none" />

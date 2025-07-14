@@ -31,11 +31,11 @@ const LocationSection = () => {
         <LocationDisplay locationData={locationData} />
       </div>
       
-      <div className="flex justify-center mt-6">
+      <div className="flex justify-center mt-8">
         <button 
           onClick={handleRefresh}
           className={`
-            relative px-8 py-4 text-lg font-black text-white
+            relative px-10 py-5 text-xl font-black text-white
             bg-gradient-to-r from-sky via-sunshine to-grape
             rounded-full shadow-xl transform transition-all duration-300
             hover:scale-110 hover:shadow-2xl active:scale-95
