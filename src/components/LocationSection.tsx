@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import LoadingSpinner from '@/components/LoadingSpinner';
 import LocationDisplay from '@/components/LocationDisplay';
 import LocationPin from '@/components/LocationPin';
-import FunFactCard from '@/components/FunFactCard';
 import { useLocation } from '@/contexts/LocationContext';
 
 const LocationSection = () => {
@@ -13,13 +12,8 @@ const LocationSection = () => {
     locationData, 
     isLoadingLocation, 
     isRefreshingLocation, 
-    funFact,
-    funFactId,
-    funFactVotes,
-    isLoadingFunFact,
     countdown, 
-    handleRefresh,
-    voteFunFact
+    handleRefresh
   } = useLocation();
 
   if (isLoadingLocation) {
@@ -48,16 +42,6 @@ const LocationSection = () => {
           <Timer className="w-5 h-5 mr-2" />
           Refresh in {countdown}s
         </Button>
-      </div>
-      
-      <div className={isRefreshingLocation ? "animate-pulse" : ""}>
-        <FunFactCard 
-          fact={funFact} 
-          isLoading={isLoadingFunFact} 
-          onVote={() => voteFunFact(funFactId)}
-          votes={funFactVotes}
-          factId={funFactId}
-        />
       </div>
     </div>
   );

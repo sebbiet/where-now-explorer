@@ -4,7 +4,6 @@ import { LocationProvider } from "@/contexts/LocationContext";
 import LocationSection from "@/components/LocationSection";
 import DestinationSection from "@/components/DestinationSection";
 import ThemeToggle from "@/components/ThemeToggle";
-import AuthButton from "@/components/AuthButton";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<"current" | "destination">("current");
@@ -13,9 +12,8 @@ const Index = () => {
     <LocationProvider>
       <div className="min-h-screen bg-gradient-to-br from-sky via-mint to-sage dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <div className="container mx-auto px-4 py-8">
-          {/* Header with theme toggle and auth button */}
+          {/* Header with theme toggle */}
           <div className="flex justify-end gap-2 mb-8">
-            <AuthButton />
             <ThemeToggle />
           </div>
           

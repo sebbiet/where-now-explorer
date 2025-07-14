@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Claude-related files
+.claude/
+.claude_chat_history/
+.claude_session*
+claude-artifacts/
+.aider*
+.assistant/
+.continue/
