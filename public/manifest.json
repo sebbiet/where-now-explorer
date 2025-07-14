@@ -1,6 +1,6 @@
 {
-  "name": "Are We There Yet? - Family Location Tracker",
-  "short_name": "Are We There Yet?",
+  "name": "There yet app! - Are we there yet?",
+  "short_name": "There yet app!",
   "description": "A fun family-friendly location tracking app for travel adventures",
   "start_url": "/",
   "display": "standalone",
@@ -53,7 +53,7 @@
       ]
     },
     {
-      "name": "Are We There Yet?",
+      "name": "Are we there yet?",
       "short_name": "Destination",
       "description": "Check distance to your destination",
       "url": "/?tab=destination",

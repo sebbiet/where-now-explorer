@@ -13,7 +13,7 @@ npm run preview    # Preview production build
 
 ## Architecture Overview
 
-This is a React + TypeScript web application built with Vite. The app provides location-based features for families, including real-time location tracking and destination progress monitoring ("Are We There Yet?").
+This is a React + TypeScript web application built with Vite. The "There yet app!" provides location-based features for families, including real-time location tracking and destination progress monitoring to answer "Are we there yet?"
 
 ### Key Technology Decisions
 

@@ -1,6 +1,6 @@
 # Where Now Explorer
 
-A location-based web application for families that provides real-time location tracking and destination progress monitoring ("Are We There Yet?").
+A location-based web application for families that provides real-time location tracking and destination progress monitoring. The "There yet app!" answers the timeless question: "Are we there yet?"
 
 ## Project History
 
