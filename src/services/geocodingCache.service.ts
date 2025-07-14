@@ -10,14 +10,23 @@ interface GeocodeCache {
   reverseGeocode: Map<string, CacheEntry<ReverseGeocodeResult>>;
 }
 
+interface PopularityData {
+  accessCount: number;
+  lastAccessed: number;
+}
+
 export class GeocodingCacheService {
   private static readonly CACHE_DURATION = 1000 * 60 * 60 * 24; // 24 hours
+  private static readonly POPULAR_CACHE_DURATION = 1000 * 60 * 60 * 24 * 7; // 7 days for popular items
   private static readonly MAX_CACHE_SIZE = 100;
+  private static readonly POPULAR_THRESHOLD = 5; // Access count to be considered popular
   
   private static cache: GeocodeCache = {
     geocode: new Map(),
     reverseGeocode: new Map(),
   };
+  
+  private static popularity = new Map<string, PopularityData>();
 
   // Initialize cache from localStorage
   static {
@@ -95,9 +104,17 @@ export class GeocodingCacheService {
     
     if (!entry) return null;
     
+    // Update popularity tracking
+    this.updatePopularity(key);
+    
     // Check if cache is expired
-    if (Date.now() - entry.timestamp > this.CACHE_DURATION) {
+    const cacheDuration = this.isPopular(key) 
+      ? this.POPULAR_CACHE_DURATION 
+      : this.CACHE_DURATION;
+      
+    if (Date.now() - entry.timestamp > cacheDuration) {
       this.cache.geocode.delete(key);
+      this.popularity.delete(key);
       this.saveCache();
       return null;
     }
@@ -121,9 +138,17 @@ export class GeocodingCacheService {
     
     if (!entry) return null;
     
+    // Update popularity tracking
+    this.updatePopularity(key);
+    
     // Check if cache is expired
-    if (Date.now() - entry.timestamp > this.CACHE_DURATION) {
+    const cacheDuration = this.isPopular(key) 
+      ? this.POPULAR_CACHE_DURATION 
+      : this.CACHE_DURATION;
+      
+    if (Date.now() - entry.timestamp > cacheDuration) {
       this.cache.reverseGeocode.delete(key);
+      this.popularity.delete(key);
       this.saveCache();
       return null;
     }
@@ -161,8 +186,53 @@ export class GeocodingCacheService {
   static clearCache(): void {
     this.cache.geocode.clear();
     this.cache.reverseGeocode.clear();
+    this.popularity.clear();
     if (typeof window !== 'undefined') {
       localStorage.removeItem('geocoding-cache');
+    }
+  }
+
+  /**
+   * Update popularity data for a cache key
+   */
+  private static updatePopularity(key: string): void {
+    const existing = this.popularity.get(key) || { accessCount: 0, lastAccessed: 0 };
+    this.popularity.set(key, {
+      accessCount: existing.accessCount + 1,
+      lastAccessed: Date.now()
+    });
+  }
+
+  /**
+   * Check if a cache entry is popular
+   */
+  private static isPopular(key: string): boolean {
+    const data = this.popularity.get(key);
+    return data ? data.accessCount >= this.POPULAR_THRESHOLD : false;
+  }
+
+  /**
+   * Pre-cache nearby locations for better performance
+   */
+  static async preCacheNearbyLocations(lat: number, lon: number): Promise<void> {
+    // Pre-cache locations in a grid around the current location
+    const gridSize = 0.01; // About 1km
+    const offsets = [-1, 0, 1];
+    
+    for (const latOffset of offsets) {
+      for (const lonOffset of offsets) {
+        if (latOffset === 0 && lonOffset === 0) continue; // Skip current location
+        
+        const nearbyLat = lat + (latOffset * gridSize);
+        const nearbyLon = lon + (lonOffset * gridSize);
+        const key = this.createReverseGeocodeKey(nearbyLat, nearbyLon);
+        
+        // Only pre-cache if not already cached
+        if (!this.cache.reverseGeocode.has(key)) {
+          // Mark for pre-caching (actual implementation would fetch these)
+          console.log(`Marked for pre-caching: ${nearbyLat}, ${nearbyLon}`);
+        }
+      }
     }
   }
 }

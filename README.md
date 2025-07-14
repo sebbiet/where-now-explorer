@@ -4,7 +4,7 @@ A location-based web application for families that provides real-time location t
 
 ## Project History
 
-This project was originally created on the Lovable platform but has since been moved off that platform for independent development.
+This is an independent web application built with React and TypeScript.
 
 ## Features
 

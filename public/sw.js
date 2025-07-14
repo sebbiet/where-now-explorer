@@ -1,14 +1,14 @@
 // Service Worker for offline support
-const CACHE_NAME = 'where-now-explorer-v1';
+const CACHE_NAME = 'thereyetapp-v1';
 const STATIC_CACHE = 'static-v1';
 const DYNAMIC_CACHE = 'dynamic-v1';
 
 // Assets to cache immediately
 const STATIC_ASSETS = [
-  '/where-now-explorer/',
-  '/where-now-explorer/index.html',
-  '/where-now-explorer/manifest.json',
-  '/where-now-explorer/og-image.png',
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/og-image.png',
   'https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap',
 ];
 

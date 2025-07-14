@@ -35,7 +35,7 @@ This is a React + TypeScript web application built with Vite. The app provides l
 - TypeScript is configured with relaxed settings (no strict null checks)
 - Path alias `@/` maps to `src/` directory
 - No testing framework currently configured
-- Runs on Lovable.dev platform with automatic deployments
+- Deployed to custom domain with GitHub Actions
 
 ### Component Patterns
 

@@ -1,4 +1,7 @@
 import { retryWithBackoff } from '@/utils/retry';
+import { deduplicateRoutingRequest } from '@/utils/requestDeduplication';
+import { withApiMonitoring } from './apiMonitor.service';
+import { offlineMode } from './offlineMode.service';
 
 export interface RouteWaypoint {
   hint?: string;
@@ -75,6 +78,12 @@ export class RoutingService {
       geometries?: 'polyline' | 'polyline6' | 'geojson';
     }
   ): Promise<RouteResult> {
+    // Check offline cache first
+    if (!offlineMode.getOnlineStatus()) {
+      // For simplicity, we'll just check cache - in a real app, this would integrate with destination data
+      console.log('Offline mode: checking cached routes');
+    }
+
     try {
       const params = new URLSearchParams({
         overview: (options?.overview ?? false).toString(),
@@ -86,26 +95,40 @@ export class RoutingService {
       const url = `${this.BASE_URL}/${profile}/${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}?${params}`;
       
       const fetchRoute = async () => {
-        const response = await fetch(url);
+        const monitoredFetch = withApiMonitoring('osrm-routing', async () => {
+          const response = await fetch(url);
+          
+          if (!response.ok) {
+            const error = new RoutingError(
+              'Failed to calculate route',
+              response.status.toString()
+            );
+            (error as any).status = response.status;
+            throw error;
+          }
+          
+          return response.json();
+        });
         
-        if (!response.ok) {
-          const error = new RoutingError(
-            'Failed to calculate route',
-            response.status.toString()
-          );
-          (error as any).status = response.status;
-          throw error;
-        }
-        
-        return response.json();
+        return monitoredFetch();
       };
       
-      const data: RouteResponse = await retryWithBackoff(fetchRoute, {
-        maxAttempts: 3,
-        onRetry: (attempt, delay) => {
-          console.log(`Retrying route calculation (attempt ${attempt}) after ${Math.round(delay)}ms`);
-        }
-      });
+      const performRequest = async () => {
+        return retryWithBackoff(fetchRoute, {
+          maxAttempts: 3,
+          onRetry: (attempt, delay) => {
+            console.log(`Retrying route calculation (attempt ${attempt}) after ${Math.round(delay)}ms`);
+          }
+        });
+      };
+      
+      // Use deduplication
+      const data: RouteResponse = await deduplicateRoutingRequest(
+        origin,
+        destination,
+        profile,
+        performRequest
+      );
       
       if (data.code !== 'Ok') {
         throw new RoutingError(

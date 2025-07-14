@@ -3,6 +3,9 @@ import { retryWithBackoff } from '@/utils/retry';
 import { rateLimiter } from './rateLimiter.service';
 import { sanitizeDestination, validateCoordinates, validateApiResponse } from '@/utils/sanitization';
 import { withPerformanceTracking } from '@/utils/performanceMonitor';
+import { deduplicateGeocodingRequest } from '@/utils/requestDeduplication';
+import { fallbackGeocoding } from './fallbackGeocoding.service';
+import { withApiMonitoring } from './apiMonitor.service';
 
 export interface Address {
   road?: string;
@@ -60,7 +63,10 @@ export class GeocodingService {
 
   static async reverseGeocode(
     latitude: number,
-    longitude: number
+    longitude: number,
+    options?: {
+      minimal?: boolean; // Request only essential fields
+    }
   ): Promise<ReverseGeocodeResult> {
     // Validate coordinates
     if (!validateCoordinates(latitude, longitude)) {
@@ -85,32 +91,62 @@ export class GeocodingService {
     }
 
     try {
-      const url = `${this.BASE_URL}/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`;
+      // Optimize payload by requesting only needed fields
+      const params = new URLSearchParams({
+        format: 'json',
+        lat: latitude.toString(),
+        lon: longitude.toString(),
+        addressdetails: '1',
+        'accept-language': 'en',
+        ...(options?.minimal && {
+          extratags: '0',
+          namedetails: '0'
+        })
+      });
+      
+      const url = `${this.BASE_URL}/reverse?${params.toString()}`;
       
       const fetchData = async () => {
-        const response = await fetch(url, {
-          headers: this.DEFAULT_HEADERS
+        const monitoredFetch = withApiMonitoring('nominatim-reverse', async () => {
+          const response = await fetch(url, {
+            headers: this.DEFAULT_HEADERS
+          });
+          
+          if (!response.ok) {
+            const error = new GeocodingError(
+              'Failed to get address from coordinates',
+              response.status
+            );
+            (error as any).status = response.status;
+            throw error;
+          }
+          
+          return response.json();
         });
         
-        if (!response.ok) {
-          const error = new GeocodingError(
-            'Failed to get address from coordinates',
-            response.status
-          );
-          (error as any).status = response.status;
-          throw error;
-        }
-        
-        return response.json();
+        return monitoredFetch();
       };
       
-      const data = await withPerformanceTracking('geocoding', () =>
-        retryWithBackoff(fetchData, {
-          maxAttempts: 3,
-          onRetry: (attempt, delay) => {
-            console.log(`Retrying reverse geocoding (attempt ${attempt}) after ${Math.round(delay)}ms`);
-          }
-        })
+      const performRequest = async () => {
+        return withPerformanceTracking('geocoding', () =>
+          retryWithBackoff(fetchData, {
+            maxAttempts: 3,
+            onRetry: (attempt, delay) => {
+              console.log(`Retrying reverse geocoding (attempt ${attempt}) after ${Math.round(delay)}ms`);
+            }
+          })
+        );
+      };
+      
+      // Use deduplication and fallback
+      const data = await deduplicateGeocodingRequest(
+        'reverse',
+        { latitude, longitude },
+        () => fallbackGeocoding.reverseGeocodeWithFallback(
+          latitude,
+          longitude,
+          performRequest
+        )
       );
       
       // Validate API response structure
@@ -185,7 +221,13 @@ export class GeocodingService {
         format: 'json',
         q: sanitizedQuery,
         limit: (options?.limit || 1).toString(),
-        addressdetails: (options?.addressdetails !== false ? 1 : 0).toString()
+        addressdetails: (options?.addressdetails !== false ? 1 : 0).toString(),
+        'accept-language': 'en',
+        // Optimize response size
+        polygon_geojson: '0',
+        polygon_kml: '0',
+        polygon_svg: '0',
+        polygon_text: '0'
       });
 
       if (options?.countrycodes?.length) {
@@ -200,29 +242,46 @@ export class GeocodingService {
       const url = `${this.BASE_URL}/search?${params.toString()}`;
       
       const fetchData = async () => {
-        const response = await fetch(url, {
-          headers: this.DEFAULT_HEADERS
+        const monitoredFetch = withApiMonitoring('nominatim-search', async () => {
+          const response = await fetch(url, {
+            headers: this.DEFAULT_HEADERS
+          });
+          
+          if (!response.ok) {
+            const error = new GeocodingError(
+              'Failed to geocode location',
+              response.status
+            );
+            (error as any).status = response.status;
+            throw error;
+          }
+          
+          return response.json();
         });
         
-        if (!response.ok) {
-          const error = new GeocodingError(
-            'Failed to geocode location',
-            response.status
-          );
-          (error as any).status = response.status;
-          throw error;
-        }
-        
-        return response.json();
+        return monitoredFetch();
       };
       
-      const data = await withPerformanceTracking('geocoding', () =>
-        retryWithBackoff(fetchData, {
-          maxAttempts: 3,
-          onRetry: (attempt, delay) => {
-            console.log(`Retrying geocoding for "${sanitizedQuery}" (attempt ${attempt}) after ${Math.round(delay)}ms`);
-          }
-        })
+      const performRequest = async () => {
+        return withPerformanceTracking('geocoding', () =>
+          retryWithBackoff(fetchData, {
+            maxAttempts: 3,
+            onRetry: (attempt, delay) => {
+              console.log(`Retrying geocoding for "${sanitizedQuery}" (attempt ${attempt}) after ${Math.round(delay)}ms`);
+            }
+          })
+        );
+      };
+      
+      // Use deduplication and fallback
+      const data = await deduplicateGeocodingRequest(
+        'geocode',
+        { query: sanitizedQuery },
+        () => fallbackGeocoding.geocodeWithFallback(
+          sanitizedQuery,
+          options,
+          performRequest
+        )
       );
       
       if (!Array.isArray(data)) {

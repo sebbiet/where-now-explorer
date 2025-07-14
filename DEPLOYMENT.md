@@ -14,7 +14,7 @@ The project includes a GitHub Actions workflow that automatically deploys to Git
 
 ### Setup GitHub Pages (One-time setup)
 
-1. Go to your repository on GitHub: https://github.com/sebbiet/where-now-explorer
+1. Go to your repository on GitHub
 2. Navigate to Settings → Pages
 3. Under "Source", select "GitHub Actions"
 4. Save the settings
@@ -32,7 +32,7 @@ git push origin main
 The GitHub Action will automatically:
 - Build the project
 - Deploy to GitHub Pages
-- Make it available at: https://sebbiet.github.io/where-now-explorer/
+- Make it available at: https://thereyetapp.com/
 
 ## Manual Deployment
 
@@ -56,7 +56,7 @@ The Geolocation API requires HTTPS to work. GitHub Pages provides HTTPS by defau
 
 ### Base Path Configuration
 
-The app is configured with the base path `/where-now-explorer/` in `vite.config.ts`. This ensures all assets load correctly when deployed to GitHub Pages.
+The app is configured with the base path `/` in `vite.config.ts` for deployment to the custom domain.
 
 ### Custom Domain (Optional)
 
@@ -89,4 +89,4 @@ npm run build
 npm run preview
 ```
 
-This will serve the built app at http://localhost:4173/where-now-explorer/
+This will serve the built app at http://localhost:4173/

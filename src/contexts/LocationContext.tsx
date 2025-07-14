@@ -88,7 +88,9 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
         longitude = position.coords.longitude;
       }
       
-      const addressData = await GeocodingService.reverseGeocode(latitude, longitude);
+      const addressData = await GeocodingService.reverseGeocode(latitude, longitude, {
+        minimal: true // Only request essential fields
+      });
       
       // Check if in Australia and add traditional land info
       if (TraditionalLandService.isAustralianLocation(addressData.country)) {
