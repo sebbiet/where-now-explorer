@@ -1,7 +1,8 @@
 import '@testing-library/jest-dom';
 import { cleanup } from '@testing-library/react';
-import { afterEach } from 'vitest';
+import { afterEach, vi } from 'vitest';
 
+// Global test setup
 afterEach(() => {
   cleanup();
 });
@@ -26,9 +27,30 @@ global.ResizeObserver = vi.fn().mockImplementation(() => ({
   disconnect: vi.fn(),
 }));
 
+// Fix DOM issues
 window.HTMLElement.prototype.scrollIntoView = vi.fn();
 window.HTMLElement.prototype.hasPointerCapture = vi.fn();
 window.HTMLElement.prototype.releasePointerCapture = vi.fn();
+
+// Fix HTMLDocument.activeElement issues
+Object.defineProperty(document, 'activeElement', {
+  writable: true,
+  value: document.body,
+});
+
+// Fix selection issues
+Object.defineProperty(window, 'getSelection', {
+  writable: true,
+  value: vi.fn(() => ({
+    removeAllRanges: vi.fn(),
+    addRange: vi.fn(),
+  })),
+});
+
+// Ensure document.documentElement exists
+if (!document.documentElement) {
+  document.appendChild(document.createElement('html'));
+}
 
 Object.defineProperty(window, 'navigator', {
   writable: true,
