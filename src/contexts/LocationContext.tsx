@@ -5,6 +5,7 @@ import React, {
   useCallback,
   ReactNode,
   useEffect,
+  useMemo,
 } from 'react';
 import { toast } from 'sonner';
 import {
@@ -229,19 +230,33 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  const value = {
-    locationData,
-    isLoadingLocation,
-    isRefreshingLocation,
-    countdown,
-    fetchLocation,
-    handleRefresh,
-    // Mock location for testing (development only)
-    useMockLocation,
-    mockLocation,
-    setMockLocation,
-    toggleMockLocation,
-  };
+  const value = useMemo(
+    () => ({
+      locationData,
+      isLoadingLocation,
+      isRefreshingLocation,
+      countdown,
+      fetchLocation,
+      handleRefresh,
+      // Mock location for testing (development only)
+      useMockLocation,
+      mockLocation,
+      setMockLocation,
+      toggleMockLocation,
+    }),
+    [
+      locationData,
+      isLoadingLocation,
+      isRefreshingLocation,
+      countdown,
+      fetchLocation,
+      handleRefresh,
+      useMockLocation,
+      mockLocation,
+      setMockLocation,
+      toggleMockLocation,
+    ]
+  );
 
   return (
     <LocationContext.Provider value={value}>

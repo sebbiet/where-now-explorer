@@ -1,4 +1,10 @@
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  ReactNode,
+  useMemo,
+  useCallback,
+} from 'react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 interface UserPreferences {
@@ -48,25 +54,28 @@ export const PreferencesProvider = ({ children }: { children: ReactNode }) => {
       defaultPreferences
     );
 
-  const updatePreference = <K extends keyof UserPreferences>(
-    key: K,
-    value: UserPreferences[K]
-  ) => {
-    setPreferences((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
+  const updatePreference = useCallback(
+    <K extends keyof UserPreferences>(key: K, value: UserPreferences[K]) => {
+      setPreferences((prev) => ({
+        ...prev,
+        [key]: value,
+      }));
+    },
+    [setPreferences]
+  );
 
-  const resetPreferences = () => {
+  const resetPreferences = useCallback(() => {
     removePreferences();
-  };
+  }, [removePreferences]);
 
-  const value = {
-    preferences,
-    updatePreference,
-    resetPreferences,
-  };
+  const value = useMemo(
+    () => ({
+      preferences,
+      updatePreference,
+      resetPreferences,
+    }),
+    [preferences, updatePreference, resetPreferences]
+  );
 
   return (
     <PreferencesContext.Provider value={value}>
