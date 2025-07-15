@@ -2,6 +2,8 @@
  * Service Worker Registration and Management
  */
 
+import { logger } from './logger';
+
 const isLocalhost = Boolean(
   window.location.hostname === 'localhost' ||
     window.location.hostname === '[::1]' ||
@@ -84,8 +86,11 @@ function checkValidServiceWorker(swUrl: string) {
       }
     })
     .catch(() => {
-      console.log(
-        'No internet connection found. App is running in offline mode.'
+      logger.info(
+        'No internet connection found. App is running in offline mode.',
+        {
+          component: 'ServiceWorker',
+        }
       );
     });
 }

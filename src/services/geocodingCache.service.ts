@@ -3,6 +3,7 @@ import {
   ReverseGeocodeResult,
   GeocodeOptions,
 } from './geocoding.service';
+import { logger } from '@/utils/logger';
 
 interface CacheEntry<T> {
   data: T;
@@ -46,7 +47,7 @@ export class GeocodingCacheService {
           this.cleanExpiredEntries();
         }
       } catch (error) {
-        console.warn('Failed to load geocoding cache:', error);
+        logger.warn('Failed to load geocoding cache', { error });
       }
     }
   }
@@ -61,7 +62,7 @@ export class GeocodingCacheService {
         };
         localStorage.setItem('geocoding-cache', JSON.stringify(cacheData));
       } catch (error) {
-        console.warn('Failed to save geocoding cache:', error);
+        logger.warn('Failed to save geocoding cache', { error });
       }
     }
   }
@@ -257,7 +258,12 @@ export class GeocodingCacheService {
         // Only pre-cache if not already cached
         if (!this.cache.reverseGeocode.has(key)) {
           // Mark for pre-caching (actual implementation would fetch these)
-          console.log(`Marked for pre-caching: ${nearbyLat}, ${nearbyLon}`);
+          logger.debug(`Marked for pre-caching: ${nearbyLat}, ${nearbyLon}`, {
+            component: 'GeocodingCacheService',
+            operation: 'markNearbyCellsForPrecaching',
+            nearbyLat,
+            nearbyLon,
+          });
         }
       }
     }

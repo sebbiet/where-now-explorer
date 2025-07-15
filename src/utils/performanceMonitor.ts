@@ -3,6 +3,8 @@
  * Tracks key performance metrics for the application
  */
 
+import { logger } from '@/utils/logger';
+
 // Extended interface for layout shift entries
 interface LayoutShiftEntry extends PerformanceEntry {
   value: number;
@@ -171,14 +173,24 @@ class PerformanceMonitor {
       Object.keys(scores).length;
 
     if (process.env.NODE_ENV === 'development') {
-      console.log(
-        `📊 Performance Score: ${(averageScore * 100).toFixed(0)}/100`
+      logger.info(
+        `📊 Performance Score: ${(averageScore * 100).toFixed(0)}/100`,
+        {
+          component: 'PerformanceMonitor',
+          score: (averageScore * 100).toFixed(0),
+        }
       );
 
       if (averageScore < 0.5) {
-        console.warn('⚠️ Performance needs improvement');
+        logger.warn('⚠️ Performance needs improvement', {
+          component: 'PerformanceMonitor',
+          score: averageScore,
+        });
       } else if (averageScore > 0.8) {
-        console.log('✅ Excellent performance!');
+        logger.info('✅ Excellent performance!', {
+          component: 'PerformanceMonitor',
+          score: averageScore,
+        });
       }
     }
   }

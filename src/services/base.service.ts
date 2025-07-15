@@ -9,6 +9,7 @@ import { rateLimiter } from './rateLimiter.service';
 import { withApiMonitoring } from './apiMonitor.service';
 import { withPerformanceTracking } from '@/utils/performanceMonitor';
 import { deduplicateGeocodingRequest } from '@/utils/requestDeduplication';
+import { logger } from '@/utils/logger';
 
 // Base error options interface
 export interface ServiceErrorOptions {
@@ -396,15 +397,29 @@ export abstract class BaseService {
       timestamp: new Date().toISOString(),
     };
 
-    console.error(`[${this.serviceName}] ${context}:`, errorInfo);
+    logger.error(
+      `[${this.serviceName}] ${context}`,
+      error instanceof Error ? error : undefined,
+      {
+        service: this.serviceName,
+        context,
+        errorInfo,
+      }
+    );
   }
 
   /**
    * Log retry attempts
    */
   private logRetry(attempt: number, delay: number): void {
-    console.log(
-      `[${this.serviceName}] Retrying operation (attempt ${attempt}) after ${Math.round(delay)}ms`
+    logger.info(
+      `[${this.serviceName}] Retrying operation (attempt ${attempt}) after ${Math.round(delay)}ms`,
+      {
+        service: this.serviceName,
+        operation: 'retry',
+        attempt,
+        delay: Math.round(delay),
+      }
     );
   }
 
@@ -413,10 +428,18 @@ export abstract class BaseService {
    */
   private logFallbackAttempt(provider: string, error: unknown): void {
     if (error) {
-      console.warn(`[${this.serviceName}] ${provider} provider failed:`, error);
+      logger.warn(`[${this.serviceName}] ${provider} provider failed`, {
+        service: this.serviceName,
+        provider,
+        error,
+      });
     } else {
-      console.log(
-        `[${this.serviceName}] Attempting operation with ${provider} provider`
+      logger.info(
+        `[${this.serviceName}] Attempting operation with ${provider} provider`,
+        {
+          service: this.serviceName,
+          provider,
+        }
       );
     }
   }

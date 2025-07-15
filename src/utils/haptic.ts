@@ -3,6 +3,8 @@
  * Provides vibration feedback for touch interactions
  */
 
+import { logger } from '@/utils/logger';
+
 interface HapticOptions {
   duration?: number;
   pattern?: number[];
@@ -43,7 +45,10 @@ class HapticFeedback {
         navigator.vibrate(10);
       }
     } catch (error) {
-      console.debug('Haptic feedback not available');
+      logger.debug('Haptic feedback not available', {
+        component: 'Haptic',
+        operation: 'vibrate',
+      });
     }
   }
 
@@ -61,7 +66,10 @@ class HapticFeedback {
         navigator.vibrate(20);
       }
     } catch (error) {
-      console.debug('Haptic feedback not available');
+      logger.debug('Haptic feedback not available', {
+        component: 'Haptic',
+        operation: 'vibrate',
+      });
     }
   }
 
@@ -79,7 +87,10 @@ class HapticFeedback {
         navigator.vibrate(30);
       }
     } catch (error) {
-      console.debug('Haptic feedback not available');
+      logger.debug('Haptic feedback not available', {
+        component: 'Haptic',
+        operation: 'vibrate',
+      });
     }
   }
 
@@ -98,7 +109,10 @@ class HapticFeedback {
         navigator.vibrate([20, 50, 20]);
       }
     } catch (error) {
-      console.debug('Haptic feedback not available');
+      logger.debug('Haptic feedback not available', {
+        component: 'Haptic',
+        operation: 'vibrate',
+      });
     }
   }
 
@@ -117,7 +131,10 @@ class HapticFeedback {
         navigator.vibrate(50);
       }
     } catch (error) {
-      console.debug('Haptic feedback not available');
+      logger.debug('Haptic feedback not available', {
+        component: 'Haptic',
+        operation: 'vibrate',
+      });
     }
   }
 
@@ -135,7 +152,10 @@ class HapticFeedback {
         navigator.vibrate(5);
       }
     } catch (error) {
-      console.debug('Haptic feedback not available');
+      logger.debug('Haptic feedback not available', {
+        component: 'Haptic',
+        operation: 'vibrate',
+      });
     }
   }
 
@@ -148,7 +168,10 @@ class HapticFeedback {
     try {
       navigator.vibrate(pattern);
     } catch (error) {
-      console.debug('Haptic feedback not available');
+      logger.debug('Haptic feedback not available', {
+        component: 'Haptic',
+        operation: 'vibrate',
+      });
     }
   }
 

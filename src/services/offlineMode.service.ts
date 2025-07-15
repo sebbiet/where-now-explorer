@@ -6,6 +6,7 @@
 import { LocationData } from '@/contexts/LocationContext';
 import { RouteResult } from './routing.service';
 import { GeocodeResult } from './geocoding.service';
+import { logger } from '@/utils/logger';
 
 interface CachedRoute {
   id: string;
@@ -49,13 +50,17 @@ export class OfflineModeService {
     window.addEventListener('online', () => {
       this.isOnline = true;
       this.notifyListeners(true);
-      console.log('Application is back online');
+      logger.info('Application is back online', {
+        service: 'OfflineModeService',
+      });
     });
 
     window.addEventListener('offline', () => {
       this.isOnline = false;
       this.notifyListeners(false);
-      console.log('Application is offline');
+      logger.info('Application is offline', {
+        service: 'OfflineModeService',
+      });
     });
 
     // Periodic connectivity check
@@ -123,7 +128,9 @@ export class OfflineModeService {
         return JSON.parse(stored);
       }
     } catch (error) {
-      console.error('Failed to load offline data:', error);
+      logger.error('Failed to load offline data', error as Error, {
+        service: 'OfflineModeService',
+      });
     }
 
     return {
@@ -143,7 +150,9 @@ export class OfflineModeService {
         JSON.stringify(this.offlineData)
       );
     } catch (error) {
-      console.error('Failed to save offline data:', error);
+      logger.error('Failed to save offline data', error as Error, {
+        service: 'OfflineModeService',
+      });
       // If storage is full, remove least accessed routes
       this.pruneOfflineData();
     }

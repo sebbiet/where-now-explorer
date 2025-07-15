@@ -3,6 +3,7 @@ import { GeocodingService, GeocodeResult } from '@/services/geocoding.service';
 import { toast } from 'sonner';
 import { sanitizeDestination } from '@/utils/sanitization';
 import { toastError } from '@/utils/errorHandling';
+import { logger } from '@/utils/logger';
 
 interface UseLocationSearchOptions {
   debounceDelay?: number;
@@ -49,7 +50,11 @@ export const useLocationSearch = ({
         setSelectedIndex(-1);
       } catch (error: any) {
         if (error.name !== 'AbortError') {
-          console.error('Search error:', error);
+          logger.error('Search error', error as Error, {
+            component: 'useLocationSearch',
+            operation: 'searchLocations',
+            query: searchQuery,
+          });
           if (error.message?.includes('Too many requests')) {
             toastError.network(() => searchLocations(searchQuery));
           }

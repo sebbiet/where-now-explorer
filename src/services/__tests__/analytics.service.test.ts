@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { analytics } from '../analytics.service';
+import type { MockGtag } from '@/test-utils/mockTypes';
 
 // Mock environment variables
 const mockEnv = {
@@ -23,18 +24,18 @@ describe('AnalyticsService', () => {
     // Mock window.gtag
     global.window = {
       ...global.window,
-      gtag: mockGtag,
+      gtag: mockGtag as MockGtag,
       dataLayer: [],
       location: {
         pathname: '/test-path',
-      },
-    } as any;
+      } as Location,
+    } as Window & typeof globalThis;
 
     // Mock document
     global.document = {
       ...global.document,
       title: 'Test Page',
-    } as any;
+    } as Document;
 
     // Mock console methods
     console.log = vi.fn();
@@ -87,7 +88,7 @@ describe('AnalyticsService', () => {
     });
 
     it('should warn when gtag is not available', () => {
-      delete (global.window as any).gtag;
+      delete (global.window as Window & { gtag?: MockGtag }).gtag;
 
       analytics.track('test_event');
 
@@ -167,7 +168,7 @@ describe('AnalyticsService', () => {
     });
 
     it('should not track page view when gtag is not available', () => {
-      delete (global.window as any).gtag;
+      delete (global.window as Window & { gtag?: MockGtag }).gtag;
 
       analytics.trackPageView();
 

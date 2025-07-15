@@ -3,6 +3,8 @@
  * Centralized service for tracking events in GA4
  */
 
+import { logger } from '@/utils/logger';
+
 declare global {
   interface Window {
     gtag: (...args: unknown[]) => void;
@@ -67,12 +69,18 @@ class AnalyticsService {
   track(eventName: string, parameters?: Record<string, any>): void {
     // Skip tracking in development unless explicitly enabled
     if (this.isDevelopment && !import.meta.env.VITE_ENABLE_ANALYTICS) {
-      console.log('[Analytics Dev]', eventName, parameters);
+      logger.debug('[Analytics Dev]', {
+        component: 'AnalyticsService',
+        eventName,
+        parameters,
+      });
       return;
     }
 
     if (!this.isInitialized || typeof window.gtag !== 'function') {
-      console.warn('[Analytics] gtag not available');
+      logger.warn('[Analytics] gtag not available', {
+        component: 'AnalyticsService',
+      });
       return;
     }
 
@@ -85,7 +93,11 @@ class AnalyticsService {
         environment: import.meta.env.MODE,
       });
     } catch (error) {
-      console.error('[Analytics] Error tracking event:', error);
+      logger.error('[Analytics] Error tracking event', error as Error, {
+        component: 'AnalyticsService',
+        eventName,
+        parameters,
+      });
     }
   }
 

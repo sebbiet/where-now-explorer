@@ -15,6 +15,7 @@ import {
   createSuggestionItem,
   SuggestionItem,
 } from '@/utils/addressFormatting';
+import { logger } from '@/utils/logger';
 
 interface DestinationSearchProps {
   onDestinationSubmit: (destination: string) => void;
@@ -67,7 +68,11 @@ export const DestinationSearch: React.FC<DestinationSearchProps> = ({
         setSuggestions(formattedSuggestions);
         setOpen(formattedSuggestions.length > 0);
       } catch (error) {
-        console.error('Error fetching place suggestions:', error);
+        logger.error('Error fetching place suggestions', error as Error, {
+          component: 'DestinationSearch',
+          operation: 'searchPlaces',
+          query,
+        });
         setSuggestions([]);
       } finally {
         setIsSearching(false);
