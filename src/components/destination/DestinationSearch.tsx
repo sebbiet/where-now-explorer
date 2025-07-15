@@ -95,9 +95,16 @@ export const DestinationSearch: React.FC<DestinationSearchProps> = ({
     setOpen(false);
   }, []);
 
-  const handleInputChange = useCallback((value: string) => {
-    setInputValue(value);
-  }, []);
+  const handleInputChange = useCallback(
+    (value: string) => {
+      setInputValue(value);
+      // Open popover when user starts typing
+      if (value.length >= 3 && !open) {
+        setOpen(true);
+      }
+    },
+    [open]
+  );
 
   const handleInputClear = useCallback(() => {
     setDestination('');
@@ -166,6 +173,7 @@ export const DestinationSearch: React.FC<DestinationSearchProps> = ({
                   onClear={handleInputClear}
                   isLoading={isLoading}
                   isOpen={open}
+                  isSearching={isSearching}
                 />
               </PopoverTrigger>
               <PopoverContent
@@ -173,6 +181,13 @@ export const DestinationSearch: React.FC<DestinationSearchProps> = ({
                 align="start"
                 sideOffset={5}
                 onOpenAutoFocus={(e) => e.preventDefault()}
+                onInteractOutside={(e) => {
+                  // Prevent closing when clicking on a suggestion
+                  const target = e.target as HTMLElement;
+                  if (target.closest('[role="option"]')) {
+                    e.preventDefault();
+                  }
+                }}
               >
                 <SuggestionsList
                   suggestions={suggestions}

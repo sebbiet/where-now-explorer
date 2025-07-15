@@ -39,6 +39,12 @@ const App = () => {
   useEffect(() => {
     // Handle unhandled errors
     const handleError = (event: ErrorEvent) => {
+      // Ignore ResizeObserver errors which are benign browser warnings
+      if (event.message?.includes('ResizeObserver loop')) {
+        event.preventDefault();
+        return;
+      }
+
       logger.error('Unhandled error', new Error(event.message), {
         component: 'App',
         filename: event.filename,

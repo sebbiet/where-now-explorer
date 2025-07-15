@@ -283,6 +283,11 @@ export const logAsyncOperation = async <T>(
 // Global error handler
 if (typeof window !== 'undefined') {
   window.addEventListener('error', (event) => {
+    // Ignore ResizeObserver errors which are benign browser warnings
+    if (event.message?.includes('ResizeObserver loop')) {
+      return;
+    }
+
     logger.error('Global error caught', event.error, {
       filename: event.filename,
       lineno: event.lineno,

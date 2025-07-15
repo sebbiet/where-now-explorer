@@ -14,6 +14,7 @@ import {
 import { fallbackGeocoding } from './fallbackGeocoding.service';
 import { BaseService, ServiceError, ValidationError } from './base.service';
 import { getErrorMessage } from '@/utils/errorMessages';
+import { logger } from '@/utils/logger';
 
 /**
  * Address components returned from geocoding services
@@ -231,8 +232,8 @@ class GeocodingServiceImpl extends BaseService {
           headers: GeocodingServiceImpl.DEFAULT_HEADERS,
         });
 
-        // Validate API response structure
-        if (!validateApiResponse(data, ['address'])) {
+        // For reverse geocoding, validate that we have an address field
+        if (!data || typeof data !== 'object' || !('address' in data)) {
           throw new ValidationError(
             getErrorMessage('GEOCODING', 'INVALID_RESPONSE')
           );
@@ -370,30 +371,40 @@ class GeocodingServiceImpl extends BaseService {
 
       // Primary operation
       const primaryOperation = async () => {
-        return this.executeRequest<GeocodeResult[]>(url, {
-          headers: GeocodingServiceImpl.DEFAULT_HEADERS,
-        });
+        try {
+          const result = await this.executeRequest<GeocodeResult[]>(url, {
+            headers: GeocodingServiceImpl.DEFAULT_HEADERS,
+          });
+          logger.info('Geocoding API successful', {
+            url,
+            resultCount: result.length,
+          });
+          return result;
+        } catch (error) {
+          logger.error('Geocoding API failed', error as Error, {
+            url,
+            query: sanitizedQuery,
+            baseUrl: this.baseUrl,
+            errorMessage:
+              error instanceof Error ? error.message : 'Unknown error',
+          });
+          throw error;
+        }
       };
 
-      // Execute with fallback support
-      const data = await this.executeWithFallbacks(primaryOperation, [
-        {
-          name: 'fallback-geocoding',
-          priority: 1,
-          execute: () =>
-            fallbackGeocoding.geocodeWithFallback(
-              sanitizedQuery,
-              options,
-              primaryOperation
-            ),
-        },
-      ]);
-
-      // Execute with deduplication
+      // Execute with deduplication and fallback support
       const result = await this.executeWithDeduplication(
         'geocode',
         { query: sanitizedQuery },
         async () => {
+          const data = await this.executeWithFallbacks(primaryOperation, [
+            {
+              name: 'fallback-geocoding',
+              priority: 1,
+              execute: () => fallbackGeocoding.geocode(sanitizedQuery, options),
+            },
+          ]);
+
           if (!Array.isArray(data)) {
             throw new ValidationError(
               getErrorMessage('GEOCODING', 'INVALID_RESPONSE')

@@ -43,7 +43,8 @@ export const SuggestionsList: React.FC<SuggestionsListProps> = ({
               <CommandItem
                 key={suggestion.id}
                 onSelect={() => onSelect(suggestion)}
-                className="cursor-pointer px-3 sm:px-4 py-3 sm:py-4 hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 border-b border-gray-100 dark:border-gray-700 last:border-b-0 touch-manipulation"
+                onClick={() => onSelect(suggestion)}
+                className="cursor-pointer px-3 sm:px-4 py-3 sm:py-4 hover:bg-yellow-50 dark:hover:bg-gray-700 active:bg-yellow-100 dark:active:bg-gray-600 border-b border-gray-100 dark:border-gray-700 last:border-b-0 touch-manipulation transition-colors duration-150"
                 role="option"
                 aria-selected={false}
               >
