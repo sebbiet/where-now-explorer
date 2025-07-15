@@ -48,6 +48,26 @@ This command will:
 2. Deploy the `dist` folder to the `gh-pages` branch
 3. GitHub Pages will serve from this branch
 
+## Environment Variables
+
+### Debug Panel Access
+
+To enable debug panel access in production:
+
+1. Create a `.env` file in your project root (copy from `.env.example`)
+2. Set a secure debug key:
+   ```bash
+   VITE_DEBUG_KEY=your-secret-debug-key
+   ```
+3. Build and deploy the application
+4. Access the debug panel in production by appending `?debug=your-secret-debug-key` to the URL
+
+**Important Security Notes:**
+- Never commit your `.env` file to version control
+- Use a strong, unique key that's hard to guess
+- Change the key periodically for better security
+- The debug panel is always visible in development mode without a key
+
 ## Important Notes
 
 ### HTTPS Requirement for Geolocation
@@ -76,9 +96,38 @@ If the app doesn't load correctly:
 
 ### Environment Considerations
 
-- The debug panel only appears in development mode
+- The debug panel only appears in development mode by default
+- To enable debug panel in production, see "Debug Panel Access" section below
 - All API calls (OpenStreetMap, OSRM) work from GitHub Pages
 - Location permissions will prompt the user due to HTTPS
+
+## Debug Panel Access (Production)
+
+The debug panel can be accessed in production using a secret key:
+
+1. **Set up environment variable** (for deployment):
+   ```bash
+   # Create .env file (DO NOT commit this file)
+   cp .env.example .env
+   
+   # Edit .env and set your secret key
+   VITE_DEBUG_KEY=your-very-secret-key-here
+   ```
+
+2. **Deploy with environment variable**:
+   - For GitHub Actions: Add `VITE_DEBUG_KEY` as a repository secret
+   - For manual deployment: Ensure the .env file is present during build
+
+3. **Access debug panel in production**:
+   ```
+   https://yoursite.com?debug=your-very-secret-key-here
+   ```
+
+**Security Notes:**
+- Never commit the actual debug key to version control
+- Use a strong, unique key that's hard to guess
+- Change the key periodically for better security
+- The debug panel is completely hidden without the correct key
 
 ## Local Preview
 

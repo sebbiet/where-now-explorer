@@ -38,8 +38,17 @@ const DebugPanel: React.FC = () => {
     { name: 'Golden Gate Bridge', lat: 37.8199, lng: -122.4783 },
   ];
   
-  // Only show in development
-  if (process.env.NODE_ENV !== 'development') {
+  // Check if debug mode is enabled via URL parameter
+  // Usage: ?debug=YOUR_SECRET_KEY (set via VITE_DEBUG_KEY env variable)
+  // This allows viewing debug panel in production for troubleshooting
+  const urlParams = new URLSearchParams(window.location.search);
+  const debugParam = urlParams.get('debug');
+  const debugKey = import.meta.env.VITE_DEBUG_KEY || 'development-only';
+  // Only enable if key is set and matches (prevents access if env var not configured)
+  const isDebugEnabled = debugKey !== 'development-only' && debugParam === debugKey;
+  
+  // Show in development OR when debug parameter is present
+  if (process.env.NODE_ENV !== 'development' && !isDebugEnabled) {
     return null;
   }
 
@@ -119,8 +128,15 @@ const DebugPanel: React.FC = () => {
 
   return (
     <div className="fixed bottom-4 right-4 z-50 space-y-4">
+      {/* Show debug mode indicator in production */}
+      {process.env.NODE_ENV === 'production' && (
+        <div className="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse">
+          🔧 DEBUG MODE
+        </div>
+      )}
+      
       {/* Production Status */}
-      <div className="max-w-2xl">
+      <div className="max-w-md">
         <ProductionStatus />
       </div>
       
