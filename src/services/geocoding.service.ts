@@ -1,3 +1,10 @@
+/**
+ * Geocoding Service
+ *
+ * Provides location search and reverse geocoding functionality using OpenStreetMap Nominatim API.
+ * Includes caching, error handling, rate limiting, and fallback support for reliable location services.
+ */
+
 import { GeocodingCacheService } from './geocodingCache.service';
 import {
   sanitizeDestination,
@@ -8,62 +15,120 @@ import { fallbackGeocoding } from './fallbackGeocoding.service';
 import { BaseService, ServiceError, ValidationError } from './base.service';
 import { getErrorMessage } from '@/utils/errorMessages';
 
+/**
+ * Address components returned from geocoding services
+ */
 export interface Address {
+  /** Street or road name */
   road?: string;
+  /** Suburb or neighborhood name */
   suburb?: string;
+  /** Neighborhood name (alternative) */
   neighbourhood?: string;
+  /** City name */
   city?: string;
+  /** Town name (smaller than city) */
   town?: string;
+  /** Village name (smaller than town) */
   village?: string;
+  /** County or administrative area */
   county?: string;
+  /** State or province */
   state?: string;
+  /** Country name */
   country?: string;
+  /** Postal/zip code */
   postcode?: string;
+  /** Tourist attraction name */
   attraction?: string;
+  /** Amenity name (restaurants, shops, etc.) */
   amenity?: string;
+  /** Tourism-related place */
   tourism?: string;
 }
 
+/**
+ * Result from reverse geocoding (coordinates to address)
+ */
 export interface ReverseGeocodeResult {
+  /** Street address */
   street?: string;
+  /** Suburb or neighborhood */
   suburb?: string;
+  /** City name */
   city?: string;
+  /** County name */
   county?: string;
+  /** State or province */
   state?: string;
+  /** Country name */
   country?: string;
+  /** Original latitude coordinate */
   latitude: number;
+  /** Original longitude coordinate */
   longitude: number;
 }
 
+/**
+ * Result from forward geocoding (address/place to coordinates)
+ */
 export interface GeocodeResult {
+  /** Latitude as string */
   lat: string;
+  /** Longitude as string */
   lon: string;
+  /** Human-readable location description */
   display_name: string;
+  /** Detailed address components */
   address?: Address;
+  /** Unique place identifier */
   place_id?: string;
+  /** OpenStreetMap object type */
   osm_type?: string;
+  /** OpenStreetMap object ID */
   osm_id?: string;
+  /** Bounding box coordinates [min_lat, max_lat, min_lon, max_lon] */
   boundingbox?: string[];
+  /** Place type classification */
   type?: string;
+  /** Search result importance score */
   importance?: number;
 }
 
+/**
+ * Options for reverse geocoding (coordinates to address)
+ */
 export interface ReverseGeocodeOptions {
+  /** Latitude coordinate */
   latitude: number;
+  /** Longitude coordinate */
   longitude: number;
+  /** Whether to return minimal response data */
   minimal?: boolean;
 }
 
+/**
+ * Options for forward geocoding (address/place to coordinates)
+ */
 export interface GeocodeOptions {
+  /** Search query (address, place name, etc.) */
   query: string;
+  /** Maximum number of results to return */
   limit?: number;
+  /** Whether to include detailed address components */
   addressdetails?: boolean;
+  /** Limit results to specific country codes (ISO 3166-1 alpha-2) */
   countrycodes?: string[];
+  /** Whether to restrict results to the viewbox area */
   bounded?: boolean;
+  /** Bounding box to prioritize results [min_lon, min_lat, max_lon, max_lat] */
   viewbox?: [number, number, number, number];
 }
 
-// Keep GeocodingError for backward compatibility
+/**
+ * Custom error class for geocoding operations
+ * @deprecated Use ServiceError from base.service instead
+ */
 export class GeocodingError extends ServiceError {
   constructor(message: string, statusCode?: number | string) {
     super(
@@ -93,6 +158,22 @@ class GeocodingServiceImpl extends BaseService {
     });
   }
 
+  /**
+   * Convert geographic coordinates to a human-readable address
+   *
+   * @param options - Reverse geocoding parameters
+   * @returns Promise resolving to address information
+   *
+   * @example
+   * ```typescript
+   * const result = await geocoding.reverseGeocode({
+   *   latitude: -33.8688,
+   *   longitude: 151.2093,
+   *   minimal: false
+   * });
+   * console.log(result.city); // "Sydney"
+   * ```
+   */
   async reverseGeocode(
     options: ReverseGeocodeOptions
   ): Promise<ReverseGeocodeResult> {
@@ -202,6 +283,23 @@ class GeocodingServiceImpl extends BaseService {
     }
   }
 
+  /**
+   * Convert an address or place name to geographic coordinates
+   *
+   * @param options - Geocoding search parameters
+   * @returns Promise resolving to array of location results
+   *
+   * @example
+   * ```typescript
+   * const results = await geocoding.geocode({
+   *   query: "Sydney Opera House",
+   *   limit: 5,
+   *   addressdetails: true,
+   *   countrycodes: ["au"]
+   * });
+   * console.log(results[0].display_name);
+   * ```
+   */
   async geocode(options: GeocodeOptions): Promise<GeocodeResult[]> {
     try {
       const {
@@ -303,6 +401,14 @@ class GeocodingServiceImpl extends BaseService {
     }
   }
 
+  /**
+   * Extract the primary place name from a geocoding result
+   *
+   * Prioritizes attractions, amenities, and tourism sites over generic addresses
+   *
+   * @param result - Geocoding result to extract name from
+   * @returns Primary place name
+   */
   extractPlaceName(result: GeocodeResult): string {
     if (result.address) {
       if (result.address.attraction) {
@@ -319,6 +425,23 @@ class GeocodingServiceImpl extends BaseService {
     return result.display_name.split(',')[0];
   }
 
+  /**
+   * Format an address result into a human-readable string
+   *
+   * @param address - Address components to format
+   * @returns Formatted address string
+   *
+   * @example
+   * ```typescript
+   * const formatted = geocoding.formatAddress({
+   *   street: "123 Main St",
+   *   city: "Sydney",
+   *   state: "NSW",
+   *   country: "Australia"
+   * });
+   * // Returns: "123 Main St, Sydney, NSW, Australia"
+   * ```
+   */
   formatAddress(address: ReverseGeocodeResult): string {
     const parts = [];
 
@@ -335,13 +458,37 @@ class GeocodingServiceImpl extends BaseService {
 // Create singleton instance
 const geocodingServiceInstance = new GeocodingServiceImpl();
 
-// Export static-like interface for backward compatibility
+/**
+ * Static interface for geocoding operations
+ *
+ * Provides both modern options-based methods and legacy parameter-based methods
+ * for backward compatibility. All methods are automatically rate-limited, cached,
+ * and include error handling with fallback support.
+ *
+ * @example
+ * ```typescript
+ * // Modern interface
+ * const results = await GeocodingService.geocode({
+ *   query: "Sydney Opera House",
+ *   limit: 5
+ * });
+ *
+ * // Legacy interface (still supported)
+ * const results = await GeocodingService.geocode("Sydney Opera House", { limit: 5 });
+ * ```
+ */
 export class GeocodingService {
-  // New options-based interface
+  /**
+   * Convert coordinates to address (modern interface)
+   */
   static async reverseGeocode(
     options: ReverseGeocodeOptions
   ): Promise<ReverseGeocodeResult>;
-  // Backward compatibility interface
+
+  /**
+   * Convert coordinates to address (legacy interface)
+   * @deprecated Use options-based interface instead
+   */
   static async reverseGeocode(
     latitude: number,
     longitude: number,
@@ -367,9 +514,15 @@ export class GeocodingService {
     }
   }
 
-  // New options-based interface
+  /**
+   * Convert address/place to coordinates (modern interface)
+   */
   static async geocode(options: GeocodeOptions): Promise<GeocodeResult[]>;
-  // Backward compatibility interface
+
+  /**
+   * Convert address/place to coordinates (legacy interface)
+   * @deprecated Use options-based interface instead
+   */
   static async geocode(
     query: string,
     options?: {
@@ -404,10 +557,22 @@ export class GeocodingService {
     }
   }
 
+  /**
+   * Extract the primary place name from a geocoding result
+   *
+   * @param result - Geocoding result
+   * @returns Extracted place name
+   */
   static extractPlaceName(result: GeocodeResult): string {
     return geocodingServiceInstance.extractPlaceName(result);
   }
 
+  /**
+   * Format address components into a readable string
+   *
+   * @param address - Address result to format
+   * @returns Formatted address string
+   */
   static formatAddress(address: ReverseGeocodeResult): string {
     return geocodingServiceInstance.formatAddress(address);
   }
