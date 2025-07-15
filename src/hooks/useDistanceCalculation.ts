@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { RoutingService, RouteResult } from '@/services/routing.service';
 import { GeocodeResult } from '@/services/geocoding.service';
 import { toast } from 'sonner';
+import { toastError, createErrorToast } from '@/utils/errorHandling';
 
 interface UseDistanceCalculationOptions {
   onSuccess?: (result: RouteResult) => void;
@@ -40,15 +41,15 @@ export const useDistanceCalculation = (
 
         // Show user-friendly error messages
         if (error.message.includes('rate limit')) {
-          toast.error(
-            'Too many route calculations. Please wait a moment before trying again.'
+          toastError.network(() =>
+            calculateDistance(fromLat, fromLng, destination)
           );
         } else if (error.message.includes('Could not find')) {
-          toast.error(
+          createErrorToast(
             "We couldn't find a route to this destination. Try a different location."
           );
         } else {
-          toast.error('Failed to calculate route. Please try again.', {
+          createErrorToast('Failed to calculate route. Please try again.', {
             action: {
               label: 'Retry',
               onClick: () => calculateDistance(fromLat, fromLng, destination),

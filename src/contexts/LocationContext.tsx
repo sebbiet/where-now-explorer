@@ -13,6 +13,7 @@ import {
   GeolocationErrorCode,
 } from '@/services/geolocation.service';
 import { GeocodingService, GeocodingError } from '@/services/geocoding.service';
+import { handleLocationError } from '@/utils/errorHandling';
 import { TraditionalLandService } from '@/services/traditionalLand.service';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { analytics } from '@/services/analytics.service';
@@ -152,62 +153,11 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
         operation: 'fetchLocation',
       });
 
-      // Provide more helpful error messages based on the error type
-      if (error instanceof GeolocationError) {
-        switch (error.code) {
-          case GeolocationErrorCode.PERMISSION_DENIED:
-            toast.error('📍 Location access denied', {
-              description:
-                "Click the location icon in your browser's address bar to enable permissions.",
-              action: {
-                label: 'Learn how',
-                onClick: () => {
-                  alert(
-                    "1. Look for a location icon in your browser's address bar\n2. Click it and select 'Allow'\n3. Refresh the page"
-                  );
-                },
-              },
-            });
-            break;
-          case GeolocationErrorCode.POSITION_UNAVAILABLE:
-            toast.error("📍 Can't find your location", {
-              description:
-                'Please check if location services are enabled on your device.',
-              action: {
-                label: 'Try again',
-                onClick: () => fetchLocation(),
-              },
-            });
-            break;
-          case GeolocationErrorCode.TIMEOUT:
-            toast.error('📍 Location request timed out', {
-              description: 'This is taking longer than usual.',
-              action: {
-                label: 'Retry',
-                onClick: () => fetchLocation(),
-              },
-            });
-            break;
-          case GeolocationErrorCode.UNSUPPORTED:
-            toast.error(
-              "📍 Your browser doesn't support location services. Please try Chrome, Firefox, or Safari."
-            );
-            break;
-          default:
-            toast.error(`📍 ${error.message}`, {
-              action: {
-                label: 'Retry',
-                onClick: () => fetchLocation(),
-              },
-            });
-        }
-      } else if (error instanceof GeocodingError) {
-        toast.error("📍 Couldn't get your address. Please try again later.");
-      } else {
-        toast.error(
-          "📍 Couldn't find your location. Please make sure location services are enabled."
-        );
-      }
+      // Use centralized error handling
+      handleLocationError(error, {
+        onRetry: () => fetchLocation(),
+        context: 'LocationContext.fetchLocation',
+      });
     } finally {
       setIsLoadingLocation(false);
       setIsRefreshingLocation(false);

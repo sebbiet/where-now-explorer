@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { GeocodingService, GeocodingError } from '@/services/geocoding.service';
 import { RoutingService, RoutingError } from '@/services/routing.service';
 import { analytics } from '@/services/analytics.service';
+import { createErrorToast } from '@/utils/errorHandling';
 
 interface DestinationData {
   name: string;
@@ -26,7 +27,9 @@ const DestinationSection = () => {
   // Calculate distance to destination
   const calculateDistance = async (destination: string) => {
     if (!locationData.latitude || !locationData.longitude) {
-      toast.error("Can't calculate distance without your current location");
+      createErrorToast(
+        "Can't calculate distance without your current location"
+      );
       return;
     }
 
@@ -43,7 +46,9 @@ const DestinationSection = () => {
       });
 
       if (places.length === 0) {
-        toast.error('Place not found. Try a more specific name or address.');
+        createErrorToast(
+          'Place not found. Try a more specific name or address.'
+        );
         return;
       }
 
@@ -102,7 +107,7 @@ const DestinationSection = () => {
           destination_query: destination,
         });
 
-        toast.error("🗺️ Couldn't find that place", {
+        createErrorToast("🗺️ Couldn't find that place", {
           description: 'Try a more specific name or address',
           action: {
             label: 'Clear & retry',
@@ -121,13 +126,12 @@ const DestinationSection = () => {
         });
 
         if (error.code === 'NO_ROUTE') {
-          toast.error('🚗 No route found', {
+          createErrorToast('🚗 No route found', {
             description:
               "We couldn't find a driving route to that destination. It might be on an island or inaccessible by car.",
-            duration: 5000,
           });
         } else {
-          toast.error("📏 Couldn't calculate distance", {
+          createErrorToast("📏 Couldn't calculate distance", {
             description: 'There was a problem calculating the route.',
             action: {
               label: 'Try again',
@@ -144,7 +148,7 @@ const DestinationSection = () => {
           destination_query: destination,
         });
 
-        toast.error('😕 Something went wrong', {
+        createErrorToast('😕 Something went wrong', {
           description: "Don't worry, let's try again!",
           action: {
             label: 'Retry',

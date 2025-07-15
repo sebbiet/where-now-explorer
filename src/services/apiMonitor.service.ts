@@ -229,10 +229,9 @@ export const apiMonitor = new ApiMonitorService();
 /**
  * Wrap a function with API monitoring
  */
-export function withApiMonitoring<T extends (...args: any[]) => Promise<any>>(
-  endpoint: string,
-  fn: T
-): T {
+export function withApiMonitoring<
+  T extends (...args: unknown[]) => Promise<unknown>,
+>(endpoint: string, fn: T): T {
   return (async (...args: Parameters<T>) => {
     // Check circuit breaker
     if (apiMonitor.isCircuitOpen(endpoint)) {

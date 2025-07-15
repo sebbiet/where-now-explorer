@@ -1,4 +1,8 @@
-import { GeocodeResult, ReverseGeocodeResult } from './geocoding.service';
+import {
+  GeocodeResult,
+  ReverseGeocodeResult,
+  GeocodeOptions,
+} from './geocoding.service';
 
 interface CacheEntry<T> {
   data: T;
@@ -98,7 +102,10 @@ export class GeocodingCacheService {
     }
   }
 
-  static getGeocodeCache(query: string, options?: any): GeocodeResult[] | null {
+  static getGeocodeCache(
+    query: string,
+    options?: Partial<GeocodeOptions>
+  ): GeocodeResult[] | null {
     const key = this.createGeocodeKey(query, options);
     const entry = this.cache.geocode.get(key);
 
@@ -124,7 +131,7 @@ export class GeocodingCacheService {
 
   static setGeocodeCache(
     query: string,
-    options: any,
+    options: Partial<GeocodeOptions>,
     data: GeocodeResult[]
   ): void {
     const key = this.createGeocodeKey(query, options);
@@ -177,7 +184,10 @@ export class GeocodingCacheService {
     this.saveCache();
   }
 
-  private static createGeocodeKey(query: string, options?: any): string {
+  private static createGeocodeKey(
+    query: string,
+    options?: Partial<GeocodeOptions>
+  ): string {
     // Round coordinates to reduce cache misses for nearby locations
     const normalized = {
       q: query.toLowerCase().trim(),

@@ -117,10 +117,14 @@ export interface ServiceConfig {
   enablePerformanceTracking?: boolean;
 }
 
+export interface RequestBody {
+  [key: string]: unknown;
+}
+
 export interface RequestOptions {
   headers?: Record<string, string>;
   method?: string;
-  body?: any;
+  body?: RequestBody | string | FormData | null;
   timeout?: number;
   skipRateLimit?: boolean;
   skipRetry?: boolean;
@@ -153,7 +157,7 @@ export abstract class BaseService {
   /**
    * Centralized error handling for all service operations
    */
-  protected handleError(error: any, context: string): never {
+  protected handleError(error: unknown, context: string): never {
     // Log the error with context
     this.logError(error, context);
 
@@ -336,7 +340,7 @@ export abstract class BaseService {
    */
   protected async executeWithDeduplication<T>(
     operationType: string,
-    operationKey: any,
+    operationKey: string | number,
     operation: () => Promise<T>
   ): Promise<T> {
     if (!this.config.enableDeduplication) {
@@ -350,8 +354,8 @@ export abstract class BaseService {
    * Validate input parameters
    */
   protected validateInput(
-    input: any,
-    validationRules: Record<string, (value: any) => boolean>
+    input: unknown,
+    validationRules: Record<string, (value: unknown) => boolean>
   ): void {
     for (const [field, validator] of Object.entries(validationRules)) {
       if (!validator(input[field])) {
@@ -383,7 +387,7 @@ export abstract class BaseService {
   /**
    * Log errors with consistent format
    */
-  private logError(error: any, context: string): void {
+  private logError(error: unknown, context: string): void {
     const errorInfo = {
       service: this.serviceName,
       context,
@@ -407,7 +411,7 @@ export abstract class BaseService {
   /**
    * Log fallback attempts
    */
-  private logFallbackAttempt(provider: string, error: any): void {
+  private logFallbackAttempt(provider: string, error: unknown): void {
     if (error) {
       console.warn(`[${this.serviceName}] ${provider} provider failed:`, error);
     } else {

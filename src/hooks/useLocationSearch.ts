@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { GeocodingService, GeocodeResult } from '@/services/geocoding.service';
 import { toast } from 'sonner';
 import { sanitizeDestination } from '@/utils/sanitization';
+import { toastError } from '@/utils/errorHandling';
 
 interface UseLocationSearchOptions {
   debounceDelay?: number;
@@ -50,9 +51,7 @@ export const useLocationSearch = ({
         if (error.name !== 'AbortError') {
           console.error('Search error:', error);
           if (error.message?.includes('Too many requests')) {
-            toast.error(
-              'Search rate limit reached. Please wait a moment before searching again.'
-            );
+            toastError.network(() => searchLocations(searchQuery));
           }
           setSuggestions([]);
         }
