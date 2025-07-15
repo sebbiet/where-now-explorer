@@ -32,6 +32,8 @@ jobs:
         
       - name: Build
         run: npm run build
+        env:
+          VITE_DEBUG_KEY: ${{ secrets.VITE_DEBUG_KEY }}
         
       - name: Setup Pages
         uses: actions/configure-pages@v4
