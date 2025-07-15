@@ -1,22 +1,20 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
-import path from "path";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react-swc';
+import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   // Using root domain now (thereyetapp.com)
   base: '/',
   server: {
-    host: "::",
+    host: '::',
     port: 8080,
     https: false, // Set to true if you need HTTPS for geolocation
   },
-  plugins: [
-    react()
-  ],
+  plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      '@': path.resolve(__dirname, './src'),
     },
   },
   build: {
@@ -46,7 +44,7 @@ export default defineConfig(({ mode }) => ({
       'react',
       'react-dom',
       'react-router-dom',
-      '@tanstack/react-query'
+      '@tanstack/react-query',
     ],
   },
 }));

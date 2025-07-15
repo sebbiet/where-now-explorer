@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { GeocodingService, GeocodingError, GeocodeResult, ReverseGeocodeResult } from '../geocoding.service';
+import {
+  GeocodingService,
+  GeocodingError,
+  GeocodeResult,
+  ReverseGeocodeResult,
+} from '../geocoding.service';
 import { GeocodingCacheService } from '../geocodingCache.service';
 import { fallbackGeocoding } from '../fallbackGeocoding.service';
 import { getErrorMessage } from '@/utils/errorMessages';
@@ -37,7 +42,7 @@ vi.mock('@/utils/sanitization', () => ({
     return lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180;
   }),
   validateApiResponse: vi.fn((data: any, requiredFields: string[]) => {
-    return requiredFields.every(field => field in data);
+    return requiredFields.every((field) => field in data);
   }),
 }));
 
@@ -98,12 +103,16 @@ describe('GeocodingService', () => {
 
     it('should handle empty input in searchPlaces', async () => {
       // Act & Assert
-      await expect(GeocodingService.geocode({ query: '  ' })).rejects.toThrow(ValidationError);
-      
+      await expect(GeocodingService.geocode({ query: '  ' })).rejects.toThrow(
+        ValidationError
+      );
+
       try {
         await GeocodingService.geocode({ query: '  ' });
       } catch (error) {
-        expect(error.message).toBe('VALIDATION_REQUIRED_FIELD_{"field":"Search query"}');
+        expect(error.message).toBe(
+          'VALIDATION_REQUIRED_FIELD_{"field":"Search query"}'
+        );
       }
     });
 
@@ -149,7 +158,9 @@ describe('GeocodingService', () => {
         },
       ];
 
-      vi.mocked(GeocodingCacheService.getGeocodeCache).mockReturnValueOnce(cachedResults);
+      vi.mocked(GeocodingCacheService.getGeocodeCache).mockReturnValueOnce(
+        cachedResults
+      );
 
       // Act
       const results = await GeocodingService.geocode({ query: 'London' });
@@ -167,7 +178,9 @@ describe('GeocodingService', () => {
       } as Response);
 
       // Act & Assert
-      await expect(GeocodingService.geocode({ query: 'Test' })).rejects.toThrow();
+      await expect(
+        GeocodingService.geocode({ query: 'Test' })
+      ).rejects.toThrow();
     });
   });
 
@@ -192,7 +205,7 @@ describe('GeocodingService', () => {
       // Act
       const result = await GeocodingService.reverseGeocode({
         latitude: 40.7128,
-        longitude: -74.0060,
+        longitude: -74.006,
       });
 
       // Assert
@@ -203,11 +216,11 @@ describe('GeocodingService', () => {
         state: 'New York',
         country: 'USA',
         latitude: 40.7128,
-        longitude: -74.0060,
+        longitude: -74.006,
       });
       expect(GeocodingCacheService.setReverseGeocodeCache).toHaveBeenCalledWith(
         40.7128,
-        -74.0060,
+        -74.006,
         result
       );
     });
@@ -223,9 +236,9 @@ describe('GeocodingService', () => {
 
       // Act & Assert
       for (const coords of invalidCoordinates) {
-        await expect(
-          GeocodingService.reverseGeocode(coords)
-        ).rejects.toThrow(ValidationError);
+        await expect(GeocodingService.reverseGeocode(coords)).rejects.toThrow(
+          ValidationError
+        );
       }
     });
 
@@ -236,15 +249,17 @@ describe('GeocodingService', () => {
         city: 'Cached City',
         country: 'Cached Country',
         latitude: 40.7128,
-        longitude: -74.0060,
+        longitude: -74.006,
       };
 
-      vi.mocked(GeocodingCacheService.getReverseGeocodeCache).mockReturnValueOnce(cachedResult);
+      vi.mocked(
+        GeocodingCacheService.getReverseGeocodeCache
+      ).mockReturnValueOnce(cachedResult);
 
       // Act
       const result = await GeocodingService.reverseGeocode({
         latitude: 40.7128,
-        longitude: -74.0060,
+        longitude: -74.006,
       });
 
       // Assert
@@ -260,7 +275,7 @@ describe('GeocodingService', () => {
       await expect(
         GeocodingService.reverseGeocode({
           latitude: 40.7128,
-          longitude: -74.0060,
+          longitude: -74.006,
         })
       ).rejects.toThrow();
     });
@@ -277,7 +292,7 @@ describe('GeocodingService', () => {
       await expect(
         GeocodingService.reverseGeocode({
           latitude: 40.7128,
-          longitude: -74.0060,
+          longitude: -74.006,
         })
       ).rejects.toThrow();
     });
@@ -294,7 +309,7 @@ describe('GeocodingService', () => {
       await expect(
         GeocodingService.reverseGeocode({
           latitude: 40.7128,
-          longitude: -74.0060,
+          longitude: -74.006,
         })
       ).rejects.toThrow();
     });
@@ -318,7 +333,7 @@ describe('GeocodingService', () => {
       // Act
       const result = await GeocodingService.reverseGeocode({
         latitude: 40.7128,
-        longitude: -74.0060,
+        longitude: -74.006,
       });
 
       // Assert
@@ -348,7 +363,7 @@ describe('GeocodingService', () => {
       // Act
       const result = await GeocodingService.reverseGeocode({
         latitude: 40.7128,
-        longitude: -74.0060,
+        longitude: -74.006,
       });
 
       // Assert
@@ -359,7 +374,7 @@ describe('GeocodingService', () => {
         state: 'State Name',
         country: 'Country Name',
         latitude: 40.7128,
-        longitude: -74.0060,
+        longitude: -74.006,
       });
     });
 
@@ -380,7 +395,7 @@ describe('GeocodingService', () => {
       // Act
       await GeocodingService.reverseGeocode({
         latitude: 40.7128,
-        longitude: -74.0060,
+        longitude: -74.006,
         minimal: true,
       });
 
@@ -408,7 +423,7 @@ describe('GeocodingService', () => {
       } as Response);
 
       // Act
-      const result = await GeocodingService.reverseGeocode(40.7128, -74.0060);
+      const result = await GeocodingService.reverseGeocode(40.7128, -74.006);
 
       // Assert
       expect(result.city).toBe('Legacy City');
@@ -430,7 +445,9 @@ describe('GeocodingService', () => {
       } as Response);
 
       // Act
-      const results = await GeocodingService.geocode('Legacy Query', { limit: 5 });
+      const results = await GeocodingService.geocode('Legacy Query', {
+        limit: 5,
+      });
 
       // Assert
       expect(results).toEqual(mockResults);
@@ -452,7 +469,9 @@ describe('GeocodingService', () => {
           city: 'Paris',
         },
       };
-      expect(GeocodingService.extractPlaceName(attractionResult)).toBe('Eiffel Tower');
+      expect(GeocodingService.extractPlaceName(attractionResult)).toBe(
+        'Eiffel Tower'
+      );
 
       // Test with amenity
       const amenityResult: GeocodeResult = {
@@ -464,7 +483,9 @@ describe('GeocodingService', () => {
           city: 'Paris',
         },
       };
-      expect(GeocodingService.extractPlaceName(amenityResult)).toBe('Café de Flore');
+      expect(GeocodingService.extractPlaceName(amenityResult)).toBe(
+        'Café de Flore'
+      );
 
       // Test with tourism
       const tourismResult: GeocodeResult = {
@@ -476,7 +497,9 @@ describe('GeocodingService', () => {
           city: 'Paris',
         },
       };
-      expect(GeocodingService.extractPlaceName(tourismResult)).toBe('Louvre Museum');
+      expect(GeocodingService.extractPlaceName(tourismResult)).toBe(
+        'Louvre Museum'
+      );
 
       // Test fallback to display_name
       const fallbackResult: GeocodeResult = {
@@ -484,7 +507,9 @@ describe('GeocodingService', () => {
         lon: '2.2945',
         display_name: 'Random Place, Paris, France',
       };
-      expect(GeocodingService.extractPlaceName(fallbackResult)).toBe('Random Place');
+      expect(GeocodingService.extractPlaceName(fallbackResult)).toBe(
+        'Random Place'
+      );
     });
 
     it('should format address correctly', () => {
@@ -496,7 +521,7 @@ describe('GeocodingService', () => {
         state: 'New York',
         country: 'USA',
         latitude: 40.7128,
-        longitude: -74.0060,
+        longitude: -74.006,
       };
       expect(GeocodingService.formatAddress(fullAddress)).toBe(
         'Main Street, Downtown, New York, New York, USA'

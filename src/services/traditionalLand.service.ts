@@ -1,4 +1,8 @@
-import { firstNationsPlaces, normalizePlaceName, TraditionalLandInfo } from '@/data/firstNationsPlaces';
+import {
+  firstNationsPlaces,
+  normalizePlaceName,
+  TraditionalLandInfo,
+} from '@/data/firstNationsPlaces';
 
 export class TraditionalLandService {
   /**
@@ -11,12 +15,12 @@ export class TraditionalLandService {
     state?: string
   ): TraditionalLandInfo | null {
     if (!city && !suburb) return null;
-    
+
     // Try exact match with city first
     if (city) {
       const cityInfo = firstNationsPlaces[city];
       if (cityInfo) return cityInfo;
-      
+
       // Try normalized match
       const normalizedCity = normalizePlaceName(city);
       for (const [placeName, info] of Object.entries(firstNationsPlaces)) {
@@ -25,12 +29,12 @@ export class TraditionalLandService {
         }
       }
     }
-    
+
     // Try suburb if no city match
     if (suburb) {
       const suburbInfo = firstNationsPlaces[suburb];
       if (suburbInfo) return suburbInfo;
-      
+
       // Try normalized match
       const normalizedSuburb = normalizePlaceName(suburb);
       for (const [placeName, info] of Object.entries(firstNationsPlaces)) {
@@ -39,7 +43,7 @@ export class TraditionalLandService {
         }
       }
     }
-    
+
     // Special handling for regions/areas
     // For example, if someone is in a suburb of Sydney, we can still acknowledge Gadigal land
     if (city && state) {
@@ -47,18 +51,20 @@ export class TraditionalLandService {
       const regionInfo = firstNationsPlaces[regionKey];
       if (regionInfo) return regionInfo;
     }
-    
+
     return null;
   }
-  
+
   /**
    * Check if location is in Australia
    */
   static isAustralianLocation(country?: string): boolean {
     if (!country) return false;
     const normalizedCountry = country.toLowerCase().trim();
-    return normalizedCountry === 'australia' || 
-           normalizedCountry === 'aus' || 
-           normalizedCountry === 'au';
+    return (
+      normalizedCountry === 'australia' ||
+      normalizedCountry === 'aus' ||
+      normalizedCountry === 'au'
+    );
   }
 }

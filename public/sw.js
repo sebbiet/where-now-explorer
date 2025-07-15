@@ -18,11 +18,12 @@ const API_CACHE_PATTERNS = [
   /router\.project-osrm\.org/,
 ];
 
-self.addEventListener('install', event => {
+self.addEventListener('install', (event) => {
   console.log('Service Worker installing...');
   event.waitUntil(
-    caches.open(STATIC_CACHE)
-      .then(cache => {
+    caches
+      .open(STATIC_CACHE)
+      .then((cache) => {
         console.log('Caching static assets');
         return cache.addAll(STATIC_ASSETS);
       })
@@ -30,32 +31,35 @@ self.addEventListener('install', event => {
   );
 });
 
-self.addEventListener('activate', event => {
+self.addEventListener('activate', (event) => {
   console.log('Service Worker activating...');
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          // Delete old caches
-          if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => self.clients.claim())
+    caches
+      .keys()
+      .then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            // Delete old caches
+            if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
+              console.log('Deleting old cache:', cacheName);
+              return caches.delete(cacheName);
+            }
+          })
+        );
+      })
+      .then(() => self.clients.claim())
   );
 });
 
-self.addEventListener('fetch', event => {
+self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
   // Handle API requests
   if (shouldCacheAPI(request.url)) {
     event.respondWith(
-      caches.open(DYNAMIC_CACHE).then(cache => {
-        return cache.match(request).then(cachedResponse => {
+      caches.open(DYNAMIC_CACHE).then((cache) => {
+        return cache.match(request).then((cachedResponse) => {
           if (cachedResponse) {
             // Return cached response and fetch in background
             fetchAndCache(request, cache);
@@ -70,74 +74,82 @@ self.addEventListener('fetch', event => {
   }
 
   // Handle static assets and app routes
-  if (request.destination === 'document' || 
-      request.destination === 'script' || 
-      request.destination === 'style' ||
-      request.destination === 'image') {
-    
+  if (
+    request.destination === 'document' ||
+    request.destination === 'script' ||
+    request.destination === 'style' ||
+    request.destination === 'image'
+  ) {
     event.respondWith(
-      caches.match(request).then(cachedResponse => {
+      caches.match(request).then((cachedResponse) => {
         if (cachedResponse) {
           return cachedResponse;
         }
-        
-        return fetch(request).then(response => {
-          // Cache successful responses
-          if (response.status === 200) {
-            const responseClone = response.clone();
-            caches.open(STATIC_CACHE).then(cache => {
-              cache.put(request, responseClone);
-            });
-          }
-          return response;
-        }).catch(() => {
-          // Return offline fallback for HTML requests
-          if (request.destination === 'document') {
-            return caches.match('/index.html');
-          }
-        });
+
+        return fetch(request)
+          .then((response) => {
+            // Cache successful responses
+            if (response.status === 200) {
+              const responseClone = response.clone();
+              caches.open(STATIC_CACHE).then((cache) => {
+                cache.put(request, responseClone);
+              });
+            }
+            return response;
+          })
+          .catch(() => {
+            // Return offline fallback for HTML requests
+            if (request.destination === 'document') {
+              return caches.match('/index.html');
+            }
+          });
       })
     );
   }
 });
 
 function shouldCacheAPI(url) {
-  return API_CACHE_PATTERNS.some(pattern => pattern.test(url));
+  return API_CACHE_PATTERNS.some((pattern) => pattern.test(url));
 }
 
 function fetchAndCache(request, cache) {
-  return fetch(request).then(response => {
-    if (response.status === 200) {
-      const responseClone = response.clone();
-      // Cache API responses for 5 minutes
-      const headers = new Headers(responseClone.headers);
-      headers.set('sw-cache-timestamp', Date.now().toString());
-      
-      const modifiedResponse = new Response(responseClone.body, {
-        status: responseClone.status,
-        statusText: responseClone.statusText,
-        headers: headers
-      });
-      
-      cache.put(request, modifiedResponse);
-    }
-    return response;
-  }).catch(error => {
-    console.log('Fetch failed, checking cache...', error);
-    return cache.match(request);
-  });
+  return fetch(request)
+    .then((response) => {
+      if (response.status === 200) {
+        const responseClone = response.clone();
+        // Cache API responses for 5 minutes
+        const headers = new Headers(responseClone.headers);
+        headers.set('sw-cache-timestamp', Date.now().toString());
+
+        const modifiedResponse = new Response(responseClone.body, {
+          status: responseClone.status,
+          statusText: responseClone.statusText,
+          headers: headers,
+        });
+
+        cache.put(request, modifiedResponse);
+      }
+      return response;
+    })
+    .catch((error) => {
+      console.log('Fetch failed, checking cache...', error);
+      return cache.match(request);
+    });
 }
 
 // Clean up old API cache entries (older than 5 minutes)
-self.addEventListener('message', event => {
+self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'CLEAN_API_CACHE') {
-    caches.open(DYNAMIC_CACHE).then(cache => {
-      cache.keys().then(requests => {
-        requests.forEach(request => {
-          cache.match(request).then(response => {
+    caches.open(DYNAMIC_CACHE).then((cache) => {
+      cache.keys().then((requests) => {
+        requests.forEach((request) => {
+          cache.match(request).then((response) => {
             if (response) {
               const timestamp = response.headers.get('sw-cache-timestamp');
-              if (timestamp && Date.now() - parseInt(timestamp) > 5 * 60 * 1000) {
+              if (
+                timestamp &&
+                Date.now() - parseInt(timestamp) > 5 * 60 * 1000
+              ) {
                 cache.delete(request);
               }
             }

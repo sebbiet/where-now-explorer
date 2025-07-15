@@ -7,14 +7,14 @@ import { GeocodeResult } from '@/services/geocoding.service';
 
 vi.mock('sonner', () => ({
   toast: {
-    error: vi.fn()
-  }
+    error: vi.fn(),
+  },
 }));
 
 vi.mock('@/services/routing.service', () => ({
   RoutingService: {
-    calculateRoute: vi.fn()
-  }
+    calculateRoute: vi.fn(),
+  },
 }));
 
 describe('useDistanceCalculation', () => {
@@ -29,15 +29,18 @@ describe('useDistanceCalculation', () => {
     class: 'tourism',
     type: 'attraction',
     importance: 0.9,
-    boundingbox: ['40.7577', '40.7583', '-73.9858', '-73.9852']
+    boundingbox: ['40.7577', '40.7583', '-73.9858', '-73.9852'],
   };
 
   const mockRouteResult: RouteResult = {
     route: {
       distance: 5432.1,
       duration: 900,
-      coordinates: [[40.7128, -74.0060], [40.7580, -73.9855]]
-    }
+      coordinates: [
+        [40.7128, -74.006],
+        [40.758, -73.9855],
+      ],
+    },
   };
 
   beforeEach(() => {
@@ -61,14 +64,18 @@ describe('useDistanceCalculation', () => {
   describe('calculateDistance', () => {
     it('should successfully calculate distance between points', async () => {
       const onSuccess = vi.fn();
-      vi.mocked(RoutingService.calculateRoute).mockResolvedValue(mockRouteResult);
+      vi.mocked(RoutingService.calculateRoute).mockResolvedValue(
+        mockRouteResult
+      );
 
-      const { result } = renderHook(() => useDistanceCalculation({ onSuccess }));
+      const { result } = renderHook(() =>
+        useDistanceCalculation({ onSuccess })
+      );
 
       await act(async () => {
         const routeResult = await result.current.calculateDistance(
           40.7128,
-          -74.0060,
+          -74.006,
           mockDestination
         );
         expect(routeResult).toEqual(mockRouteResult);
@@ -80,8 +87,8 @@ describe('useDistanceCalculation', () => {
       expect(onSuccess).toHaveBeenCalledWith(mockRouteResult);
       expect(RoutingService.calculateRoute).toHaveBeenCalledWith(
         40.7128,
-        -74.0060,
-        40.7580,
+        -74.006,
+        40.758,
         -73.9855
       );
     });
@@ -95,7 +102,11 @@ describe('useDistanceCalculation', () => {
 
       await act(async () => {
         try {
-          await result.current.calculateDistance(40.7128, -74.0060, mockDestination);
+          await result.current.calculateDistance(
+            40.7128,
+            -74.006,
+            mockDestination
+          );
         } catch (e) {
           // Expected to throw
         }
@@ -109,8 +120,8 @@ describe('useDistanceCalculation', () => {
         'Failed to calculate route. Please try again.',
         expect.objectContaining({
           action: expect.objectContaining({
-            label: 'Retry'
-          })
+            label: 'Retry',
+          }),
         })
       );
     });
@@ -123,7 +134,11 @@ describe('useDistanceCalculation', () => {
 
       await act(async () => {
         try {
-          await result.current.calculateDistance(40.7128, -74.0060, mockDestination);
+          await result.current.calculateDistance(
+            40.7128,
+            -74.006,
+            mockDestination
+          );
         } catch (e) {
           // Expected to throw
         }
@@ -142,7 +157,11 @@ describe('useDistanceCalculation', () => {
 
       await act(async () => {
         try {
-          await result.current.calculateDistance(40.7128, -74.0060, mockDestination);
+          await result.current.calculateDistance(
+            40.7128,
+            -74.006,
+            mockDestination
+          );
         } catch (e) {
           // Expected to throw
         }
@@ -155,16 +174,16 @@ describe('useDistanceCalculation', () => {
 
     it('should show loading state during calculation', async () => {
       let resolvePromise: (value: RouteResult) => void;
-      const promise = new Promise<RouteResult>(resolve => {
+      const promise = new Promise<RouteResult>((resolve) => {
         resolvePromise = resolve;
       });
-      
+
       vi.mocked(RoutingService.calculateRoute).mockReturnValue(promise);
 
       const { result } = renderHook(() => useDistanceCalculation());
 
       act(() => {
-        result.current.calculateDistance(40.7128, -74.0060, mockDestination);
+        result.current.calculateDistance(40.7128, -74.006, mockDestination);
       });
 
       expect(result.current.isCalculating).toBe(true);
@@ -181,7 +200,7 @@ describe('useDistanceCalculation', () => {
       const invalidDestination: GeocodeResult = {
         ...mockDestination,
         lat: 'invalid',
-        lon: 'invalid'
+        lon: 'invalid',
       };
 
       vi.mocked(RoutingService.calculateRoute).mockImplementation(() => {
@@ -192,7 +211,11 @@ describe('useDistanceCalculation', () => {
 
       await act(async () => {
         try {
-          await result.current.calculateDistance(40.7128, -74.0060, invalidDestination);
+          await result.current.calculateDistance(
+            40.7128,
+            -74.006,
+            invalidDestination
+          );
         } catch (e) {
           // Expected to throw
         }
@@ -204,13 +227,19 @@ describe('useDistanceCalculation', () => {
 
   describe('clearRoute', () => {
     it('should clear route and error state', async () => {
-      vi.mocked(RoutingService.calculateRoute).mockResolvedValue(mockRouteResult);
+      vi.mocked(RoutingService.calculateRoute).mockResolvedValue(
+        mockRouteResult
+      );
 
       const { result } = renderHook(() => useDistanceCalculation());
 
       // First calculate a route
       await act(async () => {
-        await result.current.calculateDistance(40.7128, -74.0060, mockDestination);
+        await result.current.calculateDistance(
+          40.7128,
+          -74.006,
+          mockDestination
+        );
       });
 
       expect(result.current.routeResult).toEqual(mockRouteResult);
@@ -273,22 +302,30 @@ describe('useDistanceCalculation', () => {
 
       await act(async () => {
         try {
-          await result.current.calculateDistance(40.7128, -74.0060, mockDestination);
+          await result.current.calculateDistance(
+            40.7128,
+            -74.006,
+            mockDestination
+          );
         } catch (e) {
           // Expected to throw
         }
       });
 
       // Find the retry action from the toast call
-      const toastCall = vi.mocked(toast.error).mock.calls.find(
-        call => call[0] === 'Failed to calculate route. Please try again.'
-      );
+      const toastCall = vi
+        .mocked(toast.error)
+        .mock.calls.find(
+          (call) => call[0] === 'Failed to calculate route. Please try again.'
+        );
       const retryAction = toastCall?.[1]?.action?.onClick;
 
       expect(retryAction).toBeDefined();
 
       // Mock successful response for retry
-      vi.mocked(RoutingService.calculateRoute).mockResolvedValueOnce(mockRouteResult);
+      vi.mocked(RoutingService.calculateRoute).mockResolvedValueOnce(
+        mockRouteResult
+      );
 
       // Execute retry
       await act(async () => {
@@ -305,26 +342,32 @@ describe('useDistanceCalculation', () => {
 
   describe('result caching', () => {
     it('should reset previous results when starting new calculation', async () => {
-      vi.mocked(RoutingService.calculateRoute).mockResolvedValue(mockRouteResult);
+      vi.mocked(RoutingService.calculateRoute).mockResolvedValue(
+        mockRouteResult
+      );
 
       const { result } = renderHook(() => useDistanceCalculation());
 
       // First calculation
       await act(async () => {
-        await result.current.calculateDistance(40.7128, -74.0060, mockDestination);
+        await result.current.calculateDistance(
+          40.7128,
+          -74.006,
+          mockDestination
+        );
       });
 
       expect(result.current.routeResult).toEqual(mockRouteResult);
 
       // Start new calculation
       let resolvePromise: (value: RouteResult) => void;
-      const promise = new Promise<RouteResult>(resolve => {
+      const promise = new Promise<RouteResult>((resolve) => {
         resolvePromise = resolve;
       });
       vi.mocked(RoutingService.calculateRoute).mockReturnValue(promise);
 
       act(() => {
-        result.current.calculateDistance(40.7128, -74.0060, mockDestination);
+        result.current.calculateDistance(40.7128, -74.006, mockDestination);
       });
 
       // Previous result should be cleared

@@ -2,12 +2,16 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { toast } from 'sonner';
 import { useGeolocation } from '../useGeolocation';
-import { GeolocationService, GeolocationError, GeolocationErrorCode } from '@/services/geolocation.service';
+import {
+  GeolocationService,
+  GeolocationError,
+  GeolocationErrorCode,
+} from '@/services/geolocation.service';
 
 vi.mock('sonner', () => ({
   toast: {
-    error: vi.fn()
-  }
+    error: vi.fn(),
+  },
 }));
 
 vi.mock('@/services/geolocation.service', () => ({
@@ -15,14 +19,14 @@ vi.mock('@/services/geolocation.service', () => ({
     getCurrentPosition: vi.fn(),
     watchPosition: vi.fn(),
     clearWatch: vi.fn(),
-    isSupported: vi.fn(() => true)
+    isSupported: vi.fn(() => true),
   },
   GeolocationErrorCode: {
     PERMISSION_DENIED: 1,
     POSITION_UNAVAILABLE: 2,
     TIMEOUT: 3,
-    UNSUPPORTED: 4
-  }
+    UNSUPPORTED: 4,
+  },
 }));
 
 describe('useGeolocation', () => {
@@ -52,18 +56,20 @@ describe('useGeolocation', () => {
       const mockPosition = {
         coords: {
           latitude: 40.7128,
-          longitude: -74.0060,
+          longitude: -74.006,
           accuracy: 10,
           altitude: null,
           altitudeAccuracy: null,
           heading: null,
-          speed: null
+          speed: null,
         },
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
 
       const onSuccess = vi.fn();
-      vi.mocked(GeolocationService.getCurrentPosition).mockResolvedValue(mockPosition);
+      vi.mocked(GeolocationService.getCurrentPosition).mockResolvedValue(
+        mockPosition
+      );
 
       const { result } = renderHook(() => useGeolocation({ onSuccess }));
 
@@ -81,11 +87,13 @@ describe('useGeolocation', () => {
       const mockError: GeolocationError = {
         code: GeolocationErrorCode.PERMISSION_DENIED,
         message: 'User denied location permission',
-        name: 'GeolocationError'
+        name: 'GeolocationError',
       };
 
       const onError = vi.fn();
-      vi.mocked(GeolocationService.getCurrentPosition).mockRejectedValue(mockError);
+      vi.mocked(GeolocationService.getCurrentPosition).mockRejectedValue(
+        mockError
+      );
 
       const { result } = renderHook(() => useGeolocation({ onError }));
 
@@ -101,9 +109,10 @@ describe('useGeolocation', () => {
       expect(result.current.error).toEqual(mockError);
       expect(onError).toHaveBeenCalledWith(mockError);
       expect(toast.error).toHaveBeenCalledWith(
-        "📍 Location access denied",
+        '📍 Location access denied',
         expect.objectContaining({
-          description: "Click the location icon in your browser's address bar to enable permissions."
+          description:
+            "Click the location icon in your browser's address bar to enable permissions.",
         })
       );
     });
@@ -112,10 +121,12 @@ describe('useGeolocation', () => {
       const mockError: GeolocationError = {
         code: GeolocationErrorCode.POSITION_UNAVAILABLE,
         message: 'Position unavailable',
-        name: 'GeolocationError'
+        name: 'GeolocationError',
       };
 
-      vi.mocked(GeolocationService.getCurrentPosition).mockRejectedValue(mockError);
+      vi.mocked(GeolocationService.getCurrentPosition).mockRejectedValue(
+        mockError
+      );
 
       const { result } = renderHook(() => useGeolocation());
 
@@ -131,7 +142,8 @@ describe('useGeolocation', () => {
       expect(toast.error).toHaveBeenCalledWith(
         "📍 Can't find your location",
         expect.objectContaining({
-          description: "Please check if location services are enabled on your device."
+          description:
+            'Please check if location services are enabled on your device.',
         })
       );
     });
@@ -140,10 +152,12 @@ describe('useGeolocation', () => {
       const mockError: GeolocationError = {
         code: GeolocationErrorCode.TIMEOUT,
         message: 'Request timed out',
-        name: 'GeolocationError'
+        name: 'GeolocationError',
       };
 
-      vi.mocked(GeolocationService.getCurrentPosition).mockRejectedValue(mockError);
+      vi.mocked(GeolocationService.getCurrentPosition).mockRejectedValue(
+        mockError
+      );
 
       const { result } = renderHook(() => useGeolocation());
 
@@ -157,9 +171,9 @@ describe('useGeolocation', () => {
 
       expect(result.current.error).toEqual(mockError);
       expect(toast.error).toHaveBeenCalledWith(
-        "📍 Location request timed out",
+        '📍 Location request timed out',
         expect.objectContaining({
-          description: "This is taking longer than usual."
+          description: 'This is taking longer than usual.',
         })
       );
     });
@@ -168,10 +182,12 @@ describe('useGeolocation', () => {
       const mockError: GeolocationError = {
         code: GeolocationErrorCode.UNSUPPORTED,
         message: 'Geolocation not supported',
-        name: 'GeolocationError'
+        name: 'GeolocationError',
       };
 
-      vi.mocked(GeolocationService.getCurrentPosition).mockRejectedValue(mockError);
+      vi.mocked(GeolocationService.getCurrentPosition).mockRejectedValue(
+        mockError
+      );
 
       const { result } = renderHook(() => useGeolocation());
 
@@ -193,10 +209,12 @@ describe('useGeolocation', () => {
       const mockError: GeolocationError = {
         code: 999 as GeolocationErrorCode,
         message: 'Unknown error occurred',
-        name: 'GeolocationError'
+        name: 'GeolocationError',
       };
 
-      vi.mocked(GeolocationService.getCurrentPosition).mockRejectedValue(mockError);
+      vi.mocked(GeolocationService.getCurrentPosition).mockRejectedValue(
+        mockError
+      );
 
       const { result } = renderHook(() => useGeolocation());
 
@@ -210,22 +228,24 @@ describe('useGeolocation', () => {
 
       expect(result.current.error).toEqual(mockError);
       expect(toast.error).toHaveBeenCalledWith(
-        "📍 Unknown error occurred",
+        '📍 Unknown error occurred',
         expect.objectContaining({
           action: expect.objectContaining({
-            label: "Retry"
-          })
+            label: 'Retry',
+          }),
         })
       );
     });
 
     it('should set loading state during position fetch', async () => {
       let resolvePromise: (value: any) => void;
-      const promise = new Promise(resolve => {
+      const promise = new Promise((resolve) => {
         resolvePromise = resolve;
       });
-      
-      vi.mocked(GeolocationService.getCurrentPosition).mockReturnValue(promise as Promise<GeolocationPosition>);
+
+      vi.mocked(GeolocationService.getCurrentPosition).mockReturnValue(
+        promise as Promise<GeolocationPosition>
+      );
 
       const { result } = renderHook(() => useGeolocation());
 
@@ -244,9 +264,9 @@ describe('useGeolocation', () => {
             altitude: null,
             altitudeAccuracy: null,
             heading: null,
-            speed: null
+            speed: null,
           },
-          timestamp: Date.now()
+          timestamp: Date.now(),
         });
         await promise;
       });
@@ -266,7 +286,11 @@ describe('useGeolocation', () => {
 
       const { result } = renderHook(() => useGeolocation());
 
-      const watchId = result.current.watchPosition(successCallback, errorCallback, options);
+      const watchId = result.current.watchPosition(
+        successCallback,
+        errorCallback,
+        options
+      );
 
       expect(GeolocationService.watchPosition).toHaveBeenCalledWith(
         successCallback,
@@ -303,10 +327,12 @@ describe('useGeolocation', () => {
       const mockError: GeolocationError = {
         code: GeolocationErrorCode.TIMEOUT,
         message: 'Request timed out',
-        name: 'GeolocationError'
+        name: 'GeolocationError',
       };
 
-      vi.mocked(GeolocationService.getCurrentPosition).mockRejectedValueOnce(mockError);
+      vi.mocked(GeolocationService.getCurrentPosition).mockRejectedValueOnce(
+        mockError
+      );
 
       const { result } = renderHook(() => useGeolocation());
 
@@ -319,9 +345,9 @@ describe('useGeolocation', () => {
       });
 
       // Find the retry action from the toast call
-      const toastCall = vi.mocked(toast.error).mock.calls.find(
-        call => call[0] === "📍 Location request timed out"
-      );
+      const toastCall = vi
+        .mocked(toast.error)
+        .mock.calls.find((call) => call[0] === '📍 Location request timed out');
       const retryAction = toastCall?.[1]?.action?.onClick;
 
       expect(retryAction).toBeDefined();
@@ -330,16 +356,18 @@ describe('useGeolocation', () => {
       const mockPosition = {
         coords: {
           latitude: 40.7128,
-          longitude: -74.0060,
+          longitude: -74.006,
           accuracy: 10,
           altitude: null,
           altitudeAccuracy: null,
           heading: null,
-          speed: null
+          speed: null,
         },
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
-      vi.mocked(GeolocationService.getCurrentPosition).mockResolvedValueOnce(mockPosition);
+      vi.mocked(GeolocationService.getCurrentPosition).mockResolvedValueOnce(
+        mockPosition
+      );
 
       // Execute retry
       await act(async () => {

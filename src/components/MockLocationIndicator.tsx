@@ -3,9 +3,13 @@ import { useLocation } from '@/contexts/LocationContext';
 
 const MockLocationIndicator: React.FC = () => {
   const { useMockLocation, mockLocation } = useLocation();
-  
+
   // Only show in development when mock location is active
-  if (process.env.NODE_ENV !== 'development' || !useMockLocation || !mockLocation) {
+  if (
+    process.env.NODE_ENV !== 'development' ||
+    !useMockLocation ||
+    !mockLocation
+  ) {
     return null;
   }
 
@@ -16,7 +20,8 @@ const MockLocationIndicator: React.FC = () => {
         <div>
           <div>MOCK LOCATION ACTIVE</div>
           <div className="text-xs opacity-90">
-            {mockLocation.latitude.toFixed(4)}, {mockLocation.longitude.toFixed(4)}
+            {mockLocation.latitude.toFixed(4)},{' '}
+            {mockLocation.longitude.toFixed(4)}
           </div>
         </div>
       </div>

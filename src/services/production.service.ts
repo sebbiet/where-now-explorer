@@ -22,7 +22,7 @@ export class ProductionService {
 
     logger.info('Initializing production services', {
       service: 'Production',
-      environment: this.isProduction ? 'production' : 'development'
+      environment: this.isProduction ? 'production' : 'development',
     });
 
     try {
@@ -47,18 +47,17 @@ export class ProductionService {
       this.isInitialized = true;
 
       logger.info('Production services initialized successfully', {
-        service: 'Production'
+        service: 'Production',
       });
 
       // Track initialization
       productionAnalytics.trackEvent('production_services_initialized', {
         environment: this.isProduction ? 'production' : 'development',
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
-
     } catch (error) {
       logger.error('Failed to initialize production services', error as Error, {
-        service: 'Production'
+        service: 'Production',
       });
       throw error;
     }
@@ -83,7 +82,7 @@ export class ProductionService {
       isInitialized: this.isInitialized,
       healthStatus,
       featureFlags: flagsStatus,
-      analytics: analyticsSession
+      analytics: analyticsSession,
     };
   }
 
@@ -96,7 +95,7 @@ export class ProductionService {
 
     logger.info('Feature flags initialized', {
       service: 'Production',
-      flagCount: Object.keys(featureFlags.getAllFlags()).length
+      flagCount: Object.keys(featureFlags.getAllFlags()).length,
     });
   }
 
@@ -110,9 +109,9 @@ export class ProductionService {
       userAgent: navigator.userAgent,
       screen: {
         width: screen.width,
-        height: screen.height
+        height: screen.height,
       },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
 
     // Track feature flag usage
@@ -123,13 +122,13 @@ export class ProductionService {
     if (enabledFlags.length > 0) {
       productionAnalytics.trackEvent('feature_flags_enabled', {
         flags: enabledFlags,
-        count: enabledFlags.length
+        count: enabledFlags.length,
       });
     }
 
     logger.info('Analytics initialized', {
       service: 'Production',
-      sessionId: productionAnalytics.getSession().sessionId
+      sessionId: productionAnalytics.getSession().sessionId,
     });
   }
 
@@ -139,18 +138,23 @@ export class ProductionService {
   private initializeHealthMonitoring(): void {
     // Register custom health checks
     healthCheck.registerCheck('production-services', async () => {
-      const isHealthy = this.isInitialized && 
-                       featureFlags.isEnabled('enablePerformanceMonitoring');
+      const isHealthy =
+        this.isInitialized &&
+        featureFlags.isEnabled('enablePerformanceMonitoring');
 
       return {
         name: 'production-services',
         status: isHealthy ? 'pass' : 'fail',
-        message: isHealthy ? 'Production services running' : 'Production services not fully initialized',
+        message: isHealthy
+          ? 'Production services running'
+          : 'Production services not fully initialized',
         duration: 0,
         details: {
           initialized: this.isInitialized,
-          performanceMonitoring: featureFlags.isEnabled('enablePerformanceMonitoring')
-        }
+          performanceMonitoring: featureFlags.isEnabled(
+            'enablePerformanceMonitoring'
+          ),
+        },
       };
     });
 
@@ -158,7 +162,7 @@ export class ProductionService {
     healthCheck.startMonitoring();
 
     logger.info('Health monitoring initialized', {
-      service: 'Production'
+      service: 'Production',
     });
   }
 
@@ -174,18 +178,18 @@ export class ProductionService {
         filename: event.filename,
         lineno: event.lineno,
         colno: event.colno,
-        type: 'global_error'
+        type: 'global_error',
       });
     });
 
     window.addEventListener('unhandledrejection', (event) => {
       productionAnalytics.trackError(new Error(event.reason), {
-        type: 'unhandled_rejection'
+        type: 'unhandled_rejection',
       });
     });
 
     logger.info('Error tracking initialized', {
-      service: 'Production'
+      service: 'Production',
     });
   }
 
@@ -207,7 +211,7 @@ export class ProductionService {
     this.monitorUserInteractions();
 
     logger.info('Performance monitoring initialized', {
-      service: 'Production'
+      service: 'Production',
     });
   }
 
@@ -224,7 +228,10 @@ export class ProductionService {
       const originalLog = console.log;
       console.log = (...args: any[]) => {
         // Only log in development or if explicitly enabled
-        if (!this.isProduction || featureFlags.isEnabled('enableDebugLogging')) {
+        if (
+          !this.isProduction ||
+          featureFlags.isEnabled('enableDebugLogging')
+        ) {
           originalLog.apply(console, args);
         }
       };
@@ -234,7 +241,7 @@ export class ProductionService {
     this.optimizeForProduction();
 
     logger.info('Production optimizations applied', {
-      service: 'Production'
+      service: 'Production',
     });
   }
 
@@ -249,7 +256,7 @@ export class ProductionService {
           list.getEntries().forEach((entry) => {
             if (entry.entryType === 'largest-contentful-paint') {
               productionAnalytics.trackPerformance('lcp', entry.startTime, {
-                element: (entry as any).element?.tagName
+                element: (entry as any).element?.tagName,
               });
             }
           });
@@ -268,7 +275,7 @@ export class ProductionService {
             if (entry.entryType === 'first-input') {
               const fid = (entry as any).processingStart - entry.startTime;
               productionAnalytics.trackPerformance('fid', fid, {
-                inputType: (entry as any).name
+                inputType: (entry as any).name,
               });
             }
           });
@@ -285,7 +292,10 @@ export class ProductionService {
         let clsValue = 0;
         const observer = new PerformanceObserver((list) => {
           list.getEntries().forEach((entry) => {
-            if (entry.entryType === 'layout-shift' && !(entry as any).hadRecentInput) {
+            if (
+              entry.entryType === 'layout-shift' &&
+              !(entry as any).hadRecentInput
+            ) {
               clsValue += (entry as any).value;
             }
           });
@@ -314,17 +324,23 @@ export class ProductionService {
           list.getEntries().forEach((entry) => {
             if (entry.entryType === 'resource') {
               const resource = entry as PerformanceResourceTiming;
-              productionAnalytics.trackPerformance('resource_load', resource.duration, {
-                name: resource.name,
-                type: resource.initiatorType,
-                size: resource.transferSize
-              });
+              productionAnalytics.trackPerformance(
+                'resource_load',
+                resource.duration,
+                {
+                  name: resource.name,
+                  type: resource.initiatorType,
+                  size: resource.transferSize,
+                }
+              );
             }
           });
         });
         observer.observe({ entryTypes: ['resource'] });
       } catch (error) {
-        logger.warn('Could not observe resource loading', { service: 'Production' });
+        logger.warn('Could not observe resource loading', {
+          service: 'Production',
+        });
       }
     }
   }
@@ -339,9 +355,13 @@ export class ProductionService {
         const observer = new PerformanceObserver((list) => {
           list.getEntries().forEach((entry) => {
             if (entry.entryType === 'longtask') {
-              productionAnalytics.trackPerformance('long_task', entry.duration, {
-                startTime: entry.startTime
-              });
+              productionAnalytics.trackPerformance(
+                'long_task',
+                entry.duration,
+                {
+                  startTime: entry.startTime,
+                }
+              );
             }
           });
         });

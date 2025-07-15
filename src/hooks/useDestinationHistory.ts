@@ -17,7 +17,9 @@ export function useDestinationHistory() {
     []
   );
 
-  const addToHistory = (item: Omit<DestinationHistoryItem, 'id' | 'timestamp'>) => {
+  const addToHistory = (
+    item: Omit<DestinationHistoryItem, 'id' | 'timestamp'>
+  ) => {
     setHistory((prev) => {
       // Check if this destination already exists
       const existingIndex = prev.findIndex(

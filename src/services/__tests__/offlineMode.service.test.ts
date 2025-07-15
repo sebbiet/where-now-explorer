@@ -30,19 +30,19 @@ describe('OfflineModeService', () => {
     vi.useFakeTimers();
     console.log = vi.fn();
     console.error = vi.fn();
-    
+
     // Reset localStorage mock
     Object.defineProperty(window, 'localStorage', {
       value: localStorageMock,
       writable: true,
     });
-    
+
     // Mock navigator.onLine
     Object.defineProperty(window.navigator, 'onLine', {
       writable: true,
       value: true,
     });
-    
+
     // Create new instance for each test
     offlineService = new OfflineModeService();
   });
@@ -166,7 +166,7 @@ describe('OfflineModeService', () => {
   describe('route caching functionality', () => {
     const mockOrigin: LocationData = {
       latitude: 40.7128,
-      longitude: -74.0060,
+      longitude: -74.006,
       address: 'New York, NY',
       timestamp: Date.now(),
     };
@@ -207,7 +207,10 @@ describe('OfflineModeService', () => {
       offlineService.cacheRoute(mockOrigin, mockDestination, mockRoute);
 
       // Assert - Check that route was updated, not duplicated
-      const lastCall = localStorageMock.setItem.mock.calls[localStorageMock.setItem.mock.calls.length - 1];
+      const lastCall =
+        localStorageMock.setItem.mock.calls[
+          localStorageMock.setItem.mock.calls.length - 1
+        ];
       const savedData = JSON.parse(lastCall[1]);
       expect(savedData.routes).toHaveLength(1);
       expect(savedData.routes[0].accessCount).toBe(2);
@@ -229,7 +232,10 @@ describe('OfflineModeService', () => {
       }
 
       // Assert - Should only keep MAX_CACHED_ROUTES
-      const lastCall = localStorageMock.setItem.mock.calls[localStorageMock.setItem.mock.calls.length - 1];
+      const lastCall =
+        localStorageMock.setItem.mock.calls[
+          localStorageMock.setItem.mock.calls.length - 1
+        ];
       const savedData = JSON.parse(lastCall[1]);
       expect(savedData.routes.length).toBeLessThanOrEqual(50);
     });
@@ -238,7 +244,7 @@ describe('OfflineModeService', () => {
   describe('route retrieval from cache', () => {
     const mockOrigin: LocationData = {
       latitude: 40.7128,
-      longitude: -74.0060,
+      longitude: -74.006,
       address: 'New York, NY',
       timestamp: Date.now(),
     };
@@ -266,7 +272,10 @@ describe('OfflineModeService', () => {
       );
 
       // Act
-      const cachedRoute = offlineService.getCachedRoute(mockOrigin, mockDestination);
+      const cachedRoute = offlineService.getCachedRoute(
+        mockOrigin,
+        mockDestination
+      );
 
       // Assert
       expect(cachedRoute).toEqual(mockRoute);
@@ -274,7 +283,10 @@ describe('OfflineModeService', () => {
 
     it('should return null for non-cached route', () => {
       // Act
-      const cachedRoute = offlineService.getCachedRoute(mockOrigin, mockDestination);
+      const cachedRoute = offlineService.getCachedRoute(
+        mockOrigin,
+        mockDestination
+      );
 
       // Assert
       expect(cachedRoute).toBeNull();
@@ -292,7 +304,10 @@ describe('OfflineModeService', () => {
       offlineService.getCachedRoute(mockOrigin, mockDestination);
 
       // Assert - Check that access count was incremented
-      const lastCall = localStorageMock.setItem.mock.calls[localStorageMock.setItem.mock.calls.length - 1];
+      const lastCall =
+        localStorageMock.setItem.mock.calls[
+          localStorageMock.setItem.mock.calls.length - 1
+        ];
       const savedData = JSON.parse(lastCall[1]);
       expect(savedData.routes[0].accessCount).toBe(2); // 1 from cache, 1 from retrieval
     });
@@ -312,26 +327,26 @@ describe('OfflineModeService', () => {
             place_id: `city_${i}`,
           } as GeocodeResult,
         };
-        
+
         const route: RouteResult = {
           distanceKm: i * 100,
           durationMinutes: i * 60,
           formattedDistance: `${i * 100} km`,
           formattedDuration: `${i} hours`,
         };
-        
+
         const origin: LocationData = {
           latitude: 40 + i * 0.1,
           longitude: -74 + i * 0.1,
           address: `Origin ${i}`,
           timestamp: Date.now(),
         };
-        
+
         // Cache route multiple times to simulate access
         for (let j = 0; j < i; j++) {
           offlineService.cacheRoute(origin, destination, route);
         }
-        
+
         routes.push({ destination, accessCount: i });
       }
 
@@ -340,7 +355,9 @@ describe('OfflineModeService', () => {
 
       // Assert
       expect(frequentRoutes).toHaveLength(10); // Should return top 10
-      expect(frequentRoutes[0].accessCount).toBeGreaterThanOrEqual(frequentRoutes[1].accessCount);
+      expect(frequentRoutes[0].accessCount).toBeGreaterThanOrEqual(
+        frequentRoutes[1].accessCount
+      );
     });
   });
 
@@ -357,7 +374,11 @@ describe('OfflineModeService', () => {
           origin: { latitude: i, longitude: i } as LocationData,
           destination: {
             name: `City ${i}`,
-            location: { lat: `${i}`, lon: `${i}`, place_id: `city_${i}` } as GeocodeResult,
+            location: {
+              lat: `${i}`,
+              lon: `${i}`,
+              place_id: `city_${i}`,
+            } as GeocodeResult,
           },
           route: {} as RouteResult,
           timestamp: oldTime,
@@ -382,7 +403,7 @@ describe('OfflineModeService', () => {
             place_id: `new_city_${i}`,
           } as GeocodeResult,
         };
-        
+
         offlineService.cacheRoute(
           { latitude: i, longitude: i } as LocationData,
           destination,
@@ -391,12 +412,15 @@ describe('OfflineModeService', () => {
       }
 
       // Assert - Should have pruned old routes
-      const lastCall = localStorageMock.setItem.mock.calls[localStorageMock.setItem.mock.calls.length - 1];
+      const lastCall =
+        localStorageMock.setItem.mock.calls[
+          localStorageMock.setItem.mock.calls.length - 1
+        ];
       const savedData = JSON.parse(lastCall[1]);
       expect(savedData.routes.length).toBe(50);
-      
+
       // New routes should be present
-      const hasNewRoute = savedData.routes.some((r: any) => 
+      const hasNewRoute = savedData.routes.some((r: any) =>
         r.destination.name.includes('New City')
       );
       expect(hasNewRoute).toBe(true);
@@ -410,7 +434,11 @@ describe('OfflineModeService', () => {
         { latitude: 40, longitude: -74 } as LocationData,
         {
           name: 'Test City',
-          location: { lat: '34', lon: '-118', place_id: 'test' } as GeocodeResult,
+          location: {
+            lat: '34',
+            lon: '-118',
+            place_id: 'test',
+          } as GeocodeResult,
         },
         {} as RouteResult
       );
@@ -436,7 +464,11 @@ describe('OfflineModeService', () => {
             origin: { latitude: 1, longitude: 1 } as LocationData,
             destination: {
               name: 'Old City',
-              location: { lat: '1', lon: '1', place_id: 'old' } as GeocodeResult,
+              location: {
+                lat: '1',
+                lon: '1',
+                place_id: 'old',
+              } as GeocodeResult,
             },
             route: {} as RouteResult,
             timestamp: oldTime,
@@ -448,7 +480,11 @@ describe('OfflineModeService', () => {
             origin: { latitude: 2, longitude: 2 } as LocationData,
             destination: {
               name: 'Recent City',
-              location: { lat: '2', lon: '2', place_id: 'recent' } as GeocodeResult,
+              location: {
+                lat: '2',
+                lon: '2',
+                place_id: 'recent',
+              } as GeocodeResult,
             },
             route: {} as RouteResult,
             timestamp: recentTime,
@@ -469,7 +505,7 @@ describe('OfflineModeService', () => {
 
       // Assert - Old route should be removed
       const savedCall = localStorageMock.setItem.mock.calls.find(
-        call => call[0] === 'offline-data'
+        (call) => call[0] === 'offline-data'
       );
       if (savedCall) {
         const savedData = JSON.parse(savedCall[1]);

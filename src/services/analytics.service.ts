@@ -90,8 +90,13 @@ class AnalyticsService {
   }
 
   // Location Events
-  trackLocationPermission(granted: boolean, params?: LocationPermissionParams): void {
-    const eventName = granted ? 'location_permission_granted' : 'location_permission_denied';
+  trackLocationPermission(
+    granted: boolean,
+    params?: LocationPermissionParams
+  ): void {
+    const eventName = granted
+      ? 'location_permission_granted'
+      : 'location_permission_denied';
     this.track(eventName, {
       ...params,
       timestamp: params?.timestamp || Date.now(),
@@ -182,4 +187,10 @@ class AnalyticsService {
 export const analytics = new AnalyticsService();
 
 // Export types for use in components
-export type { LocationPermissionParams, LocationUpdateParams, DestinationParams, UIInteractionParams, ErrorParams };
+export type {
+  LocationPermissionParams,
+  LocationUpdateParams,
+  DestinationParams,
+  UIInteractionParams,
+  ErrorParams,
+};

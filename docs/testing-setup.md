@@ -21,6 +21,7 @@ The project now uses Vitest as its test runner, configured to work with React, T
 ### 2. Configuration Files
 
 #### `vitest.config.ts`
+
 - Extends the existing Vite configuration
 - Configures jsdom as the test environment
 - Sets up global test utilities
@@ -28,6 +29,7 @@ The project now uses Vitest as its test runner, configured to work with React, T
 - Enables CSS processing in tests
 
 #### `tsconfig.test.json`
+
 - TypeScript configuration specific to test files
 - Includes Vitest globals and jest-dom types
 - Extends the app TypeScript configuration
@@ -35,6 +37,7 @@ The project now uses Vitest as its test runner, configured to work with React, T
 ### 3. Test Setup
 
 #### `src/test/setup.ts`
+
 - Imports jest-dom matchers for extended assertions
 - Configures automatic cleanup after each test
 - Mocks browser APIs (matchMedia, ResizeObserver, geolocation)
@@ -50,6 +53,7 @@ The project now uses Vitest as its test runner, configured to work with React, T
 ### 5. Example Test
 
 Created `src/App.test.tsx` as a simple example that:
+
 - Mocks external service dependencies
 - Tests basic rendering
 - Demonstrates testing patterns
@@ -106,6 +110,7 @@ When writing new tests:
 5. Test both success and error cases
 
 Example structure:
+
 ```typescript
 import { describe, it, expect, vi } from 'vitest';
 

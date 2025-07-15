@@ -30,7 +30,7 @@ const InstallPrompt: React.FC = () => {
   const handleInstall = async () => {
     setIsInstalling(true);
     haptic.medium();
-    
+
     try {
       const success = await promptInstall();
       if (success) {
@@ -62,22 +62,23 @@ const InstallPrompt: React.FC = () => {
         >
           <X className="w-5 h-5 text-gray-500" />
         </button>
-        
+
         <div className="flex items-start gap-4">
           <div className="flex-shrink-0">
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
               <span className="text-2xl">🌍</span>
             </div>
           </div>
-          
+
           <div className="flex-1">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
               Install Where Now Explorer
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-              Add to your home screen for the best experience - works offline too!
+              Add to your home screen for the best experience - works offline
+              too!
             </p>
-            
+
             <div className="flex gap-2">
               <LoadingButton
                 isLoading={isInstalling}

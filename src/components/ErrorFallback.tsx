@@ -9,7 +9,11 @@ interface ErrorFallbackProps {
   context?: 'location' | 'destination' | 'general';
 }
 
-const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetError, context = 'general' }) => {
+const ErrorFallback: React.FC<ErrorFallbackProps> = ({
+  error,
+  resetError,
+  context = 'general',
+}) => {
   const [isRetrying, setIsRetrying] = useState(false);
   const [isRestarting, setIsRestarting] = useState(false);
 
@@ -34,38 +38,41 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetError, contex
 
   // Kid-friendly error messages based on context
   const getErrorMessage = () => {
-    if (error.message.includes('geolocation') || error.message.includes('location')) {
+    if (
+      error.message.includes('geolocation') ||
+      error.message.includes('location')
+    ) {
       return {
         title: "Can't Find Your Location 📍",
-        message: "Make sure location services are turned on in your browser!",
-        icon: "🗺️",
-        actions: ['retry', 'settings']
+        message: 'Make sure location services are turned on in your browser!',
+        icon: '🗺️',
+        actions: ['retry', 'settings'],
       };
     }
-    
+
     if (error.message.includes('network') || error.message.includes('fetch')) {
       return {
-        title: "Connection Problem 🌐",
-        message: "Check your internet connection and try again!",
-        icon: "📡",
-        actions: ['retry']
+        title: 'Connection Problem 🌐',
+        message: 'Check your internet connection and try again!',
+        icon: '📡',
+        actions: ['retry'],
       };
     }
-    
+
     if (context === 'destination') {
       return {
         title: "Oops! Can't Calculate Route 🚗",
         message: "We couldn't find a way to get there. Try a different place!",
-        icon: "🛣️",
-        actions: ['retry', 'home']
+        icon: '🛣️',
+        actions: ['retry', 'home'],
       };
     }
-    
+
     return {
-      title: "Something Went Wrong 😕",
+      title: 'Something Went Wrong 😕',
       message: "Don't worry! Let's try again.",
-      icon: "🔧",
-      actions: ['retry', 'home']
+      icon: '🔧',
+      actions: ['retry', 'home'],
     };
   };
 
@@ -84,28 +91,34 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetError, contex
 
   return (
     <div className="w-full max-w-2xl mx-auto p-8 animate-fade-in">
-      <div className="relative backdrop-blur-2xl rounded-3xl p-8 text-center" style={{
-        background: 'rgba(255, 255, 255, 0.85)',
-        boxShadow: `
+      <div
+        className="relative backdrop-blur-2xl rounded-3xl p-8 text-center"
+        style={{
+          background: 'rgba(255, 255, 255, 0.85)',
+          boxShadow: `
           0 8px 32px rgba(0, 0, 0, 0.12),
           0 2px 16px rgba(0, 0, 0, 0.08),
           inset 0 1px 0 rgba(255, 255, 255, 0.8)
         `,
-        border: '1px solid rgba(255, 255, 255, 0.3)'
-      }}>
+          border: '1px solid rgba(255, 255, 255, 0.3)',
+        }}
+      >
         {/* Dark mode overlay */}
-        <div className="absolute inset-0 rounded-3xl hidden dark:block pointer-events-none" style={{
-          background: 'rgba(30, 41, 59, 0.9)',
-          boxShadow: `
+        <div
+          className="absolute inset-0 rounded-3xl hidden dark:block pointer-events-none"
+          style={{
+            background: 'rgba(30, 41, 59, 0.9)',
+            boxShadow: `
             0 8px 32px rgba(0, 0, 0, 0.4),
             inset 0 1px 0 rgba(255, 255, 255, 0.1)
-          `
-        }}></div>
-        
+          `,
+          }}
+        ></div>
+
         <div className="relative z-10">
           {/* Error icon */}
           <div className="text-6xl mb-4 animate-bounce">{errorInfo.icon}</div>
-          
+
           {/* Error message */}
           <h2 className="text-3xl font-black text-gray-800 dark:text-white mb-4">
             {errorInfo.title}
@@ -113,7 +126,7 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetError, contex
           <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">
             {errorInfo.message}
           </p>
-          
+
           {/* Error details (dev mode only) */}
           {process.env.NODE_ENV === 'development' && (
             <details className="mb-6 text-left">
@@ -125,7 +138,7 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetError, contex
               </pre>
             </details>
           )}
-          
+
           {/* Action buttons */}
           <div className="flex flex-wrap gap-4 justify-center">
             {errorInfo.actions.includes('retry') && (
@@ -139,7 +152,7 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetError, contex
                 Try Again
               </LoadingButton>
             )}
-            
+
             {errorInfo.actions.includes('home') && (
               <LoadingButton
                 isLoading={isRestarting}
@@ -151,7 +164,7 @@ const ErrorFallback: React.FC<ErrorFallbackProps> = ({ error, resetError, contex
                 Start Over
               </LoadingButton>
             )}
-            
+
             {errorInfo.actions.includes('settings') && (
               <Button
                 onClick={handleOpenSettings}

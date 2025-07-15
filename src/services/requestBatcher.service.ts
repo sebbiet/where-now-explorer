@@ -5,11 +5,19 @@
 
 import { GeocodeResult } from './geocoding.service';
 
-interface BatchRequest<T> {
+interface GeocodeOptions {
+  limit?: number;
+  countrycodes?: string;
+  addressdetails?: boolean;
+  extratags?: boolean;
+  namedetails?: boolean;
+}
+
+interface BatchRequest<T, R = unknown> {
   id: string;
   request: T;
-  resolve: (result: any) => void;
-  reject: (error: any) => void;
+  resolve: (result: R) => void;
+  reject: (error: Error) => void;
 }
 
 interface BatchConfig {
@@ -19,7 +27,7 @@ interface BatchConfig {
 }
 
 export class RequestBatcherService {
-  private batchQueues = new Map<string, BatchRequest<any>[]>();
+  private batchQueues = new Map<string, BatchRequest<unknown, unknown>[]>();
   private batchTimers = new Map<string, NodeJS.Timeout>();
   private configs = new Map<string, BatchConfig>();
 
@@ -28,13 +36,13 @@ export class RequestBatcherService {
     this.configs.set('geocode', {
       maxBatchSize: 10,
       batchWindowMs: 100,
-      maxWaitMs: 500
+      maxWaitMs: 500,
     });
-    
+
     this.configs.set('reverse-geocode', {
       maxBatchSize: 20,
       batchWindowMs: 200,
-      maxWaitMs: 1000
+      maxWaitMs: 1000,
     });
   }
 
@@ -49,25 +57,25 @@ export class RequestBatcherService {
     const config = this.configs.get(type) || {
       maxBatchSize: 5,
       batchWindowMs: 100,
-      maxWaitMs: 500
+      maxWaitMs: 500,
     };
 
-    return new Promise((resolve, reject) => {
-      const batchRequest: BatchRequest<T> = {
+    return new Promise<R>((resolve, reject) => {
+      const batchRequest: BatchRequest<T, R> = {
         id: this.generateRequestId(),
         request,
         resolve,
-        reject
+        reject,
       };
 
       // Add to queue
       if (!this.batchQueues.has(type)) {
         this.batchQueues.set(type, []);
       }
-      this.batchQueues.get(type)!.push(batchRequest);
+      (this.batchQueues.get(type) as BatchRequest<T, R>[])!.push(batchRequest);
 
       // Check if we should process immediately
-      const queue = this.batchQueues.get(type)!;
+      const queue = this.batchQueues.get(type) as BatchRequest<T, R>[];
       if (queue.length >= config.maxBatchSize) {
         this.processBatch(type, batchProcessor);
       } else {
@@ -92,13 +100,13 @@ export class RequestBatcherService {
     }
 
     // Get and clear the queue
-    const queue = this.batchQueues.get(type) || [];
+    const queue = (this.batchQueues.get(type) as BatchRequest<T, R>[]) || [];
     if (queue.length === 0) return;
-    
+
     this.batchQueues.set(type, []);
 
     // Extract requests
-    const requests = queue.map(item => item.request);
+    const requests = queue.map((item) => item.request);
 
     try {
       // Process batch
@@ -109,12 +117,16 @@ export class RequestBatcherService {
         if (index < results.length) {
           item.resolve(results[index]);
         } else {
-          item.reject(new Error('Batch processing returned insufficient results'));
+          item.reject(
+            new Error('Batch processing returned insufficient results')
+          );
         }
       });
     } catch (error) {
       // Reject all promises in the batch
-      queue.forEach(item => item.reject(error));
+      const errorInstance =
+        error instanceof Error ? error : new Error(String(error));
+      queue.forEach((item) => item.reject(errorInstance));
     }
   }
 
@@ -152,13 +164,13 @@ export class RequestBatcherService {
    */
   async batchGeocode(
     queries: string[],
-    options?: any
+    options?: GeocodeOptions
   ): Promise<GeocodeResult[][]> {
     // This would be implemented to make a single API call for multiple queries
     // For now, we'll simulate it - in real implementation, this would use
     // a batch geocoding endpoint if available
     const results: GeocodeResult[][] = [];
-    
+
     // Group similar queries to reduce API calls
     const uniqueQueries = [...new Set(queries)];
     const queryResults = new Map<string, GeocodeResult[]>();
@@ -188,12 +200,12 @@ export class RequestBatcherService {
    */
   clearPendingBatches(): void {
     // Clear all timers
-    this.batchTimers.forEach(timer => clearTimeout(timer));
+    this.batchTimers.forEach((timer) => clearTimeout(timer));
     this.batchTimers.clear();
 
     // Reject all pending requests
-    this.batchQueues.forEach(queue => {
-      queue.forEach(item => {
+    this.batchQueues.forEach((queue) => {
+      queue.forEach((item) => {
         item.reject(new Error('Batch processing cancelled'));
       });
     });

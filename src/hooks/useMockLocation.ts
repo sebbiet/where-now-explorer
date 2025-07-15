@@ -17,7 +17,7 @@ export const useMockLocation = () => {
 
   const toggleMockLocation = useCallback(() => {
     if (process.env.NODE_ENV === 'development') {
-      setIsEnabled(prev => !prev);
+      setIsEnabled((prev) => !prev);
       if (!isEnabled && !location) {
         // Set default mock location when first enabling
         setLocation({ latitude: -33.8568, longitude: 151.2153 }); // Sydney Opera House
@@ -36,6 +36,6 @@ export const useMockLocation = () => {
     setMockLocation,
     toggleMockLocation,
     clearMockLocation,
-    isDevelopment: process.env.NODE_ENV === 'development'
+    isDevelopment: process.env.NODE_ENV === 'development',
   };
 };

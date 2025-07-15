@@ -13,19 +13,21 @@ export function sanitizeText(input: string): string {
     return '';
   }
 
-  return input
-    // Remove HTML tags
-    .replace(/<[^>]*>/g, '')
-    // Remove script tags specifically
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    // Remove javascript: URLs
-    .replace(/javascript:/gi, '')
-    // Remove on* event handlers
-    .replace(/\bon\w+\s*=/gi, '')
-    // Limit length to prevent DoS
-    .slice(0, 1000)
-    // Trim whitespace
-    .trim();
+  return (
+    input
+      // Remove HTML tags
+      .replace(/<[^>]*>/g, '')
+      // Remove script tags specifically
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      // Remove javascript: URLs
+      .replace(/javascript:/gi, '')
+      // Remove on* event handlers
+      .replace(/\bon\w+\s*=/gi, '')
+      // Limit length to prevent DoS
+      .slice(0, 1000)
+      // Trim whitespace
+      .trim()
+  );
 }
 
 /**
@@ -37,14 +39,18 @@ export function sanitizeDestination(destination: string): string {
   }
 
   const sanitized = sanitizeText(destination);
-  
+
   // Additional validation for destination searches
   if (sanitized.length < 2) {
-    throw new Error(getErrorMessage('VALIDATION', 'TOO_SHORT', { field: 'Destination' }));
+    throw new Error(
+      getErrorMessage('VALIDATION', 'TOO_SHORT', { field: 'Destination' })
+    );
   }
 
   if (sanitized.length > 200) {
-    throw new Error(getErrorMessage('VALIDATION', 'TOO_LONG', { field: 'Destination search' }));
+    throw new Error(
+      getErrorMessage('VALIDATION', 'TOO_LONG', { field: 'Destination search' })
+    );
   }
 
   // Check for suspicious patterns
@@ -103,7 +109,10 @@ export function sanitizeUrlParam(param: string): string {
 /**
  * Validate API response data structure
  */
-export function validateApiResponse(data: unknown, expectedFields: string[]): boolean {
+export function validateApiResponse(
+  data: unknown,
+  expectedFields: string[]
+): boolean {
   if (!data || typeof data !== 'object') {
     return false;
   }
@@ -126,18 +135,17 @@ export function sanitizeStorageKey(key: string): string {
     return '';
   }
 
-  return key
-    .replace(/[^a-zA-Z0-9_-]/g, '')
-    .slice(0, 100);
+  return key.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 100);
 }
 
 export function sanitizeStorageValue(value: unknown): string {
   try {
     // Ensure the value can be safely serialized
     const serialized = JSON.stringify(value);
-    
+
     // Limit size to prevent storage abuse
-    if (serialized.length > 1024 * 100) { // 100KB limit
+    if (serialized.length > 1024 * 100) {
+      // 100KB limit
       throw new Error(getErrorMessage('STORAGE', 'QUOTA_EXCEEDED'));
     }
 

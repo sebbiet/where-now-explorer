@@ -34,11 +34,13 @@ class HealthCheckService {
   private monitoringInterval: NodeJS.Timeout | null = null;
   private startTime = Date.now();
 
-  constructor(private config: HealthCheckConfig = {
-    timeout: 5000,
-    retries: 2,
-    interval: 30000 // 30 seconds
-  }) {
+  constructor(
+    private config: HealthCheckConfig = {
+      timeout: 5000,
+      retries: 2,
+      interval: 30000, // 30 seconds
+    }
+  ) {
     this.initializeDefaultChecks();
     this.startMonitoring();
   }
@@ -50,7 +52,7 @@ class HealthCheckService {
     this.checks.set(name, checkFn);
     logger.info(`Health check '${name}' registered`, {
       service: 'HealthCheck',
-      checkName: name
+      checkName: name,
     });
   }
 
@@ -59,21 +61,21 @@ class HealthCheckService {
    */
   async getHealthStatus(): Promise<HealthStatus> {
     const checks: HealthCheck[] = [];
-    
+
     // Run all registered checks
     for (const [name, checkFn] of this.checks) {
       try {
         const start = performance.now();
         const result = await Promise.race([
           checkFn(),
-          this.timeoutPromise(this.config.timeout)
+          this.timeoutPromise(this.config.timeout),
         ]);
         const duration = performance.now() - start;
-        
+
         checks.push({
           ...result,
           duration,
-          name
+          name,
         });
       } catch (error) {
         checks.push({
@@ -81,30 +83,30 @@ class HealthCheckService {
           status: 'fail',
           message: error instanceof Error ? error.message : 'Unknown error',
           duration: this.config.timeout,
-          details: { error: String(error) }
+          details: { error: String(error) },
         });
       }
     }
 
     // Determine overall status
     const overallStatus = this.calculateOverallStatus(checks);
-    
+
     const healthStatus: HealthStatus = {
       status: overallStatus,
       timestamp: Date.now(),
       checks,
       uptime: Date.now() - this.startTime,
       version: import.meta.env.VITE_APP_VERSION || 'unknown',
-      environment: import.meta.env.PROD ? 'production' : 'development'
+      environment: import.meta.env.PROD ? 'production' : 'development',
     };
 
     this.lastHealthStatus = healthStatus;
-    
+
     logger.debug('Health check completed', {
       service: 'HealthCheck',
       status: overallStatus,
       checkCount: checks.length,
-      failedChecks: checks.filter(c => c.status === 'fail').length
+      failedChecks: checks.filter((c) => c.status === 'fail').length,
     });
 
     return healthStatus;
@@ -135,19 +137,21 @@ class HealthCheckService {
 
     this.monitoringInterval = setInterval(async () => {
       const status = await this.getHealthStatus();
-      
+
       if (status.status !== 'healthy') {
         logger.warn('Application health degraded', {
           service: 'HealthCheck',
           status: status.status,
-          failedChecks: status.checks.filter(c => c.status === 'fail').map(c => c.name)
+          failedChecks: status.checks
+            .filter((c) => c.status === 'fail')
+            .map((c) => c.name),
         });
       }
     }, this.config.interval);
 
     logger.info('Health monitoring started', {
       service: 'HealthCheck',
-      interval: this.config.interval
+      interval: this.config.interval,
     });
   }
 
@@ -171,7 +175,7 @@ class HealthCheckService {
       const requiredAPIs = ['fetch', 'localStorage', 'navigator'];
       const missing: string[] = [];
 
-      requiredAPIs.forEach(api => {
+      requiredAPIs.forEach((api) => {
         if (!(api in window)) {
           missing.push(api);
         }
@@ -180,11 +184,12 @@ class HealthCheckService {
       return {
         name: 'browser-apis',
         status: missing.length === 0 ? 'pass' : 'fail',
-        message: missing.length === 0 
-          ? 'All required browser APIs available'
-          : `Missing APIs: ${missing.join(', ')}`,
+        message:
+          missing.length === 0
+            ? 'All required browser APIs available'
+            : `Missing APIs: ${missing.join(', ')}`,
         duration: 0,
-        details: { requiredAPIs, missing }
+        details: { requiredAPIs, missing },
       };
     });
 
@@ -201,7 +206,7 @@ class HealthCheckService {
           status: usage < 80 ? 'pass' : usage < 90 ? 'warn' : 'fail',
           message: `Memory usage: ${usedMB}MB / ${limitMB}MB (${usage.toFixed(1)}%)`,
           duration: 0,
-          details: { usedMB, limitMB, usagePercent: usage }
+          details: { usedMB, limitMB, usagePercent: usage },
         };
       }
 
@@ -209,7 +214,7 @@ class HealthCheckService {
         name: 'memory-usage',
         status: 'warn',
         message: 'Memory API not available',
-        duration: 0
+        duration: 0,
       };
     });
 
@@ -224,8 +229,11 @@ class HealthCheckService {
         return {
           name: 'local-storage',
           status: value === 'test' ? 'pass' : 'fail',
-          message: value === 'test' ? 'Local storage working' : 'Local storage test failed',
-          duration: 0
+          message:
+            value === 'test'
+              ? 'Local storage working'
+              : 'Local storage test failed',
+          duration: 0,
         };
       } catch (error) {
         return {
@@ -233,7 +241,7 @@ class HealthCheckService {
           status: 'fail',
           message: 'Local storage not available or full',
           duration: 0,
-          details: { error: String(error) }
+          details: { error: String(error) },
         };
       }
     });
@@ -245,9 +253,11 @@ class HealthCheckService {
         return {
           name: 'network-connectivity',
           status: isOnline ? 'pass' : 'warn',
-          message: isOnline ? 'Network connection available' : 'No network connection detected',
+          message: isOnline
+            ? 'Network connection available'
+            : 'No network connection detected',
           duration: 0,
-          details: { onLine: isOnline }
+          details: { onLine: isOnline },
         };
       }
 
@@ -255,7 +265,7 @@ class HealthCheckService {
         name: 'network-connectivity',
         status: 'warn',
         message: 'Network status API not available',
-        duration: 0
+        duration: 0,
       };
     });
 
@@ -266,7 +276,7 @@ class HealthCheckService {
           name: 'geolocation-api',
           status: 'pass',
           message: 'Geolocation API available',
-          duration: 0
+          duration: 0,
         };
       }
 
@@ -274,7 +284,7 @@ class HealthCheckService {
         name: 'geolocation-api',
         status: 'fail',
         message: 'Geolocation API not available',
-        duration: 0
+        duration: 0,
       };
     });
 
@@ -288,13 +298,15 @@ class HealthCheckService {
           return {
             name: 'service-worker',
             status: isActive ? 'pass' : 'warn',
-            message: isActive ? 'Service worker active' : 'Service worker not active',
+            message: isActive
+              ? 'Service worker active'
+              : 'Service worker not active',
             duration: 0,
-            details: { 
-              available: true, 
+            details: {
+              available: true,
               active: isActive,
-              scope: registration?.scope 
-            }
+              scope: registration?.scope,
+            },
           };
         } catch (error) {
           return {
@@ -302,7 +314,7 @@ class HealthCheckService {
             status: 'warn',
             message: 'Service worker check failed',
             duration: 0,
-            details: { error: String(error) }
+            details: { error: String(error) },
           };
         }
       }
@@ -311,7 +323,7 @@ class HealthCheckService {
         name: 'service-worker',
         status: 'warn',
         message: 'Service Worker API not available',
-        duration: 0
+        duration: 0,
       };
     });
 
@@ -322,30 +334,30 @@ class HealthCheckService {
         const testUrl = 'https://nominatim.openstreetmap.org/status.php';
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3000);
-        
+
         try {
           const response = await fetch(testUrl, {
             method: 'GET',
             signal: controller.signal,
             headers: {
-              'Accept': 'text/plain'
-            }
+              Accept: 'text/plain',
+            },
           });
           clearTimeout(timeoutId);
-          
+
           const isHealthy = response.ok;
-          
+
           return {
             name: 'external-apis',
             status: isHealthy ? 'pass' : 'warn',
-            message: isHealthy 
-              ? 'External API connectivity working' 
+            message: isHealthy
+              ? 'External API connectivity working'
               : 'External API connectivity degraded',
             duration: 0,
-            details: { 
+            details: {
               statusCode: response.status,
-              endpoint: 'nominatim'
-            }
+              endpoint: 'nominatim',
+            },
           };
         } catch (fetchError) {
           clearTimeout(timeoutId);
@@ -358,23 +370,25 @@ class HealthCheckService {
           status: 'warn',
           message: 'External API connectivity may be limited',
           duration: 0,
-          details: { error: String(error) }
+          details: { error: String(error) },
         };
       }
     });
 
     logger.info('Default health checks initialized', {
       service: 'HealthCheck',
-      checkCount: this.checks.size
+      checkCount: this.checks.size,
     });
   }
 
   /**
    * Calculate overall health status from individual checks
    */
-  private calculateOverallStatus(checks: HealthCheck[]): 'healthy' | 'degraded' | 'unhealthy' {
-    const failedChecks = checks.filter(c => c.status === 'fail');
-    const warningChecks = checks.filter(c => c.status === 'warn');
+  private calculateOverallStatus(
+    checks: HealthCheck[]
+  ): 'healthy' | 'degraded' | 'unhealthy' {
+    const failedChecks = checks.filter((c) => c.status === 'fail');
+    const warningChecks = checks.filter((c) => c.status === 'warn');
 
     if (failedChecks.length > 0) {
       return 'unhealthy';
@@ -405,16 +419,19 @@ export const createHealthEndpoint = () => {
   return async (req: any, res: any) => {
     try {
       const status = await healthCheck.getHealthStatus();
-      const httpStatus = status.status === 'healthy' ? 200 
-                       : status.status === 'degraded' ? 200 
-                       : 503;
+      const httpStatus =
+        status.status === 'healthy'
+          ? 200
+          : status.status === 'degraded'
+            ? 200
+            : 503;
 
       res.status(httpStatus).json(status);
     } catch (error) {
       res.status(503).json({
         status: 'unhealthy',
         message: 'Health check failed',
-        error: String(error)
+        error: String(error),
       });
     }
   };

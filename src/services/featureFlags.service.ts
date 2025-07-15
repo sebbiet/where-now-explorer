@@ -44,7 +44,7 @@ class FeatureFlagsService {
       flags: {},
       defaultValues: {},
       refreshInterval: 5 * 60 * 1000, // 5 minutes
-      ...config
+      ...config,
     };
 
     this.userBucket = this.calculateUserBucket();
@@ -57,14 +57,17 @@ class FeatureFlagsService {
    */
   isEnabled(flagKey: string): boolean {
     const flag = this.flags.get(flagKey);
-    
+
     if (!flag) {
       const defaultValue = this.config.defaultValues[flagKey] ?? false;
-      logger.warn(`Feature flag '${flagKey}' not found, using default: ${defaultValue}`, {
-        service: 'FeatureFlags',
-        flagKey,
-        defaultValue
-      });
+      logger.warn(
+        `Feature flag '${flagKey}' not found, using default: ${defaultValue}`,
+        {
+          service: 'FeatureFlags',
+          flagKey,
+          defaultValue,
+        }
+      );
       return defaultValue;
     }
 
@@ -87,7 +90,7 @@ class FeatureFlagsService {
       service: 'FeatureFlags',
       flagKey,
       userBucket: this.userBucket,
-      rolloutPercentage: flag.rolloutPercentage
+      rolloutPercentage: flag.rolloutPercentage,
     });
 
     return true;
@@ -113,7 +116,7 @@ class FeatureFlagsService {
       service: 'FeatureFlags',
       flagKey,
       enabled: flag.enabled,
-      rolloutPercentage: flag.rolloutPercentage
+      rolloutPercentage: flag.rolloutPercentage,
     });
   }
 
@@ -122,14 +125,14 @@ class FeatureFlagsService {
    */
   getAllFlags(): Record<string, boolean> {
     const result: Record<string, boolean> = {};
-    
+
     // Include configured flags
     this.flags.forEach((flag, key) => {
       result[key] = this.isEnabled(key);
     });
 
     // Include default values for missing flags
-    Object.keys(this.config.defaultValues).forEach(key => {
+    Object.keys(this.config.defaultValues).forEach((key) => {
       if (!(key in result)) {
         result[key] = this.config.defaultValues[key];
       }
@@ -149,7 +152,7 @@ class FeatureFlagsService {
     try {
       logger.debug('Refreshing feature flags from remote config', {
         service: 'FeatureFlags',
-        url: this.config.remoteConfigUrl
+        url: this.config.remoteConfigUrl,
       });
 
       const response = await fetch(this.config.remoteConfigUrl);
@@ -158,7 +161,7 @@ class FeatureFlagsService {
       }
 
       const remoteFlags: Record<string, FeatureFlag> = await response.json();
-      
+
       // Update local flags
       Object.entries(remoteFlags).forEach(([key, flag]) => {
         this.flags.set(key, flag);
@@ -166,13 +169,12 @@ class FeatureFlagsService {
 
       logger.info('Feature flags refreshed successfully', {
         service: 'FeatureFlags',
-        flagCount: Object.keys(remoteFlags).length
+        flagCount: Object.keys(remoteFlags).length,
       });
-
     } catch (error) {
       logger.error('Failed to refresh feature flags', error as Error, {
         service: 'FeatureFlags',
-        url: this.config.remoteConfigUrl
+        url: this.config.remoteConfigUrl,
       });
     }
   }
@@ -191,8 +193,8 @@ class FeatureFlagsService {
           description: 'Enable detailed performance monitoring',
           owner: 'platform-team',
           createdAt: new Date(),
-          lastModified: new Date()
-        }
+          lastModified: new Date(),
+        },
       },
 
       // Enhanced analytics
@@ -204,8 +206,8 @@ class FeatureFlagsService {
           description: 'Enable advanced analytics and user behavior tracking',
           owner: 'product-team',
           createdAt: new Date(),
-          lastModified: new Date()
-        }
+          lastModified: new Date(),
+        },
       },
 
       // PWA features
@@ -217,8 +219,8 @@ class FeatureFlagsService {
           description: 'Show PWA installation prompt',
           owner: 'mobile-team',
           createdAt: new Date(),
-          lastModified: new Date()
-        }
+          lastModified: new Date(),
+        },
       },
 
       // Experimental features
@@ -230,8 +232,8 @@ class FeatureFlagsService {
           description: 'Enable offline mode capabilities',
           owner: 'platform-team',
           createdAt: new Date(),
-          lastModified: new Date()
-        }
+          lastModified: new Date(),
+        },
       },
 
       // Location features
@@ -243,8 +245,8 @@ class FeatureFlagsService {
           description: 'Show traditional land acknowledgments',
           owner: 'product-team',
           createdAt: new Date(),
-          lastModified: new Date()
-        }
+          lastModified: new Date(),
+        },
       },
 
       // Debug features (only in development)
@@ -256,8 +258,8 @@ class FeatureFlagsService {
           description: 'Show debug panel for development',
           owner: 'dev-team',
           createdAt: new Date(),
-          lastModified: new Date()
-        }
+          lastModified: new Date(),
+        },
       },
 
       // A/B testing example
@@ -269,8 +271,8 @@ class FeatureFlagsService {
           description: 'Test new location display UI',
           owner: 'design-team',
           createdAt: new Date(),
-          lastModified: new Date()
-        }
+          lastModified: new Date(),
+        },
       },
 
       // Gradual rollout example
@@ -285,9 +287,9 @@ class FeatureFlagsService {
           description: 'Enable haptic feedback on mobile devices',
           owner: 'mobile-team',
           createdAt: new Date(),
-          lastModified: new Date()
-        }
-      }
+          lastModified: new Date(),
+        },
+      },
     };
 
     // Load flags
@@ -297,7 +299,7 @@ class FeatureFlagsService {
 
     logger.info('Feature flags initialized', {
       service: 'FeatureFlags',
-      flagCount: this.flags.size
+      flagCount: this.flags.size,
     });
   }
 
@@ -307,7 +309,7 @@ class FeatureFlagsService {
   private calculateUserBucket(): number {
     // Use a combination of localStorage and sessionStorage for consistency
     let userSeed = localStorage.getItem('user-bucket-seed');
-    
+
     if (!userSeed) {
       userSeed = Math.random().toString(36).substring(2, 15);
       localStorage.setItem('user-bucket-seed', userSeed);
@@ -317,10 +319,10 @@ class FeatureFlagsService {
     let hash = 0;
     for (let i = 0; i < userSeed.length; i++) {
       const char = userSeed.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
-    
+
     return Math.abs(hash) % 100;
   }
 
@@ -335,7 +337,7 @@ class FeatureFlagsService {
     // Check user agent
     if (conditions.userAgent && conditions.userAgent.length > 0) {
       const userAgent = navigator.userAgent;
-      const matches = conditions.userAgent.some(pattern => 
+      const matches = conditions.userAgent.some((pattern) =>
         userAgent.toLowerCase().includes(pattern.toLowerCase())
       );
       if (!matches) return false;

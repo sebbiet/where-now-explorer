@@ -3,8 +3,8 @@ export interface RetryOptions {
   initialDelay?: number;
   maxDelay?: number;
   backoffFactor?: number;
-  shouldRetry?: (error: any) => boolean;
-  onRetry?: (attempt: number, delay: number, error: any) => void;
+  shouldRetry?: (error: unknown) => boolean;
+  onRetry?: (attempt: number, delay: number, error: unknown) => void;
 }
 
 const DEFAULT_OPTIONS: Required<RetryOptions> = {
@@ -34,7 +34,7 @@ export async function retryWithBackoff<T>(
   options: RetryOptions = {}
 ): Promise<T> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
-  let lastError: any;
+  let lastError: unknown;
 
   for (let attempt = 1; attempt <= opts.maxAttempts; attempt++) {
     try {
@@ -67,11 +67,11 @@ export async function retryWithBackoff<T>(
 }
 
 // Utility to create a retryable version of a function
-export function makeRetryable<T extends (...args: any[]) => Promise<any>>(
-  fn: T,
+export function makeRetryable<TArgs extends readonly unknown[], TReturn>(
+  fn: (...args: TArgs) => Promise<TReturn>,
   options: RetryOptions = {}
-): T {
-  return (async (...args: Parameters<T>) => {
+): (...args: TArgs) => Promise<TReturn> {
+  return async (...args: TArgs) => {
     return retryWithBackoff(() => fn(...args), options);
-  }) as T;
+  };
 }

@@ -136,13 +136,13 @@ describe('RateLimiterService', () => {
       for (let i = 0; i < 25; i++) {
         requests.push({
           allowed: rateLimiter.isAllowed(endpoint),
-          index: i
+          index: i,
         });
         rateLimiter.recordRequest(endpoint);
       }
 
       // Assert - All 25 should be allowed (under limit of 30)
-      expect(requests.every(r => r.allowed)).toBe(true);
+      expect(requests.every((r) => r.allowed)).toBe(true);
     });
 
     it('should track requests independently per endpoint', () => {
@@ -227,10 +227,10 @@ describe('RateLimiterService', () => {
 
       // Record requests at different times
       rateLimiter.recordRequest(endpoint);
-      
+
       vi.setSystemTime(now + 10000); // 10 seconds later
       rateLimiter.recordRequest(endpoint);
-      
+
       vi.setSystemTime(now + 20000); // 20 seconds later
       rateLimiter.recordRequest(endpoint);
 
@@ -246,9 +246,9 @@ describe('RateLimiterService', () => {
     it('should handle rapid concurrent requests', async () => {
       // Arrange
       const endpoint = 'geocoding';
-      const mockFn = vi.fn().mockImplementation((index) => 
-        Promise.resolve(`result-${index}`)
-      );
+      const mockFn = vi
+        .fn()
+        .mockImplementation((index) => Promise.resolve(`result-${index}`));
       const limitedFn = rateLimiter.withRateLimit(endpoint, mockFn);
 
       // Act - Fire off multiple concurrent requests
@@ -275,12 +275,12 @@ describe('RateLimiterService', () => {
       for (let i = 0; i < 30; i++) {
         operations.push({
           check: rateLimiter.isAllowed(endpoint),
-          record: () => rateLimiter.recordRequest(endpoint)
+          record: () => rateLimiter.recordRequest(endpoint),
         });
       }
 
       // Execute all records
-      operations.forEach(op => op.record());
+      operations.forEach((op) => op.record());
 
       // Assert - Next request should be blocked
       expect(rateLimiter.isAllowed(endpoint)).toBe(false);
@@ -291,7 +291,12 @@ describe('RateLimiterService', () => {
     it('should maintain separate counters for each endpoint', () => {
       // Arrange & Act
       const endpoints = ['geocoding', 'routing', 'geolocation', 'custom'];
-      const counts = { geocoding: 50, routing: 25, geolocation: 15, custom: 80 };
+      const counts = {
+        geocoding: 50,
+        routing: 25,
+        geolocation: 15,
+        custom: 80,
+      };
 
       // Record different numbers of requests for each endpoint
       Object.entries(counts).forEach(([endpoint, count]) => {
@@ -370,7 +375,7 @@ describe('RateLimiterService', () => {
       // Arrange
       const endpoint = 'geolocation';
       let requestsBeforeExecution = 0;
-      
+
       const mockFn = vi.fn().mockImplementation(() => {
         // Check how many requests are recorded when function executes
         let count = 0;

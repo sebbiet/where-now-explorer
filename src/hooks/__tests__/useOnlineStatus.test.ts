@@ -1,25 +1,26 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { useOnlineStatus } from '../useOnlineStatus';
+import { flushSync } from 'react-dom';
 
 // Mock the constants
 vi.mock('@/styles/constants', () => ({
   animations: {
     timeouts: {
-      cleanup: 5000
-    }
-  }
+      cleanup: 5000,
+    },
+  },
 }));
 
 // Mock navigator.onLine
 const mockNavigator = {
-  onLine: true
+  onLine: true,
 };
 
 // Mock window object
 const mockWindow = {
   addEventListener: vi.fn(),
-  removeEventListener: vi.fn()
+  removeEventListener: vi.fn(),
 };
 
 describe('useOnlineStatus', () => {
@@ -28,8 +29,9 @@ describe('useOnlineStatus', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
-    // Mock setTimeout to be synchronous for testing
+    vi.useFakeTimers();
+
+    // Reset mocks for each test
     global.setTimeout = vi.fn((fn, delay) => {
       if (typeof fn === 'function') {
         // Store the function to call it manually in tests
@@ -43,13 +45,13 @@ describe('useOnlineStatus', () => {
     // Setup navigator mock
     Object.defineProperty(global, 'navigator', {
       value: mockNavigator,
-      writable: true
+      writable: true,
     });
 
     // Setup window mock
     Object.defineProperty(global, 'window', {
       value: mockWindow,
-      writable: true
+      writable: true,
     });
 
     // Reset navigator state
@@ -58,18 +60,21 @@ describe('useOnlineStatus', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.useRealTimers();
     global.setTimeout = originalSetTimeout;
     global.clearTimeout = originalClearTimeout;
   });
 
   describe('initial online state', () => {
-    it('should initialize with navigator.onLine state when online', () => {
+    it('should initialize with navigator.onLine state when online', async () => {
       mockNavigator.onLine = true;
 
       const { result } = renderHook(() => useOnlineStatus());
 
-      expect(result.current.isOnline).toBe(true);
-      expect(result.current.wasOffline).toBe(false);
+      await waitFor(() => {
+        expect(result.current.isOnline).toBe(true);
+        expect(result.current.wasOffline).toBe(false);
+      });
     });
 
     it('should initialize with navigator.onLine state when offline', () => {
@@ -84,8 +89,14 @@ describe('useOnlineStatus', () => {
     it('should setup event listeners on mount', () => {
       renderHook(() => useOnlineStatus());
 
-      expect(mockWindow.addEventListener).toHaveBeenCalledWith('online', expect.any(Function));
-      expect(mockWindow.addEventListener).toHaveBeenCalledWith('offline', expect.any(Function));
+      expect(mockWindow.addEventListener).toHaveBeenCalledWith(
+        'online',
+        expect.any(Function)
+      );
+      expect(mockWindow.addEventListener).toHaveBeenCalledWith(
+        'offline',
+        expect.any(Function)
+      );
     });
 
     it('should check initial state even when navigator.onLine is false', () => {
@@ -104,7 +115,7 @@ describe('useOnlineStatus', () => {
 
       // Get the offline event handler
       const offlineHandler = mockWindow.addEventListener.mock.calls.find(
-        call => call[0] === 'offline'
+        (call) => call[0] === 'offline'
       )?.[1];
 
       expect(offlineHandler).toBeDefined();
@@ -122,10 +133,10 @@ describe('useOnlineStatus', () => {
 
       // First simulate going offline then online to set wasOffline
       const offlineHandler = mockWindow.addEventListener.mock.calls.find(
-        call => call[0] === 'offline'
+        (call) => call[0] === 'offline'
       )?.[1];
       const onlineHandler = mockWindow.addEventListener.mock.calls.find(
-        call => call[0] === 'online'
+        (call) => call[0] === 'online'
       )?.[1];
 
       // Go offline first
@@ -160,7 +171,7 @@ describe('useOnlineStatus', () => {
 
       // Get the online event handler
       const onlineHandler = mockWindow.addEventListener.mock.calls.find(
-        call => call[0] === 'online'
+        (call) => call[0] === 'online'
       )?.[1];
 
       expect(onlineHandler).toBeDefined();
@@ -177,7 +188,7 @@ describe('useOnlineStatus', () => {
 
       // First go offline
       const offlineHandler = mockWindow.addEventListener.mock.calls.find(
-        call => call[0] === 'offline'
+        (call) => call[0] === 'offline'
       )?.[1];
 
       act(() => {
@@ -189,7 +200,7 @@ describe('useOnlineStatus', () => {
 
       // Then go online
       const onlineHandler = mockWindow.addEventListener.mock.calls.find(
-        call => call[0] === 'online'
+        (call) => call[0] === 'online'
       )?.[1];
 
       act(() => {
@@ -210,7 +221,7 @@ describe('useOnlineStatus', () => {
 
       // Trigger online event while already online
       const onlineHandler = mockWindow.addEventListener.mock.calls.find(
-        call => call[0] === 'online'
+        (call) => call[0] === 'online'
       )?.[1];
 
       act(() => {
@@ -226,7 +237,7 @@ describe('useOnlineStatus', () => {
 
       // Go offline first
       const offlineHandler = mockWindow.addEventListener.mock.calls.find(
-        call => call[0] === 'offline'
+        (call) => call[0] === 'offline'
       )?.[1];
 
       act(() => {
@@ -235,7 +246,7 @@ describe('useOnlineStatus', () => {
 
       // Go online to trigger wasOffline
       const onlineHandler = mockWindow.addEventListener.mock.calls.find(
-        call => call[0] === 'online'
+        (call) => call[0] === 'online'
       )?.[1];
 
       act(() => {
@@ -248,7 +259,8 @@ describe('useOnlineStatus', () => {
       expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), 5000);
 
       // Get the timeout callback and execute it manually
-      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]?.value as any;
+      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]
+        ?.value as any;
       if (setTimeoutCall && setTimeoutCall.fn) {
         act(() => {
           setTimeoutCall.fn();
@@ -264,16 +276,26 @@ describe('useOnlineStatus', () => {
       renderHook(() => useOnlineStatus());
 
       expect(mockWindow.addEventListener).toHaveBeenCalledTimes(2);
-      expect(mockWindow.addEventListener).toHaveBeenCalledWith('online', expect.any(Function));
-      expect(mockWindow.addEventListener).toHaveBeenCalledWith('offline', expect.any(Function));
+      expect(mockWindow.addEventListener).toHaveBeenCalledWith(
+        'online',
+        expect.any(Function)
+      );
+      expect(mockWindow.addEventListener).toHaveBeenCalledWith(
+        'offline',
+        expect.any(Function)
+      );
     });
 
     it('should use the same handler functions across re-renders', () => {
       const { rerender } = renderHook(() => useOnlineStatus());
 
       const firstCallHandlers = {
-        online: mockWindow.addEventListener.mock.calls.find(call => call[0] === 'online')?.[1],
-        offline: mockWindow.addEventListener.mock.calls.find(call => call[0] === 'offline')?.[1]
+        online: mockWindow.addEventListener.mock.calls.find(
+          (call) => call[0] === 'online'
+        )?.[1],
+        offline: mockWindow.addEventListener.mock.calls.find(
+          (call) => call[0] === 'offline'
+        )?.[1],
       };
 
       // Clear mocks and rerender
@@ -281,8 +303,12 @@ describe('useOnlineStatus', () => {
       rerender();
 
       const secondCallHandlers = {
-        online: mockWindow.addEventListener.mock.calls.find(call => call[0] === 'online')?.[1],
-        offline: mockWindow.addEventListener.mock.calls.find(call => call[0] === 'offline')?.[1]
+        online: mockWindow.addEventListener.mock.calls.find(
+          (call) => call[0] === 'online'
+        )?.[1],
+        offline: mockWindow.addEventListener.mock.calls.find(
+          (call) => call[0] === 'offline'
+        )?.[1],
       };
 
       // Handlers should be different on rerender due to useEffect dependency
@@ -297,7 +323,7 @@ describe('useOnlineStatus', () => {
 
       // Trigger offline event to change isOnline state
       const offlineHandler = mockWindow.addEventListener.mock.calls.find(
-        call => call[0] === 'offline'
+        (call) => call[0] === 'offline'
       )?.[1];
 
       act(() => {
@@ -305,7 +331,9 @@ describe('useOnlineStatus', () => {
       });
 
       // Should have setup listeners again due to isOnline dependency
-      expect(mockWindow.addEventListener.mock.calls.length).toBeGreaterThan(initialSetupCalls);
+      expect(mockWindow.addEventListener.mock.calls.length).toBeGreaterThan(
+        initialSetupCalls
+      );
     });
   });
 
@@ -314,29 +342,49 @@ describe('useOnlineStatus', () => {
       const { unmount } = renderHook(() => useOnlineStatus());
 
       // Verify listeners were added
-      expect(mockWindow.addEventListener).toHaveBeenCalledWith('online', expect.any(Function));
-      expect(mockWindow.addEventListener).toHaveBeenCalledWith('offline', expect.any(Function));
+      expect(mockWindow.addEventListener).toHaveBeenCalledWith(
+        'online',
+        expect.any(Function)
+      );
+      expect(mockWindow.addEventListener).toHaveBeenCalledWith(
+        'offline',
+        expect.any(Function)
+      );
 
       unmount();
 
       // Verify listeners were removed
-      expect(mockWindow.removeEventListener).toHaveBeenCalledWith('online', expect.any(Function));
-      expect(mockWindow.removeEventListener).toHaveBeenCalledWith('offline', expect.any(Function));
+      expect(mockWindow.removeEventListener).toHaveBeenCalledWith(
+        'online',
+        expect.any(Function)
+      );
+      expect(mockWindow.removeEventListener).toHaveBeenCalledWith(
+        'offline',
+        expect.any(Function)
+      );
     });
 
     it('should remove correct event handlers', () => {
       const { unmount } = renderHook(() => useOnlineStatus());
 
       const addedHandlers = {
-        online: mockWindow.addEventListener.mock.calls.find(call => call[0] === 'online')?.[1],
-        offline: mockWindow.addEventListener.mock.calls.find(call => call[0] === 'offline')?.[1]
+        online: mockWindow.addEventListener.mock.calls.find(
+          (call) => call[0] === 'online'
+        )?.[1],
+        offline: mockWindow.addEventListener.mock.calls.find(
+          (call) => call[0] === 'offline'
+        )?.[1],
       };
 
       unmount();
 
       const removedHandlers = {
-        online: mockWindow.removeEventListener.mock.calls.find(call => call[0] === 'online')?.[1],
-        offline: mockWindow.removeEventListener.mock.calls.find(call => call[0] === 'offline')?.[1]
+        online: mockWindow.removeEventListener.mock.calls.find(
+          (call) => call[0] === 'online'
+        )?.[1],
+        offline: mockWindow.removeEventListener.mock.calls.find(
+          (call) => call[0] === 'offline'
+        )?.[1],
       };
 
       expect(addedHandlers.online).toBe(removedHandlers.online);
@@ -349,7 +397,7 @@ describe('useOnlineStatus', () => {
       // Mock navigator without onLine property
       Object.defineProperty(global, 'navigator', {
         value: {},
-        writable: true
+        writable: true,
       });
 
       const { result } = renderHook(() => useOnlineStatus());
@@ -362,7 +410,7 @@ describe('useOnlineStatus', () => {
       // Mock navigator as undefined
       Object.defineProperty(global, 'navigator', {
         value: undefined,
-        writable: true
+        writable: true,
       });
 
       // Should not crash
@@ -375,10 +423,10 @@ describe('useOnlineStatus', () => {
       const { result } = renderHook(() => useOnlineStatus());
 
       const onlineHandler = mockWindow.addEventListener.mock.calls.find(
-        call => call[0] === 'online'
+        (call) => call[0] === 'online'
       )?.[1];
       const offlineHandler = mockWindow.addEventListener.mock.calls.find(
-        call => call[0] === 'offline'
+        (call) => call[0] === 'offline'
       )?.[1];
 
       // Start online
@@ -419,7 +467,7 @@ describe('useOnlineStatus', () => {
       const { result } = renderHook(() => useOnlineStatus());
 
       const onlineHandler = mockWindow.addEventListener.mock.calls.find(
-        call => call[0] === 'online'
+        (call) => call[0] === 'online'
       )?.[1];
 
       // Multiple online events
@@ -438,7 +486,7 @@ describe('useOnlineStatus', () => {
       const { result } = renderHook(() => useOnlineStatus());
 
       const offlineHandler = mockWindow.addEventListener.mock.calls.find(
-        call => call[0] === 'offline'
+        (call) => call[0] === 'offline'
       )?.[1];
 
       // Multiple offline events
@@ -457,10 +505,10 @@ describe('useOnlineStatus', () => {
 
       // Go offline then online to trigger timeout
       const offlineHandler = mockWindow.addEventListener.mock.calls.find(
-        call => call[0] === 'offline'
+        (call) => call[0] === 'offline'
       )?.[1];
       const onlineHandler = mockWindow.addEventListener.mock.calls.find(
-        call => call[0] === 'online'
+        (call) => call[0] === 'online'
       )?.[1];
 
       act(() => {
@@ -477,7 +525,8 @@ describe('useOnlineStatus', () => {
       unmount();
 
       // Should not crash when timeout tries to execute
-      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]?.value as any;
+      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]
+        ?.value as any;
       if (setTimeoutCall && setTimeoutCall.fn) {
         expect(() => {
           setTimeoutCall.fn();
@@ -489,10 +538,10 @@ describe('useOnlineStatus', () => {
       const { result } = renderHook(() => useOnlineStatus());
 
       const onlineHandler = mockWindow.addEventListener.mock.calls.find(
-        call => call[0] === 'online'
+        (call) => call[0] === 'online'
       )?.[1];
       const offlineHandler = mockWindow.addEventListener.mock.calls.find(
-        call => call[0] === 'offline'
+        (call) => call[0] === 'offline'
       )?.[1];
 
       // Simulate rapid state changes

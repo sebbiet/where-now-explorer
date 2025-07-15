@@ -6,7 +6,7 @@ const mockEnv = {
   DEV: false,
   MODE: 'test',
   VITE_APP_VERSION: '1.0.0',
-  VITE_ENABLE_ANALYTICS: undefined
+  VITE_ENABLE_ANALYTICS: undefined,
 };
 
 vi.mock('import.meta.env', () => mockEnv);
@@ -19,21 +19,21 @@ describe('AnalyticsService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Mock window.gtag
     global.window = {
       ...global.window,
       gtag: mockGtag,
       dataLayer: [],
       location: {
-        pathname: '/test-path'
-      }
+        pathname: '/test-path',
+      },
     } as any;
 
     // Mock document
     global.document = {
       ...global.document,
-      title: 'Test Page'
+      title: 'Test Page',
     } as any;
 
     // Mock console methods
@@ -60,7 +60,7 @@ describe('AnalyticsService', () => {
       expect(mockGtag).toHaveBeenCalledWith('event', 'test_event', {
         test_param: 'value',
         app_version: '1.0.0',
-        environment: 'test'
+        environment: 'test',
       });
     });
 
@@ -69,7 +69,7 @@ describe('AnalyticsService', () => {
 
       expect(mockGtag).toHaveBeenCalledWith('event', 'custom_event', {
         app_version: '1.0.0',
-        environment: 'test'
+        environment: 'test',
       });
     });
 
@@ -80,7 +80,10 @@ describe('AnalyticsService', () => {
 
       analytics.track('error_event');
 
-      expect(console.error).toHaveBeenCalledWith('[Analytics] Error tracking event:', expect.any(Error));
+      expect(console.error).toHaveBeenCalledWith(
+        '[Analytics] Error tracking event:',
+        expect.any(Error)
+      );
     });
 
     it('should warn when gtag is not available', () => {
@@ -88,7 +91,9 @@ describe('AnalyticsService', () => {
 
       analytics.track('test_event');
 
-      expect(console.warn).toHaveBeenCalledWith('[Analytics] gtag not available');
+      expect(console.warn).toHaveBeenCalledWith(
+        '[Analytics] gtag not available'
+      );
       expect(mockGtag).not.toHaveBeenCalled();
     });
   });
@@ -98,7 +103,7 @@ describe('AnalyticsService', () => {
       const errorParams = {
         error_type: 'network_error',
         error_message: 'Connection failed',
-        error_source: 'api_call'
+        error_source: 'api_call',
       };
 
       analytics.trackError(errorParams);
@@ -106,14 +111,14 @@ describe('AnalyticsService', () => {
       expect(mockGtag).toHaveBeenCalledWith('event', 'app_error', {
         ...errorParams,
         app_version: '1.0.0',
-        environment: 'test'
+        environment: 'test',
       });
     });
 
     it('should track error with retry count', () => {
       const errorParams = {
         error_type: 'timeout',
-        retry_count: 3
+        retry_count: 3,
       };
 
       analytics.trackError(errorParams);
@@ -121,23 +126,23 @@ describe('AnalyticsService', () => {
       expect(mockGtag).toHaveBeenCalledWith('event', 'app_error', {
         ...errorParams,
         app_version: '1.0.0',
-        environment: 'test'
+        environment: 'test',
       });
     });
   });
 
   describe('trackTiming method', () => {
     it('should track custom timing events', () => {
-      analytics.track('page_load_time', { 
+      analytics.track('page_load_time', {
         duration: 1250,
-        page: 'home' 
+        page: 'home',
       });
 
       expect(mockGtag).toHaveBeenCalledWith('event', 'page_load_time', {
         duration: 1250,
         page: 'home',
         app_version: '1.0.0',
-        environment: 'test'
+        environment: 'test',
       });
     });
   });
@@ -148,7 +153,7 @@ describe('AnalyticsService', () => {
 
       expect(mockGtag).toHaveBeenCalledWith('event', 'page_view', {
         page_path: '/test-path',
-        page_title: 'Test Page'
+        page_title: 'Test Page',
       });
     });
 
@@ -157,7 +162,7 @@ describe('AnalyticsService', () => {
 
       expect(mockGtag).toHaveBeenCalledWith('event', 'page_view', {
         page_path: '/custom-path',
-        page_title: 'Test Page'
+        page_title: 'Test Page',
       });
     });
 
@@ -176,21 +181,29 @@ describe('AnalyticsService', () => {
 
       analytics.trackLocationPermission(true, params);
 
-      expect(mockGtag).toHaveBeenCalledWith('event', 'location_permission_granted', {
-        timestamp: 1234567890,
-        app_version: '1.0.0',
-        environment: 'test'
-      });
+      expect(mockGtag).toHaveBeenCalledWith(
+        'event',
+        'location_permission_granted',
+        {
+          timestamp: 1234567890,
+          app_version: '1.0.0',
+          environment: 'test',
+        }
+      );
     });
 
     it('should track denied location permission', () => {
       analytics.trackLocationPermission(false);
 
-      expect(mockGtag).toHaveBeenCalledWith('event', 'location_permission_denied', {
-        timestamp: expect.any(Number),
-        app_version: '1.0.0',
-        environment: 'test'
-      });
+      expect(mockGtag).toHaveBeenCalledWith(
+        'event',
+        'location_permission_denied',
+        {
+          timestamp: expect.any(Number),
+          app_version: '1.0.0',
+          environment: 'test',
+        }
+      );
     });
 
     it('should track location permission errors', () => {
@@ -199,18 +212,22 @@ describe('AnalyticsService', () => {
         message: 'User denied geolocation',
         PERMISSION_DENIED: 1,
         POSITION_UNAVAILABLE: 2,
-        TIMEOUT: 3
+        TIMEOUT: 3,
       } as GeolocationPositionError;
 
       analytics.trackLocationPermissionError(mockError);
 
-      expect(mockGtag).toHaveBeenCalledWith('event', 'location_permission_error', {
-        error_type: 'permission_denied',
-        error_message: 'User denied geolocation',
-        error_code: 1,
-        app_version: '1.0.0',
-        environment: 'test'
-      });
+      expect(mockGtag).toHaveBeenCalledWith(
+        'event',
+        'location_permission_error',
+        {
+          error_type: 'permission_denied',
+          error_message: 'User denied geolocation',
+          error_code: 1,
+          app_version: '1.0.0',
+          environment: 'test',
+        }
+      );
     });
 
     it('should handle different geolocation error codes', () => {
@@ -219,24 +236,28 @@ describe('AnalyticsService', () => {
         message: 'Timeout',
         PERMISSION_DENIED: 1,
         POSITION_UNAVAILABLE: 2,
-        TIMEOUT: 3
+        TIMEOUT: 3,
       } as GeolocationPositionError;
 
       analytics.trackLocationPermissionError(timeoutError);
 
-      expect(mockGtag).toHaveBeenCalledWith('event', 'location_permission_error', {
-        error_type: 'timeout',
-        error_message: 'Timeout',
-        error_code: 3,
-        app_version: '1.0.0',
-        environment: 'test'
-      });
+      expect(mockGtag).toHaveBeenCalledWith(
+        'event',
+        'location_permission_error',
+        {
+          error_type: 'timeout',
+          error_message: 'Timeout',
+          error_code: 3,
+          app_version: '1.0.0',
+          environment: 'test',
+        }
+      );
     });
 
     it('should track location updates', () => {
       const updateParams = {
         update_type: 'initial' as const,
-        has_traditional_land_info: true
+        has_traditional_land_info: true,
       };
 
       analytics.trackLocationUpdated(updateParams);
@@ -244,7 +265,7 @@ describe('AnalyticsService', () => {
       expect(mockGtag).toHaveBeenCalledWith('event', 'location_updated', {
         ...updateParams,
         app_version: '1.0.0',
-        environment: 'test'
+        environment: 'test',
       });
     });
 
@@ -252,7 +273,7 @@ describe('AnalyticsService', () => {
       const refreshParams = {
         update_type: 'refresh' as const,
         refresh_type: 'manual' as const,
-        countdown_remaining: 15
+        countdown_remaining: 15,
       };
 
       analytics.trackLocationRefresh(refreshParams);
@@ -260,23 +281,23 @@ describe('AnalyticsService', () => {
       expect(mockGtag).toHaveBeenCalledWith('event', 'location_refresh', {
         ...refreshParams,
         app_version: '1.0.0',
-        environment: 'test'
+        environment: 'test',
       });
     });
   });
 
   describe('GA4 integration', () => {
     it('should use GA4 event format', () => {
-      analytics.track('custom_event', { 
+      analytics.track('custom_event', {
         custom_parameter: 'value',
-        numeric_value: 42 
+        numeric_value: 42,
       });
 
       expect(mockGtag).toHaveBeenCalledWith('event', 'custom_event', {
         custom_parameter: 'value',
         numeric_value: 42,
         app_version: '1.0.0',
-        environment: 'test'
+        environment: 'test',
       });
     });
 
@@ -287,7 +308,7 @@ describe('AnalyticsService', () => {
 
       expect(mockGtag).toHaveBeenCalledWith('event', 'version_test', {
         app_version: '2.1.0',
-        environment: 'test'
+        environment: 'test',
       });
     });
 
@@ -298,7 +319,7 @@ describe('AnalyticsService', () => {
 
       expect(mockGtag).toHaveBeenCalledWith('event', 'version_test', {
         app_version: '1.0.0',
-        environment: 'test'
+        environment: 'test',
       });
     });
   });
@@ -309,7 +330,9 @@ describe('AnalyticsService', () => {
 
       analytics.track('dev_event', { test: 'value' });
 
-      expect(console.log).toHaveBeenCalledWith('[Analytics Dev]', 'dev_event', { test: 'value' });
+      expect(console.log).toHaveBeenCalledWith('[Analytics Dev]', 'dev_event', {
+        test: 'value',
+      });
       expect(mockGtag).not.toHaveBeenCalled();
     });
 
@@ -321,7 +344,7 @@ describe('AnalyticsService', () => {
 
       expect(mockGtag).toHaveBeenCalledWith('event', 'dev_enabled_event', {
         app_version: '1.0.0',
-        environment: 'test'
+        environment: 'test',
       });
       expect(console.log).not.toHaveBeenCalled();
     });
@@ -333,7 +356,7 @@ describe('AnalyticsService', () => {
 
       expect(mockGtag).toHaveBeenCalledWith('event', 'prod_event', {
         app_version: '1.0.0',
-        environment: 'test'
+        environment: 'test',
       });
     });
   });
@@ -342,34 +365,42 @@ describe('AnalyticsService', () => {
     it('should track destination search started', () => {
       analytics.trackDestinationSearchStarted(5);
 
-      expect(mockGtag).toHaveBeenCalledWith('event', 'destination_search_started', {
-        search_length: 5,
-        app_version: '1.0.0',
-        environment: 'test'
-      });
+      expect(mockGtag).toHaveBeenCalledWith(
+        'event',
+        'destination_search_started',
+        {
+          search_length: 5,
+          app_version: '1.0.0',
+          environment: 'test',
+        }
+      );
     });
 
     it('should track destination suggestion selected', () => {
       const params = {
         suggestion_index: 2,
         total_suggestions: 5,
-        destination_type: 'landmark'
+        destination_type: 'landmark',
       };
 
       analytics.trackDestinationSuggestionSelected(params);
 
-      expect(mockGtag).toHaveBeenCalledWith('event', 'destination_suggestion_selected', {
-        ...params,
-        app_version: '1.0.0',
-        environment: 'test'
-      });
+      expect(mockGtag).toHaveBeenCalledWith(
+        'event',
+        'destination_suggestion_selected',
+        {
+          ...params,
+          app_version: '1.0.0',
+          environment: 'test',
+        }
+      );
     });
 
     it('should track successful destination calculation', () => {
       const params = {
         distance_km: 10.5,
         duration_minutes: 25,
-        destination_type: 'address'
+        destination_type: 'address',
       };
 
       analytics.trackDestinationCalculated(params);
@@ -378,24 +409,28 @@ describe('AnalyticsService', () => {
         ...params,
         success: true,
         app_version: '1.0.0',
-        environment: 'test'
+        environment: 'test',
       });
     });
 
     it('should track destination calculation errors', () => {
       const params = {
         error_type: 'route_not_found',
-        destination_query: 'invalid location'
+        destination_query: 'invalid location',
       };
 
       analytics.trackDestinationCalculationError(params);
 
-      expect(mockGtag).toHaveBeenCalledWith('event', 'destination_calculation_error', {
-        ...params,
-        success: false,
-        app_version: '1.0.0',
-        environment: 'test'
-      });
+      expect(mockGtag).toHaveBeenCalledWith(
+        'event',
+        'destination_calculation_error',
+        {
+          ...params,
+          success: false,
+          app_version: '1.0.0',
+          environment: 'test',
+        }
+      );
     });
   });
 
@@ -404,7 +439,7 @@ describe('AnalyticsService', () => {
       const params = {
         from_tab: 'home',
         to_tab: 'settings',
-        interaction_method: 'click' as const
+        interaction_method: 'click' as const,
       };
 
       analytics.trackTabSwitch(params);
@@ -412,14 +447,14 @@ describe('AnalyticsService', () => {
       expect(mockGtag).toHaveBeenCalledWith('event', 'tab_switched', {
         ...params,
         app_version: '1.0.0',
-        environment: 'test'
+        environment: 'test',
       });
     });
 
     it('should track theme toggles', () => {
       const params = {
         new_theme: 'dark' as const,
-        system_preference: 'light' as const
+        system_preference: 'light' as const,
       };
 
       analytics.trackThemeToggle(params);
@@ -427,7 +462,7 @@ describe('AnalyticsService', () => {
       expect(mockGtag).toHaveBeenCalledWith('event', 'theme_toggled', {
         ...params,
         app_version: '1.0.0',
-        environment: 'test'
+        environment: 'test',
       });
     });
   });
@@ -440,7 +475,9 @@ describe('AnalyticsService', () => {
       analytics.track('no_window_event');
 
       // Should not throw error
-      expect(console.warn).toHaveBeenCalledWith('[Analytics] gtag not available');
+      expect(console.warn).toHaveBeenCalledWith(
+        '[Analytics] gtag not available'
+      );
 
       global.window = originalWindow;
     });
@@ -450,7 +487,9 @@ describe('AnalyticsService', () => {
 
       analytics.track('no_gtag_event');
 
-      expect(console.warn).toHaveBeenCalledWith('[Analytics] gtag not available');
+      expect(console.warn).toHaveBeenCalledWith(
+        '[Analytics] gtag not available'
+      );
     });
   });
 });

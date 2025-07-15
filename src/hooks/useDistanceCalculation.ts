@@ -8,56 +8,61 @@ interface UseDistanceCalculationOptions {
   onError?: (error: Error) => void;
 }
 
-export const useDistanceCalculation = (options?: UseDistanceCalculationOptions) => {
+export const useDistanceCalculation = (
+  options?: UseDistanceCalculationOptions
+) => {
   const [isCalculating, setIsCalculating] = useState(false);
   const [routeResult, setRouteResult] = useState<RouteResult | null>(null);
   const [error, setError] = useState<Error | null>(null);
 
-  const calculateDistance = useCallback(async (
-    fromLat: number,
-    fromLng: number,
-    destination: GeocodeResult
-  ) => {
-    setIsCalculating(true);
-    setError(null);
-    setRouteResult(null);
+  const calculateDistance = useCallback(
+    async (fromLat: number, fromLng: number, destination: GeocodeResult) => {
+      setIsCalculating(true);
+      setError(null);
+      setRouteResult(null);
 
-    try {
-      const result = await RoutingService.calculateRoute(
-        fromLat,
-        fromLng,
-        parseFloat(destination.lat),
-        parseFloat(destination.lon)
-      );
-      
-      setRouteResult(result);
-      options?.onSuccess?.(result);
-      
-      return result;
-    } catch (err) {
-      const error = err as Error;
-      setError(error);
-      options?.onError?.(error);
-      
-      // Show user-friendly error messages
-      if (error.message.includes('rate limit')) {
-        toast.error('Too many route calculations. Please wait a moment before trying again.');
-      } else if (error.message.includes('Could not find')) {
-        toast.error("We couldn't find a route to this destination. Try a different location.");
-      } else {
-        toast.error('Failed to calculate route. Please try again.', {
-          action: {
-            label: 'Retry',
-            onClick: () => calculateDistance(fromLat, fromLng, destination)
-          }
-        });
+      try {
+        const result = await RoutingService.calculateRoute(
+          fromLat,
+          fromLng,
+          parseFloat(destination.lat),
+          parseFloat(destination.lon)
+        );
+
+        setRouteResult(result);
+        options?.onSuccess?.(result);
+
+        return result;
+      } catch (err) {
+        const error = err as Error;
+        setError(error);
+        options?.onError?.(error);
+
+        // Show user-friendly error messages
+        if (error.message.includes('rate limit')) {
+          toast.error(
+            'Too many route calculations. Please wait a moment before trying again.'
+          );
+        } else if (error.message.includes('Could not find')) {
+          toast.error(
+            "We couldn't find a route to this destination. Try a different location."
+          );
+        } else {
+          toast.error('Failed to calculate route. Please try again.', {
+            action: {
+              label: 'Retry',
+              onClick: () => calculateDistance(fromLat, fromLng, destination),
+            },
+          });
+        }
+
+        throw error;
+      } finally {
+        setIsCalculating(false);
       }
-      
-      throw error;
-    } finally {
-      setIsCalculating(false);
-    }
-  }, [options]);
+    },
+    [options]
+  );
 
   const clearRoute = useCallback(() => {
     setRouteResult(null);
@@ -74,7 +79,7 @@ export const useDistanceCalculation = (options?: UseDistanceCalculationOptions) 
   const formatDuration = useCallback((seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes}min`;
     }
@@ -88,6 +93,6 @@ export const useDistanceCalculation = (options?: UseDistanceCalculationOptions) 
     formatDuration,
     isCalculating,
     routeResult,
-    error
+    error,
   };
 };

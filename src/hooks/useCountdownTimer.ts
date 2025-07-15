@@ -11,7 +11,7 @@ export const useCountdownTimer = ({
   initialValue,
   onComplete,
   autoReset = true,
-  enabled = true
+  enabled = true,
 }: UseCountdownTimerOptions) => {
   const [countdown, setCountdown] = useState(initialValue);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -31,7 +31,7 @@ export const useCountdownTimer = ({
     if (!enabled || intervalRef.current) return;
 
     intervalRef.current = setInterval(() => {
-      setCountdown(prev => {
+      setCountdown((prev) => {
         if (prev <= 1) {
           onComplete?.();
           return autoReset ? initialValue : 0;
@@ -66,6 +66,6 @@ export const useCountdownTimer = ({
     reset,
     pause,
     resume,
-    isRunning: !!intervalRef.current
+    isRunning: !!intervalRef.current,
   };
 };

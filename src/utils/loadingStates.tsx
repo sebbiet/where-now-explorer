@@ -31,23 +31,23 @@ export function useAsyncOperation<T = void>(
   const [state, setState] = useState<LoadingState>({
     isLoading: false,
     error: null,
-    lastUpdated: null
+    lastUpdated: null,
   });
 
   const execute = useCallback(async (): Promise<T | null> => {
-    setState(prev => ({ ...prev, isLoading: true, error: null }));
-    
+    setState((prev) => ({ ...prev, isLoading: true, error: null }));
+
     if (options.showToast && options.loadingMessage) {
       toast.loading(options.loadingMessage);
     }
 
     try {
       const result = await operation();
-      
+
       setState({
         isLoading: false,
         error: null,
-        lastUpdated: Date.now()
+        lastUpdated: Date.now(),
       });
 
       if (options.showToast) {
@@ -59,25 +59,26 @@ export function useAsyncOperation<T = void>(
 
       return result;
     } catch (error) {
-      const errorInstance = error instanceof Error ? error : new Error(String(error));
-      
+      const errorInstance =
+        error instanceof Error ? error : new Error(String(error));
+
       setState({
         isLoading: false,
         error: errorInstance,
-        lastUpdated: Date.now()
+        lastUpdated: Date.now(),
       });
 
       if (options.showToast) {
         toast.dismiss();
-        
+
         if (options.retryable && options.onRetry) {
           toast.error(options.errorMessage || errorInstance.message, {
             action: {
               label: 'Retry',
               onClick: async () => {
                 await execute();
-              }
-            }
+              },
+            },
           });
         } else {
           toast.error(options.errorMessage || errorInstance.message);
@@ -100,7 +101,7 @@ export function useAsyncOperation<T = void>(
     ...state,
     execute,
     retry,
-    isSuccess: !state.isLoading && !state.error && state.lastUpdated !== null
+    isSuccess: !state.isLoading && !state.error && state.lastUpdated !== null,
   };
 }
 
@@ -108,32 +109,34 @@ export function useAsyncOperation<T = void>(
  * Hook for managing multiple async operations with loading states
  */
 export function useMultipleAsyncOperations() {
-  const [operations, setOperations] = useState<Record<string, LoadingState>>({});
+  const [operations, setOperations] = useState<Record<string, LoadingState>>(
+    {}
+  );
 
   const startOperation = useCallback((key: string) => {
-    setOperations(prev => ({
+    setOperations((prev) => ({
       ...prev,
       [key]: {
         isLoading: true,
         error: null,
-        lastUpdated: null
-      }
+        lastUpdated: null,
+      },
     }));
   }, []);
 
   const finishOperation = useCallback((key: string, error?: Error) => {
-    setOperations(prev => ({
+    setOperations((prev) => ({
       ...prev,
       [key]: {
         isLoading: false,
         error: error || null,
-        lastUpdated: Date.now()
-      }
+        lastUpdated: Date.now(),
+      },
     }));
   }, []);
 
-  const isAnyLoading = Object.values(operations).some(op => op.isLoading);
-  const hasAnyError = Object.values(operations).some(op => op.error !== null);
+  const isAnyLoading = Object.values(operations).some((op) => op.isLoading);
+  const hasAnyError = Object.values(operations).some((op) => op.error !== null);
 
   return {
     operations,
@@ -141,7 +144,8 @@ export function useMultipleAsyncOperations() {
     finishOperation,
     isAnyLoading,
     hasAnyError,
-    getOperation: (key: string) => operations[key] || { isLoading: false, error: null, lastUpdated: null }
+    getOperation: (key: string) =>
+      operations[key] || { isLoading: false, error: null, lastUpdated: null },
   };
 }
 
@@ -163,22 +167,26 @@ export function LoadingWrapper({
   children,
   loadingComponent,
   errorComponent,
-  fallbackMessage = 'Loading...'
+  fallbackMessage = 'Loading...',
 }: LoadingWrapperProps) {
   if (isLoading) {
-    return loadingComponent || (
-      <div className="flex items-center justify-center p-4">
-        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-        <span className="ml-2 text-gray-600">{fallbackMessage}</span>
-      </div>
+    return (
+      loadingComponent || (
+        <div className="flex items-center justify-center p-4">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+          <span className="ml-2 text-gray-600">{fallbackMessage}</span>
+        </div>
+      )
     );
   }
 
   if (error) {
-    return errorComponent || (
-      <div className="flex items-center justify-center p-4 text-red-600">
-        <span>Error: {error.message}</span>
-      </div>
+    return (
+      errorComponent || (
+        <div className="flex items-center justify-center p-4 text-red-600">
+          <span>Error: {error.message}</span>
+        </div>
+      )
     );
   }
 
@@ -206,7 +214,7 @@ export function LoadingButton({
   loadingText = 'Loading...',
   disabled = false,
   className = '',
-  onClick
+  onClick,
 }: LoadingButtonProps) {
   const handleClick = useCallback(async () => {
     if (onClick && !isLoading && !disabled) {
@@ -242,7 +250,12 @@ export interface SkeletonProps {
   rounded?: boolean;
 }
 
-export function Skeleton({ className = '', width = '100%', height = '1rem', rounded = false }: SkeletonProps) {
+export function Skeleton({
+  className = '',
+  width = '100%',
+  height = '1rem',
+  rounded = false,
+}: SkeletonProps) {
   return (
     <div
       className={`animate-pulse bg-gray-200 ${rounded ? 'rounded-full' : 'rounded'} ${className}`}
@@ -254,7 +267,13 @@ export function Skeleton({ className = '', width = '100%', height = '1rem', roun
 /**
  * Skeleton text component
  */
-export function SkeletonText({ lines = 3, className = '' }: { lines?: number; className?: string }) {
+export function SkeletonText({
+  lines = 3,
+  className = '',
+}: {
+  lines?: number;
+  className?: string;
+}) {
   return (
     <div className={`space-y-2 ${className}`}>
       {Array.from({ length: lines }).map((_, i) => (
@@ -275,10 +294,11 @@ export const LOADING_STATES = {
   IDLE: 'idle',
   LOADING: 'loading',
   SUCCESS: 'success',
-  ERROR: 'error'
+  ERROR: 'error',
 } as const;
 
-export type LoadingStateType = typeof LOADING_STATES[keyof typeof LOADING_STATES];
+export type LoadingStateType =
+  (typeof LOADING_STATES)[keyof typeof LOADING_STATES];
 
 /**
  * Utility function to manage loading state with timeout
@@ -291,6 +311,6 @@ export function withLoadingTimeout<T>(
     operation(),
     new Promise<never>((_, reject) => {
       setTimeout(() => reject(new Error('Operation timed out')), timeout);
-    })
+    }),
   ]);
 }

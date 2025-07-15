@@ -8,13 +8,16 @@ export const useTheme = () => {
     const checkTheme = () => {
       setIsDarkMode(document.documentElement.classList.contains('dark'));
     };
-    
+
     checkTheme();
 
     // Watch for changes to the dark class
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
-        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+        if (
+          mutation.type === 'attributes' &&
+          mutation.attributeName === 'class'
+        ) {
           checkTheme();
         }
       });
@@ -22,7 +25,7 @@ export const useTheme = () => {
 
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['class']
+      attributeFilter: ['class'],
     });
 
     return () => observer.disconnect();

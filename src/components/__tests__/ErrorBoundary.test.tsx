@@ -7,18 +7,28 @@ import React from 'react';
 // Mock dependencies
 vi.mock('@/services/analytics.service', () => ({
   analytics: {
-    trackError: vi.fn()
-  }
+    trackError: vi.fn(),
+  },
 }));
 
 vi.mock('../ErrorFallback', () => ({
-  default: ({ error, resetError, context }: { error: Error; resetError: () => void; context: string }) => (
+  default: ({
+    error,
+    resetError,
+    context,
+  }: {
+    error: Error;
+    resetError: () => void;
+    context: string;
+  }) => (
     <div>
       <div data-testid="error-message">{error.message}</div>
       <div data-testid="error-context">{context}</div>
-      <button onClick={resetError} data-testid="reset-button">Reset</button>
+      <button onClick={resetError} data-testid="reset-button">
+        Reset
+      </button>
     </div>
-  )
+  ),
 }));
 
 // Test component that throws an error
@@ -53,7 +63,9 @@ describe('ErrorBoundary', () => {
         </ErrorBoundary>
       );
 
-      expect(screen.getByTestId('error-message')).toHaveTextContent('Test error');
+      expect(screen.getByTestId('error-message')).toHaveTextContent(
+        'Test error'
+      );
       expect(screen.getByTestId('error-context')).toHaveTextContent('general');
     });
 
@@ -77,7 +89,7 @@ describe('ErrorBoundary', () => {
       expect(analytics.trackError).toHaveBeenCalledWith({
         error_type: 'react_error_boundary',
         error_message: 'Test error',
-        error_source: expect.stringContaining('ThrowError')
+        error_source: expect.stringContaining('ThrowError'),
       });
     });
   });
@@ -98,7 +110,9 @@ describe('ErrorBoundary', () => {
       const customFallback = (error: Error, resetError: () => void) => (
         <div>
           <div data-testid="custom-error">Custom: {error.message}</div>
-          <button onClick={resetError} data-testid="custom-reset">Custom Reset</button>
+          <button onClick={resetError} data-testid="custom-reset">
+            Custom Reset
+          </button>
         </div>
       );
 
@@ -108,7 +122,9 @@ describe('ErrorBoundary', () => {
         </ErrorBoundary>
       );
 
-      expect(screen.getByTestId('custom-error')).toHaveTextContent('Custom: Test error');
+      expect(screen.getByTestId('custom-error')).toHaveTextContent(
+        'Custom: Test error'
+      );
       expect(screen.getByTestId('custom-reset')).toBeInTheDocument();
     });
   });
@@ -122,14 +138,14 @@ describe('ErrorBoundary', () => {
       );
 
       expect(screen.getByTestId('error-message')).toBeInTheDocument();
-      
+
       // Verify reset button exists and can be clicked
       const resetButton = screen.getByTestId('reset-button');
       expect(resetButton).toBeInTheDocument();
-      
+
       // Click reset button - this should call the reset function
       fireEvent.click(resetButton);
-      
+
       // We can't easily test state reset without re-rendering, but we can verify
       // the button works and doesn't crash
       expect(resetButton).toBeInTheDocument();
@@ -139,7 +155,13 @@ describe('ErrorBoundary', () => {
       const resetSpy = vi.fn();
       const customFallback = (error: Error, resetError: () => void) => (
         <div>
-          <button onClick={() => { resetError(); resetSpy(); }} data-testid="custom-reset">
+          <button
+            onClick={() => {
+              resetError();
+              resetSpy();
+            }}
+            data-testid="custom-reset"
+          >
             Reset
           </button>
         </div>
@@ -172,18 +194,18 @@ describe('ErrorBoundary', () => {
       expect(analytics.trackError).toHaveBeenCalledWith({
         error_type: 'react_error_boundary',
         error_message: 'Custom error message',
-        error_source: expect.stringContaining('CustomError')
+        error_source: expect.stringContaining('CustomError'),
       });
     });
 
     it('should handle errors without component stack', () => {
       // Mock componentDidCatch to simulate missing componentStack
       const originalDidCatch = ErrorBoundary.prototype.componentDidCatch;
-      ErrorBoundary.prototype.componentDidCatch = function(error: Error) {
+      ErrorBoundary.prototype.componentDidCatch = function (error: Error) {
         analytics.trackError({
           error_type: 'react_error_boundary',
           error_message: error.message,
-          error_source: 'unknown'
+          error_source: 'unknown',
         });
       };
 
@@ -196,7 +218,7 @@ describe('ErrorBoundary', () => {
       expect(analytics.trackError).toHaveBeenCalledWith({
         error_type: 'react_error_boundary',
         error_message: 'Test error',
-        error_source: 'unknown'
+        error_source: 'unknown',
       });
 
       // Restore original method
@@ -212,12 +234,14 @@ describe('ErrorBoundary', () => {
         </ErrorBoundary>
       );
 
-      expect(screen.getByTestId('error-message')).toHaveTextContent('Test error');
+      expect(screen.getByTestId('error-message')).toHaveTextContent(
+        'Test error'
+      );
       expect(analytics.trackError).toHaveBeenCalledTimes(1);
       expect(analytics.trackError).toHaveBeenCalledWith({
         error_type: 'react_error_boundary',
         error_message: 'Test error',
-        error_source: expect.stringContaining('ThrowError')
+        error_source: expect.stringContaining('ThrowError'),
       });
     });
 
@@ -237,7 +261,9 @@ describe('ErrorBoundary', () => {
       );
 
       // Only the inner boundary should catch the error
-      expect(screen.getByTestId('error-message')).toHaveTextContent('Inner error');
+      expect(screen.getByTestId('error-message')).toHaveTextContent(
+        'Inner error'
+      );
       expect(analytics.trackError).toHaveBeenCalledTimes(1);
     });
   });
@@ -248,7 +274,9 @@ describe('ErrorBoundary', () => {
 
       render(<WrappedComponent message="Hello World" />);
 
-      expect(screen.getByTestId('test-component')).toHaveTextContent('Hello World');
+      expect(screen.getByTestId('test-component')).toHaveTextContent(
+        'Hello World'
+      );
     });
 
     it('should catch errors in HOC wrapped components', () => {
@@ -259,7 +287,9 @@ describe('ErrorBoundary', () => {
 
       render(<WrappedErrorComponent />);
 
-      expect(screen.getByTestId('error-message')).toHaveTextContent('HOC error');
+      expect(screen.getByTestId('error-message')).toHaveTextContent(
+        'HOC error'
+      );
     });
 
     it('should use custom fallback with HOC', () => {
@@ -270,12 +300,17 @@ describe('ErrorBoundary', () => {
       const ErrorComponent = () => {
         throw new Error('HOC custom error');
       };
-      
-      const WrappedComponent = withErrorBoundary(ErrorComponent, customFallback);
+
+      const WrappedComponent = withErrorBoundary(
+        ErrorComponent,
+        customFallback
+      );
 
       render(<WrappedComponent />);
 
-      expect(screen.getByTestId('hoc-custom-error')).toHaveTextContent('HOC Custom: HOC custom error');
+      expect(screen.getByTestId('hoc-custom-error')).toHaveTextContent(
+        'HOC Custom: HOC custom error'
+      );
     });
 
     it('should preserve component props with HOC', () => {
@@ -313,7 +348,7 @@ describe('ErrorBoundary', () => {
       expect(spy).toHaveBeenCalledWith(expect.any(Error));
       expect(spy).toHaveReturnedWith({
         hasError: true,
-        error: expect.any(Error)
+        error: expect.any(Error),
       });
 
       spy.mockRestore();

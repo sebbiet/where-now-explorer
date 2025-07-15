@@ -19,13 +19,13 @@ describe('GeocodingCacheService', () => {
     vi.clearAllMocks();
     console.warn = vi.fn();
     console.log = vi.fn();
-    
+
     // Reset localStorage mock
     Object.defineProperty(window, 'localStorage', {
       value: localStorageMock,
       writable: true,
     });
-    
+
     // Clear the cache before each test
     GeocodingCacheService.clearCache();
   });
@@ -62,7 +62,7 @@ describe('GeocodingCacheService', () => {
     it('should retrieve existing reverse geocode cache entry', () => {
       // Arrange
       const lat = 40.7128;
-      const lon = -74.0060;
+      const lon = -74.006;
       const mockResult: ReverseGeocodeResult = {
         street: 'Broadway',
         city: 'New York',
@@ -200,7 +200,9 @@ describe('GeocodingCacheService', () => {
       vi.setSystemTime(now + 24 * 60 * 60 * 1000 - 1000);
 
       // Act & Assert - should still be cached
-      expect(GeocodingCacheService.getGeocodeCache(query, {})).toEqual(mockResults);
+      expect(GeocodingCacheService.getGeocodeCache(query, {})).toEqual(
+        mockResults
+      );
 
       // Fast forward past expiration
       vi.setSystemTime(now + 24 * 60 * 60 * 1000 + 1000);
@@ -216,7 +218,7 @@ describe('GeocodingCacheService', () => {
     it('should track access count for popular locations', () => {
       // Arrange
       const lat = 40.7128;
-      const lon = -74.0060;
+      const lon = -74.006;
       const mockResult: ReverseGeocodeResult = {
         city: 'New York',
         country: 'USA',
@@ -265,7 +267,9 @@ describe('GeocodingCacheService', () => {
       vi.setSystemTime(now + 3 * 24 * 60 * 60 * 1000); // 3 days
 
       // Act & Assert - Should still be cached
-      expect(GeocodingCacheService.getGeocodeCache(query, {})).toEqual(mockResults);
+      expect(GeocodingCacheService.getGeocodeCache(query, {})).toEqual(
+        mockResults
+      );
 
       // Fast forward beyond popular cache duration
       vi.setSystemTime(now + 8 * 24 * 60 * 60 * 1000); // 8 days
@@ -281,7 +285,7 @@ describe('GeocodingCacheService', () => {
     it('should mark nearby locations for pre-caching', async () => {
       // Arrange
       const lat = 40.7128;
-      const lon = -74.0060;
+      const lon = -74.006;
 
       // Act
       await GeocodingCacheService.preCacheNearbyLocations(lat, lon);
@@ -313,12 +317,16 @@ describe('GeocodingCacheService', () => {
       // Assert - Should only keep the most recent 100 entries
       // The first 5 entries should be evicted
       for (let i = 0; i < 5; i++) {
-        expect(GeocodingCacheService.getGeocodeCache(`City${i}`, {})).toBeNull();
+        expect(
+          GeocodingCacheService.getGeocodeCache(`City${i}`, {})
+        ).toBeNull();
       }
-      
+
       // Recent entries should still be cached
       for (let i = 5; i < 105; i++) {
-        expect(GeocodingCacheService.getGeocodeCache(`City${i}`, {})).toBeTruthy();
+        expect(
+          GeocodingCacheService.getGeocodeCache(`City${i}`, {})
+        ).toBeTruthy();
       }
     });
 
@@ -339,7 +347,7 @@ describe('GeocodingCacheService', () => {
       for (let i = 0; i < 5; i++) {
         expect(GeocodingCacheService.getReverseGeocodeCache(i, i)).toBeNull();
       }
-      
+
       // Recent entries should still be cached
       for (let i = 5; i < 105; i++) {
         expect(GeocodingCacheService.getReverseGeocodeCache(i, i)).toBeTruthy();
@@ -351,7 +359,7 @@ describe('GeocodingCacheService', () => {
     it('should clean up oldest entries when reaching size limit', () => {
       // Arrange
       const baseTime = Date.now();
-      
+
       // Add entries with different timestamps
       for (let i = 0; i < 100; i++) {
         vi.setSystemTime(baseTime + i * 1000);
@@ -378,10 +386,12 @@ describe('GeocodingCacheService', () => {
 
       // Assert - Oldest entry should be removed
       expect(GeocodingCacheService.getGeocodeCache('Query0', {})).toBeNull();
-      
+
       // Newer entries should still exist
       expect(GeocodingCacheService.getGeocodeCache('Query99', {})).toBeTruthy();
-      expect(GeocodingCacheService.getGeocodeCache('NewQuery', {})).toBeTruthy();
+      expect(
+        GeocodingCacheService.getGeocodeCache('NewQuery', {})
+      ).toBeTruthy();
 
       vi.useRealTimers();
     });
@@ -463,7 +473,9 @@ describe('GeocodingCacheService', () => {
       // Assert
       expect(GeocodingCacheService.getGeocodeCache('test', {})).toBeNull();
       expect(GeocodingCacheService.getReverseGeocodeCache(0, 0)).toBeNull();
-      expect(localStorageMock.removeItem).toHaveBeenCalledWith('geocoding-cache');
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith(
+        'geocoding-cache'
+      );
     });
   });
 
@@ -487,8 +499,12 @@ describe('GeocodingCacheService', () => {
       GeocodingCacheService.setGeocodeCache(query1, options, results);
 
       // Assert - All variations should retrieve the same cached result
-      expect(GeocodingCacheService.getGeocodeCache(query2, options)).toEqual(results);
-      expect(GeocodingCacheService.getGeocodeCache(query3, options)).toEqual(results);
+      expect(GeocodingCacheService.getGeocodeCache(query2, options)).toEqual(
+        results
+      );
+      expect(GeocodingCacheService.getGeocodeCache(query3, options)).toEqual(
+        results
+      );
     });
 
     it('should round coordinates for reverse geocode keys', () => {
@@ -501,11 +517,19 @@ describe('GeocodingCacheService', () => {
       };
 
       // Set cache with precise coordinates
-      GeocodingCacheService.setReverseGeocodeCache(40.71284567, -74.00604321, result);
+      GeocodingCacheService.setReverseGeocodeCache(
+        40.71284567,
+        -74.00604321,
+        result
+      );
 
       // Act & Assert - Nearby coordinates should retrieve the same result
-      expect(GeocodingCacheService.getReverseGeocodeCache(40.71284999, -74.00604999)).toEqual(result);
-      expect(GeocodingCacheService.getReverseGeocodeCache(40.71280001, -74.00600001)).toEqual(result);
+      expect(
+        GeocodingCacheService.getReverseGeocodeCache(40.71284999, -74.00604999)
+      ).toEqual(result);
+      expect(
+        GeocodingCacheService.getReverseGeocodeCache(40.71280001, -74.00600001)
+      ).toEqual(result);
     });
   });
 });

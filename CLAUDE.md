@@ -27,7 +27,7 @@ This is a React + TypeScript web application built with Vite. The "There yet app
 
 ### Core Application Flow
 
-1. **Location Services** (`src/contexts/LocationContext.tsx`): 
+1. **Location Services** (`src/contexts/LocationContext.tsx`):
    - Watches user's geolocation using browser API
    - Performs reverse geocoding via OpenStreetMap Nominatim API
    - Updates every 30 seconds when active

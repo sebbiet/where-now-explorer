@@ -15,7 +15,7 @@ interface State {
 export class ErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
-    error: null
+    error: null,
   };
 
   public static getDerivedStateFromError(error: Error): State {
@@ -24,12 +24,12 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
-    
+
     // Track error in analytics
     analytics.trackError({
       error_type: 'react_error_boundary',
       error_message: error.message,
-      error_source: errorInfo.componentStack || 'unknown'
+      error_source: errorInfo.componentStack || 'unknown',
     });
   }
 
@@ -45,8 +45,8 @@ export class ErrorBoundary extends Component<Props, State> {
 
       return (
         <div className="min-h-screen flex items-center justify-center p-4">
-          <ErrorFallback 
-            error={this.state.error!} 
+          <ErrorFallback
+            error={this.state.error!}
             resetError={this.resetError}
             context="general"
           />

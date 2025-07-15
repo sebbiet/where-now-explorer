@@ -9,134 +9,131 @@ export interface TraditionalLandInfo {
 
 export const firstNationsPlaces: Record<string, TraditionalLandInfo> = {
   // New South Wales
-  'Sydney': {
+  Sydney: {
     traditionalName: 'Warrane',
-    nation: 'Gadigal people of the Eora Nation'
+    nation: 'Gadigal people of the Eora Nation',
   },
-  'Parramatta': {
+  Parramatta: {
     traditionalName: 'Burramatta',
-    nation: 'Burramattagal people of the Darug Nation'
+    nation: 'Burramattagal people of the Darug Nation',
   },
-  'Newcastle': {
+  Newcastle: {
     traditionalName: 'Mulubinba',
-    nation: 'Awabakal and Worimi peoples'
+    nation: 'Awabakal and Worimi peoples',
   },
-  'Wollongong': {
+  Wollongong: {
     traditionalName: 'Woolyungah',
-    nation: 'Dharawal people'
+    nation: 'Dharawal people',
   },
-  'Dubbo': {
+  Dubbo: {
     traditionalName: 'Dubbo',
-    nation: 'Wiradjuri people'
+    nation: 'Wiradjuri people',
   },
   'Byron Bay': {
     traditionalName: 'Cavvanbah',
-    nation: 'Arakwal people of the Bundjalung Nation'
+    nation: 'Arakwal people of the Bundjalung Nation',
   },
-  
+
   // Victoria
-  'Melbourne': {
+  Melbourne: {
     traditionalName: 'Naarm',
-    nation: 'Wurundjeri people of the Kulin Nation'
+    nation: 'Wurundjeri people of the Kulin Nation',
   },
-  'Geelong': {
+  Geelong: {
     traditionalName: 'Djilang',
-    nation: 'Wadawurrung people'
+    nation: 'Wadawurrung people',
   },
-  'Ballarat': {
+  Ballarat: {
     traditionalName: 'Ballarat',
-    nation: 'Wadawurrung and Dja Dja Wurrung peoples'
+    nation: 'Wadawurrung and Dja Dja Wurrung peoples',
   },
-  'Bendigo': {
+  Bendigo: {
     traditionalName: 'Bendigo',
-    nation: 'Dja Dja Wurrung people'
+    nation: 'Dja Dja Wurrung people',
   },
-  
+
   // Queensland
-  'Brisbane': {
+  Brisbane: {
     traditionalName: 'Meanjin',
-    nation: 'Turrbal and Yuggera peoples'
+    nation: 'Turrbal and Yuggera peoples',
   },
   'Gold Coast': {
     traditionalName: 'Kombumerri',
-    nation: 'Yugambeh people'
+    nation: 'Yugambeh people',
   },
-  'Cairns': {
+  Cairns: {
     traditionalName: 'Gimuy',
-    nation: 'Gimuy Walubara Yidinji people'
+    nation: 'Gimuy Walubara Yidinji people',
   },
-  'Townsville': {
+  Townsville: {
     traditionalName: 'Gurambilbarra',
-    nation: 'Wulgurukaba and Bindal peoples'
+    nation: 'Wulgurukaba and Bindal peoples',
   },
-  'Toowoomba': {
+  Toowoomba: {
     traditionalName: 'Toowoomba',
-    nation: 'Jagera, Giabal and Jarowair peoples'
+    nation: 'Jagera, Giabal and Jarowair peoples',
   },
-  
+
   // Western Australia
-  'Perth': {
+  Perth: {
     traditionalName: 'Boorloo',
-    nation: 'Whadjuk people of the Noongar Nation'
+    nation: 'Whadjuk people of the Noongar Nation',
   },
-  'Fremantle': {
+  Fremantle: {
     traditionalName: 'Walyalup',
-    nation: 'Whadjuk people of the Noongar Nation'
+    nation: 'Whadjuk people of the Noongar Nation',
   },
-  'Broome': {
+  Broome: {
     traditionalName: 'Rubibi',
-    nation: 'Yawuru people'
+    nation: 'Yawuru people',
   },
-  'Albany': {
+  Albany: {
     traditionalName: 'Kinjarling',
-    nation: 'Menang people of the Noongar Nation'
+    nation: 'Menang people of the Noongar Nation',
   },
-  
+
   // South Australia
-  'Adelaide': {
+  Adelaide: {
     traditionalName: 'Tarntanya',
-    nation: 'Kaurna people'
+    nation: 'Kaurna people',
   },
   'Port Adelaide': {
     traditionalName: 'Yertabulti',
-    nation: 'Kaurna people'
+    nation: 'Kaurna people',
   },
   'Mount Gambier': {
     traditionalName: 'Berrin',
-    nation: 'Bungandidj people'
+    nation: 'Bungandidj people',
   },
-  
+
   // Tasmania
-  'Hobart': {
+  Hobart: {
     traditionalName: 'nipaluna',
-    nation: 'Muwinina people of the Palawa Nation'
+    nation: 'Muwinina people of the Palawa Nation',
   },
-  'Launceston': {
+  Launceston: {
     traditionalName: 'kanamaluka',
-    nation: 'Palawa people'
+    nation: 'Palawa people',
   },
-  
+
   // Northern Territory
-  'Darwin': {
+  Darwin: {
     traditionalName: 'Garramilla',
-    nation: 'Larrakia people'
+    nation: 'Larrakia people',
   },
   'Alice Springs': {
     traditionalName: 'Mparntwe',
-    nation: 'Arrernte people'
+    nation: 'Arrernte people',
   },
-  
+
   // Australian Capital Territory
-  'Canberra': {
+  Canberra: {
     traditionalName: 'Ngambri',
-    nation: 'Ngunnawal and Ngambri peoples'
-  }
+    nation: 'Ngunnawal and Ngambri peoples',
+  },
 };
 
 // Function to normalize place names for matching
 export function normalizePlaceName(name: string): string {
-  return name.toLowerCase()
-    .trim()
-    .replace(/\s+/g, ' ')
-    .replace(/['-]/g, '');
+  return name.toLowerCase().trim().replace(/\s+/g, ' ').replace(/['-]/g, '');
 }

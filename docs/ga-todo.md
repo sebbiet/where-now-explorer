@@ -1,20 +1,28 @@
 # Google Analytics Implementation Plan for There Yet App
 
 ## Overview
+
 This document outlines the implementation plan for adding Google Analytics (GA4) to the There Yet App, including custom events to track user behavior and app performance.
 
 ## Implementation Steps
 
 ### 1. Add Google Analytics Script ✅ COMPLETED
+
 **File**: `index.html`
 
 Add the following to the `<head>` section:
+
 ```html
 <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-S9T5V0V3KZ"></script>
+<script
+  async
+  src="https://www.googletagmanager.com/gtag/js?id=G-S9T5V0V3KZ"
+></script>
 <script>
   window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
+  function gtag() {
+    dataLayer.push(arguments);
+  }
   gtag('js', new Date());
 
   gtag('config', 'G-S9T5V0V3KZ');
@@ -22,10 +30,12 @@ Add the following to the `<head>` section:
 ```
 
 **CSP Update Required**: ✅ COMPLETED
+
 - ✅ Add `https://www.googletagmanager.com` to script-src
 - ✅ Add `https://www.google-analytics.com` to connect-src
 
 ### 2. Create Analytics Service ✅ COMPLETED
+
 **File**: `src/services/analytics.service.ts`
 
 Create a centralized service to manage all analytics events with TypeScript support.
@@ -50,6 +60,7 @@ class AnalyticsService {
 ```
 
 **Implementation includes**:
+
 - ✅ TypeScript interfaces for all event parameters
 - ✅ Development mode logging
 - ✅ Error handling for blocked trackers
@@ -60,11 +71,11 @@ class AnalyticsService {
 ### Core User Actions
 
 #### 1. Location Permission Events
+
 - **Event**: `location_permission_granted`
   - When: User allows location access
   - Parameters: `timestamp`
-  
-- **Event**: `location_permission_denied`  
+- **Event**: `location_permission_denied`
   - When: User denies location access
   - Parameters: `timestamp`
 
@@ -73,6 +84,7 @@ class AnalyticsService {
   - Parameters: `error_type`, `error_message`
 
 #### 2. Location Features
+
 - **Event**: `location_refresh`
   - When: User manually refreshes location
   - Parameters: `refresh_type` (manual/automatic), `countdown_remaining`
@@ -82,6 +94,7 @@ class AnalyticsService {
   - Parameters: `update_type` (initial/refresh), `has_traditional_land_info`
 
 #### 3. Destination Search & Calculation
+
 - **Event**: `destination_search_started`
   - When: User starts typing in destination field
   - Parameters: `search_length`
@@ -99,6 +112,7 @@ class AnalyticsService {
   - Parameters: `error_type`, `destination_query`
 
 #### 4. Navigation & UI Interactions
+
 - **Event**: `tab_switched`
   - When: User switches between tabs
   - Parameters: `from_tab`, `to_tab`, `interaction_method` (click/keyboard)
@@ -110,6 +124,7 @@ class AnalyticsService {
 ### Feature Usage Events
 
 #### 5. PWA Installation
+
 - **Event**: `pwa_install_prompted`
   - When: Install prompt appears
   - Parameters: `prompt_trigger` (auto/manual)
@@ -123,6 +138,7 @@ class AnalyticsService {
   - Parameters: `dismiss_method`
 
 #### 6. Privacy & Settings
+
 - **Event**: `privacy_mode_toggled`
   - When: Privacy mode changed
   - Parameters: `new_state` (on/off)
@@ -134,6 +150,7 @@ class AnalyticsService {
 ### Performance & Error Events
 
 #### 8. API Performance
+
 - **Event**: `api_response_time`
   - When: API calls complete
   - Parameters: `api_type` (geocoding/routing), `response_time_ms`, `success`
@@ -143,6 +160,7 @@ class AnalyticsService {
   - Parameters: `api_type`, `error_code`, `retry_count`
 
 #### 9. App Performance
+
 - **Event**: `page_performance`
   - When: Page loads
   - Parameters: Core Web Vitals (LCP, FID, CLS)
@@ -154,6 +172,7 @@ class AnalyticsService {
 ### User Journey Events
 
 #### 10. Session & Engagement
+
 - **Event**: `session_started`
   - When: User opens app
   - Parameters: `entry_point`, `referrer`
@@ -169,6 +188,7 @@ class AnalyticsService {
 ## Implementation Priority
 
 ### Phase 1 (Core Analytics) ✅ COMPLETED
+
 1. ✅ Add GA script and update CSP
 2. ✅ Create analytics service
 3. ✅ Implement basic page view tracking (automatic via gtag config)
@@ -176,12 +196,14 @@ class AnalyticsService {
 5. ✅ Add destination search/calculation events
 
 ### Phase 2 (User Behavior) ✅ COMPLETED
+
 1. ✅ Tab switching events
 2. ✅ Theme toggle tracking
 3. ✅ Manual refresh tracking
 4. ✅ Error tracking (ErrorBoundary, global handlers)
 
 ### Phase 3 (Advanced Features)
+
 1. PWA installation tracking
 2. Performance metrics
 3. API response tracking
@@ -205,6 +227,7 @@ class AnalyticsService {
 ## Success Metrics
 
 Track these KPIs after implementation:
+
 - User engagement rate
 - Feature adoption rates
 - Error rates and types

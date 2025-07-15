@@ -15,7 +15,10 @@ const OfflineNotification: React.FC = () => {
     } else if (wasOffline) {
       setShow(false);
       setShowBackOnline(true);
-      const timer = setTimeout(() => setShowBackOnline(false), animations.timeouts.notification);
+      const timer = setTimeout(
+        () => setShowBackOnline(false),
+        animations.timeouts.notification
+      );
       return () => clearTimeout(timer);
     } else {
       setShow(false);
@@ -37,7 +40,9 @@ const OfflineNotification: React.FC = () => {
           <WifiOff className="w-6 h-6" />
           <div>
             <p className="font-bold text-lg">No Internet Connection</p>
-            <p className="text-sm opacity-90">Some features may not work offline</p>
+            <p className="text-sm opacity-90">
+              Some features may not work offline
+            </p>
           </div>
         </div>
       </div>
@@ -45,7 +50,9 @@ const OfflineNotification: React.FC = () => {
       {/* Back online notification */}
       <div
         className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 transition-all ${
-          showBackOnline ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
+          showBackOnline
+            ? 'translate-y-0 opacity-100'
+            : '-translate-y-full opacity-0'
         }`}
         style={{ transitionDuration: animations.durations.moderate }}
       >

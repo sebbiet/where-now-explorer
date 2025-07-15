@@ -8,14 +8,14 @@ vi.mock('sonner', () => ({
   toast: {
     error: vi.fn(() => 'toast-id-1'),
     loading: vi.fn(),
-    success: vi.fn()
-  }
+    success: vi.fn(),
+  },
 }));
 
 vi.mock('@/utils/logger', () => ({
   logger: {
-    error: vi.fn()
-  }
+    error: vi.fn(),
+  },
 }));
 
 describe('useErrorHandler', () => {
@@ -81,7 +81,9 @@ describe('useErrorHandler', () => {
     });
 
     it('should not show toast when showToast is false', () => {
-      const { result } = renderHook(() => useErrorHandler({ showToast: false }));
+      const { result } = renderHook(() =>
+        useErrorHandler({ showToast: false })
+      );
       const testError = new Error('Test error');
 
       act(() => {
@@ -94,7 +96,9 @@ describe('useErrorHandler', () => {
 
     it('should show retry action when retryable', () => {
       const onRetry = vi.fn();
-      const { result } = renderHook(() => useErrorHandler({ retryable: true, onRetry }));
+      const { result } = renderHook(() =>
+        useErrorHandler({ retryable: true, onRetry })
+      );
       const testError = new Error('Retryable error');
 
       act(() => {
@@ -105,8 +109,8 @@ describe('useErrorHandler', () => {
         'Retryable error',
         expect.objectContaining({
           action: expect.objectContaining({
-            label: 'Retry'
-          })
+            label: 'Retry',
+          }),
         })
       );
     });
@@ -124,23 +128,27 @@ describe('useErrorHandler', () => {
 
     it('should merge default options with call options', () => {
       const defaultOnRetry = vi.fn();
-      const { result } = renderHook(() => useErrorHandler({ 
-        showToast: false,
-        retryable: true,
-        onRetry: defaultOnRetry 
-      }));
+      const { result } = renderHook(() =>
+        useErrorHandler({
+          showToast: false,
+          retryable: true,
+          onRetry: defaultOnRetry,
+        })
+      );
       const testError = new Error('Test error');
 
       act(() => {
-        result.current.handleError(testError, 'Custom message', { showToast: true });
+        result.current.handleError(testError, 'Custom message', {
+          showToast: true,
+        });
       });
 
       expect(toast.error).toHaveBeenCalledWith(
         'Custom message',
         expect.objectContaining({
           action: expect.objectContaining({
-            label: 'Retry'
-          })
+            label: 'Retry',
+          }),
         })
       );
     });
@@ -149,7 +157,9 @@ describe('useErrorHandler', () => {
   describe('retry functionality', () => {
     it('should handle successful retry through toast action', async () => {
       const onRetry = vi.fn().mockResolvedValue(undefined);
-      const { result } = renderHook(() => useErrorHandler({ retryable: true, onRetry }));
+      const { result } = renderHook(() =>
+        useErrorHandler({ retryable: true, onRetry })
+      );
       const testError = new Error('Retryable error');
 
       act(() => {
@@ -170,7 +180,9 @@ describe('useErrorHandler', () => {
       });
 
       expect(onRetry).toHaveBeenCalled();
-      expect(toast.loading).toHaveBeenCalledWith('Retrying...', { id: 'toast-id-1' });
+      expect(toast.loading).toHaveBeenCalledWith('Retrying...', {
+        id: 'toast-id-1',
+      });
       expect(toast.success).toHaveBeenCalledWith(
         'Operation completed successfully',
         { id: 'toast-id-1' }
@@ -181,7 +193,9 @@ describe('useErrorHandler', () => {
     it('should handle failed retry through toast action', async () => {
       const retryError = new Error('Retry failed');
       const onRetry = vi.fn().mockRejectedValue(retryError);
-      const { result } = renderHook(() => useErrorHandler({ retryable: true, onRetry }));
+      const { result } = renderHook(() =>
+        useErrorHandler({ retryable: true, onRetry })
+      );
       const testError = new Error('Initial error');
 
       act(() => {
@@ -197,11 +211,10 @@ describe('useErrorHandler', () => {
         }
       });
 
-      expect(logger.error).toHaveBeenCalledWith(
-        'Retry failed',
-        retryError,
-        { component: 'useErrorHandler', operation: 'retry' }
-      );
+      expect(logger.error).toHaveBeenCalledWith('Retry failed', retryError, {
+        component: 'useErrorHandler',
+        operation: 'retry',
+      });
       expect(toast.error).toHaveBeenCalledWith(
         'Retry failed. Please try again.',
         { id: 'toast-id-1' }
@@ -209,9 +222,15 @@ describe('useErrorHandler', () => {
     });
 
     it('should show Retrying label when already retrying', async () => {
-      const onRetry = vi.fn().mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
-      const { result } = renderHook(() => useErrorHandler({ retryable: true, onRetry }));
-      
+      const onRetry = vi
+        .fn()
+        .mockImplementation(
+          () => new Promise((resolve) => setTimeout(resolve, 100))
+        );
+      const { result } = renderHook(() =>
+        useErrorHandler({ retryable: true, onRetry })
+      );
+
       // First error
       act(() => {
         result.current.handleError(new Error('First error'));
@@ -241,8 +260,8 @@ describe('useErrorHandler', () => {
         'Second error',
         expect.objectContaining({
           action: expect.objectContaining({
-            label: 'Retrying...'
-          })
+            label: 'Retrying...',
+          }),
         })
       );
     });
@@ -311,9 +330,9 @@ describe('useErrorHandler', () => {
 
     it('should update isRetrying state during retry', async () => {
       const onRetry = vi.fn().mockImplementation(() => {
-        return new Promise(resolve => setTimeout(resolve, 50));
+        return new Promise((resolve) => setTimeout(resolve, 50));
       });
-      
+
       const { result } = renderHook(() => useErrorHandler({ onRetry }));
 
       // Start retry but don't await
@@ -326,7 +345,7 @@ describe('useErrorHandler', () => {
 
       // Wait for retry to complete
       await act(async () => {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       });
 
       expect(result.current.isRetrying).toBe(false);
@@ -336,7 +355,9 @@ describe('useErrorHandler', () => {
   describe('error recovery actions', () => {
     it('should clear error after successful retry', async () => {
       const onRetry = vi.fn().mockResolvedValue(undefined);
-      const { result } = renderHook(() => useErrorHandler({ retryable: true, onRetry }));
+      const { result } = renderHook(() =>
+        useErrorHandler({ retryable: true, onRetry })
+      );
       const testError = new Error('Test error');
 
       act(() => {
@@ -361,7 +382,9 @@ describe('useErrorHandler', () => {
   describe('edge cases', () => {
     it('should handle circular reference in error object', () => {
       const { result } = renderHook(() => useErrorHandler());
-      const circularError = new Error('Circular error') as Error & { self?: Error };
+      const circularError = new Error('Circular error') as Error & {
+        self?: Error;
+      };
       circularError.self = circularError;
 
       act(() => {

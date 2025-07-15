@@ -23,7 +23,7 @@ interface CircuitBreakerState {
 export class ApiMonitorService {
   private metrics = new Map<string, ApiMetrics>();
   private circuitBreakers = new Map<string, CircuitBreakerState>();
-  
+
   private static readonly CIRCUIT_BREAKER_THRESHOLD = 5; // Failures before opening
   private static readonly CIRCUIT_BREAKER_TIMEOUT = 60000; // 1 minute
   private static readonly METRICS_WINDOW = 5 * 60 * 1000; // 5 minutes
@@ -38,7 +38,7 @@ export class ApiMonitorService {
     error?: string
   ): void {
     const metrics = this.metrics.get(endpoint) || this.createEmptyMetrics();
-    
+
     metrics.totalRequests++;
     if (success) {
       metrics.successfulRequests++;
@@ -50,12 +50,13 @@ export class ApiMonitorService {
       }
       this.updateCircuitBreaker(endpoint, false);
     }
-    
+
     metrics.totalResponseTime += responseTime;
-    metrics.averageResponseTime = metrics.totalResponseTime / metrics.totalRequests;
-    
+    metrics.averageResponseTime =
+      metrics.totalResponseTime / metrics.totalRequests;
+
     this.metrics.set(endpoint, metrics);
-    
+
     if (success) {
       this.updateCircuitBreaker(endpoint, true);
     }
@@ -67,7 +68,7 @@ export class ApiMonitorService {
   isCircuitOpen(endpoint: string): boolean {
     const breaker = this.circuitBreakers.get(endpoint);
     if (!breaker) return false;
-    
+
     if (breaker.isOpen) {
       // Check if we should try to close the circuit
       if (Date.now() >= breaker.nextRetryTime) {
@@ -76,7 +77,7 @@ export class ApiMonitorService {
       }
       return true;
     }
-    
+
     return false;
   }
 
@@ -88,9 +89,9 @@ export class ApiMonitorService {
       isOpen: false,
       failures: 0,
       lastFailureTime: 0,
-      nextRetryTime: 0
+      nextRetryTime: 0,
     };
-    
+
     if (success) {
       // Reset on success
       if (breaker.failures > 0) {
@@ -102,17 +103,18 @@ export class ApiMonitorService {
       // Increment failures
       breaker.failures++;
       breaker.lastFailureTime = Date.now();
-      
+
       // Open circuit if threshold reached
       if (breaker.failures >= ApiMonitorService.CIRCUIT_BREAKER_THRESHOLD) {
         breaker.isOpen = true;
-        breaker.nextRetryTime = Date.now() + ApiMonitorService.CIRCUIT_BREAKER_TIMEOUT;
+        breaker.nextRetryTime =
+          Date.now() + ApiMonitorService.CIRCUIT_BREAKER_TIMEOUT;
         console.warn(
           `Circuit breaker opened for ${endpoint} after ${breaker.failures} failures`
         );
       }
     }
-    
+
     this.circuitBreakers.set(endpoint, breaker);
   }
 
@@ -131,18 +133,19 @@ export class ApiMonitorService {
         successRate: 100,
         averageResponseTime: 0,
         isHealthy: true,
-        circuitBreakerOpen: false
+        circuitBreakerOpen: false,
       };
     }
-    
-    const successRate = (metrics.successfulRequests / metrics.totalRequests) * 100;
+
+    const successRate =
+      (metrics.successfulRequests / metrics.totalRequests) * 100;
     const isHealthy = successRate >= 95 && metrics.averageResponseTime < 2000;
-    
+
     return {
       successRate,
       averageResponseTime: metrics.averageResponseTime,
       isHealthy,
-      circuitBreakerOpen: this.isCircuitOpen(endpoint)
+      circuitBreakerOpen: this.isCircuitOpen(endpoint),
     };
   }
 
@@ -151,7 +154,7 @@ export class ApiMonitorService {
    */
   getAllEndpointHealth(): Record<string, any> {
     const health: Record<string, any> = {};
-    
+
     this.metrics.forEach((metrics, endpoint) => {
       health[endpoint] = {
         ...this.getApiHealth(endpoint),
@@ -160,10 +163,10 @@ export class ApiMonitorService {
         lastError: metrics.lastError,
         lastErrorTime: metrics.lastErrorTime
           ? new Date(metrics.lastErrorTime).toISOString()
-          : null
+          : null,
       };
     });
-    
+
     return health;
   }
 
@@ -173,20 +176,20 @@ export class ApiMonitorService {
   selectBestProvider(providers: string[]): string | null {
     let bestProvider: string | null = null;
     let bestScore = -1;
-    
+
     for (const provider of providers) {
       if (this.isCircuitOpen(provider)) continue;
-      
+
       const health = this.getApiHealth(provider);
       // Score based on success rate and response time
-      const score = health.successRate - (health.averageResponseTime / 100);
-      
+      const score = health.successRate - health.averageResponseTime / 100;
+
       if (score > bestScore) {
         bestScore = score;
         bestProvider = provider;
       }
     }
-    
+
     return bestProvider;
   }
 
@@ -199,7 +202,7 @@ export class ApiMonitorService {
       successfulRequests: 0,
       failedRequests: 0,
       totalResponseTime: 0,
-      averageResponseTime: 0
+      averageResponseTime: 0,
     };
   }
 
@@ -233,11 +236,13 @@ export function withApiMonitoring<T extends (...args: any[]) => Promise<any>>(
   return (async (...args: Parameters<T>) => {
     // Check circuit breaker
     if (apiMonitor.isCircuitOpen(endpoint)) {
-      throw new Error(`Circuit breaker is open for ${endpoint}. Service temporarily unavailable.`);
+      throw new Error(
+        `Circuit breaker is open for ${endpoint}. Service temporarily unavailable.`
+      );
     }
-    
+
     const startTime = Date.now();
-    
+
     try {
       const result = await fn(...args);
       const responseTime = Date.now() - startTime;

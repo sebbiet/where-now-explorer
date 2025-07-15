@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import { LocationProvider, useLocation } from '../LocationContext';
-import { GeolocationService, GeolocationError, GeolocationErrorCode } from '@/services/geolocation.service';
+import {
+  GeolocationService,
+  GeolocationError,
+  GeolocationErrorCode,
+} from '@/services/geolocation.service';
 import { GeocodingService, GeocodingError } from '@/services/geocoding.service';
 import { TraditionalLandService } from '@/services/traditionalLand.service';
 import { usePreferences } from '@/contexts/PreferencesContext';
@@ -12,16 +16,19 @@ import React from 'react';
 // Mock dependencies
 vi.mock('sonner', () => ({
   toast: {
-    error: vi.fn()
-  }
+    error: vi.fn(),
+  },
 }));
 
 vi.mock('@/services/geolocation.service', () => ({
   GeolocationService: {
-    getCurrentPosition: vi.fn()
+    getCurrentPosition: vi.fn(),
   },
   GeolocationError: class GeolocationError extends Error {
-    constructor(public code: number, message: string) {
+    constructor(
+      public code: number,
+      message: string
+    ) {
       super(message);
       this.name = 'GeolocationError';
     }
@@ -30,61 +37,69 @@ vi.mock('@/services/geolocation.service', () => ({
     PERMISSION_DENIED: 1,
     POSITION_UNAVAILABLE: 2,
     TIMEOUT: 3,
-    UNSUPPORTED: 4
-  }
+    UNSUPPORTED: 4,
+  },
 }));
 
 vi.mock('@/services/geocoding.service', () => ({
   GeocodingService: {
-    reverseGeocode: vi.fn()
+    reverseGeocode: vi.fn(),
   },
   GeocodingError: class GeocodingError extends Error {
     constructor(message: string) {
       super(message);
       this.name = 'GeocodingError';
     }
-  }
+  },
 }));
 
 vi.mock('@/services/traditionalLand.service', () => ({
   TraditionalLandService: {
     isAustralianLocation: vi.fn(),
-    getTraditionalLandInfo: vi.fn()
-  }
+    getTraditionalLandInfo: vi.fn(),
+  },
 }));
 
 vi.mock('@/contexts/PreferencesContext', () => ({
-  usePreferences: vi.fn()
+  usePreferences: vi.fn(),
 }));
 
 vi.mock('@/services/analytics.service', () => ({
   analytics: {
     trackLocationUpdated: vi.fn(),
-    trackLocationRefresh: vi.fn()
-  }
+    trackLocationRefresh: vi.fn(),
+  },
 }));
 
 vi.mock('@/utils/logger', () => ({
   logger: {
-    error: vi.fn()
-  }
+    error: vi.fn(),
+  },
 }));
 
 // Test component that uses the context
 const TestComponent = ({ onRender }: { onRender?: (data: any) => void }) => {
   const locationContext = useLocation();
-  
+
   React.useEffect(() => {
     onRender?.(locationContext);
   }, [locationContext, onRender]);
 
   return (
     <div>
-      <div data-testid="loading">{locationContext.isLoadingLocation ? 'Loading' : 'Not Loading'}</div>
-      <div data-testid="refreshing">{locationContext.isRefreshingLocation ? 'Refreshing' : 'Not Refreshing'}</div>
+      <div data-testid="loading">
+        {locationContext.isLoadingLocation ? 'Loading' : 'Not Loading'}
+      </div>
+      <div data-testid="refreshing">
+        {locationContext.isRefreshingLocation ? 'Refreshing' : 'Not Refreshing'}
+      </div>
       <div data-testid="countdown">{locationContext.countdown}</div>
-      <div data-testid="city">{locationContext.locationData.city || 'No city'}</div>
-      <div data-testid="traditional">{locationContext.locationData.traditionalName || 'No traditional info'}</div>
+      <div data-testid="city">
+        {locationContext.locationData.city || 'No city'}
+      </div>
+      <div data-testid="traditional">
+        {locationContext.locationData.traditionalName || 'No traditional info'}
+      </div>
       <button onClick={locationContext.handleRefresh}>Refresh</button>
       <button onClick={locationContext.toggleMockLocation}>Toggle Mock</button>
     </div>
@@ -100,9 +115,9 @@ describe('LocationContext', () => {
       altitude: null,
       altitudeAccuracy: null,
       heading: null,
-      speed: null
+      speed: null,
     },
-    timestamp: Date.now()
+    timestamp: Date.now(),
   };
 
   const mockAddressData = {
@@ -112,22 +127,28 @@ describe('LocationContext', () => {
     state: 'NSW',
     country: 'Australia',
     latitude: -33.8688,
-    longitude: 151.2093
+    longitude: 151.2093,
   };
 
   const mockPreferences = {
     preferences: {
       autoRefreshInterval: 30,
-      enableLocationTracking: true
-    }
+      enableLocationTracking: true,
+    },
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(usePreferences).mockReturnValue(mockPreferences as any);
-    vi.mocked(GeolocationService.getCurrentPosition).mockResolvedValue(mockPosition);
-    vi.mocked(GeocodingService.reverseGeocode).mockResolvedValue(mockAddressData);
-    vi.mocked(TraditionalLandService.isAustralianLocation).mockReturnValue(false);
+    vi.mocked(GeolocationService.getCurrentPosition).mockResolvedValue(
+      mockPosition
+    );
+    vi.mocked(GeocodingService.reverseGeocode).mockResolvedValue(
+      mockAddressData
+    );
+    vi.mocked(TraditionalLandService.isAustralianLocation).mockReturnValue(
+      false
+    );
     // Mock alert for permission denied error
     global.alert = vi.fn();
   });
@@ -150,12 +171,14 @@ describe('LocationContext', () => {
 
     it('should throw error when used outside provider', () => {
       // Suppress console.error for this test
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      
+      const consoleSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+
       expect(() => {
         render(<TestComponent />);
       }).toThrow('useLocation must be used within a LocationProvider');
-      
+
       consoleSpy.mockRestore();
     });
   });
@@ -184,7 +207,7 @@ describe('LocationContext', () => {
 
       expect(analytics.trackLocationUpdated).toHaveBeenCalledWith({
         update_type: 'initial',
-        has_traditional_land_info: false
+        has_traditional_land_info: false,
       });
     });
 
@@ -209,11 +232,13 @@ describe('LocationContext', () => {
       expect(analytics.trackLocationRefresh).toHaveBeenCalledWith({
         update_type: 'refresh',
         refresh_type: 'manual',
-        countdown_remaining: 30
+        countdown_remaining: 30,
       });
 
       await waitFor(() => {
-        expect(screen.getByTestId('refreshing')).toHaveTextContent('Not Refreshing');
+        expect(screen.getByTestId('refreshing')).toHaveTextContent(
+          'Not Refreshing'
+        );
       });
     });
   });
@@ -221,10 +246,14 @@ describe('LocationContext', () => {
   describe('mock location toggle (dev mode)', () => {
     it('should expose mock location functions', async () => {
       let capturedContext: any;
-      
+
       render(
         <LocationProvider>
-          <TestComponent onRender={(ctx) => { capturedContext = ctx; }} />
+          <TestComponent
+            onRender={(ctx) => {
+              capturedContext = ctx;
+            }}
+          />
         </LocationProvider>
       );
 
@@ -259,7 +288,9 @@ describe('LocationContext', () => {
         GeolocationErrorCode.PERMISSION_DENIED,
         'User denied location permission'
       );
-      vi.mocked(GeolocationService.getCurrentPosition).mockRejectedValue(permissionError);
+      vi.mocked(GeolocationService.getCurrentPosition).mockRejectedValue(
+        permissionError
+      );
 
       render(
         <LocationProvider>
@@ -269,9 +300,10 @@ describe('LocationContext', () => {
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(
-          "📍 Location access denied",
+          '📍 Location access denied',
           expect.objectContaining({
-            description: "Click the location icon in your browser's address bar to enable permissions."
+            description:
+              "Click the location icon in your browser's address bar to enable permissions.",
           })
         );
       });
@@ -284,7 +316,9 @@ describe('LocationContext', () => {
         GeolocationErrorCode.POSITION_UNAVAILABLE,
         'Position unavailable'
       );
-      vi.mocked(GeolocationService.getCurrentPosition).mockRejectedValue(positionError);
+      vi.mocked(GeolocationService.getCurrentPosition).mockRejectedValue(
+        positionError
+      );
 
       render(
         <LocationProvider>
@@ -296,7 +330,8 @@ describe('LocationContext', () => {
         expect(toast.error).toHaveBeenCalledWith(
           "📍 Can't find your location",
           expect.objectContaining({
-            description: "Please check if location services are enabled on your device."
+            description:
+              'Please check if location services are enabled on your device.',
           })
         );
       });
@@ -307,7 +342,9 @@ describe('LocationContext', () => {
         GeolocationErrorCode.TIMEOUT,
         'Request timed out'
       );
-      vi.mocked(GeolocationService.getCurrentPosition).mockRejectedValue(timeoutError);
+      vi.mocked(GeolocationService.getCurrentPosition).mockRejectedValue(
+        timeoutError
+      );
 
       render(
         <LocationProvider>
@@ -317,9 +354,9 @@ describe('LocationContext', () => {
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(
-          "📍 Location request timed out",
+          '📍 Location request timed out',
           expect.objectContaining({
-            description: "This is taking longer than usual."
+            description: 'This is taking longer than usual.',
           })
         );
       });
@@ -327,7 +364,9 @@ describe('LocationContext', () => {
 
     it('should handle geocoding error', async () => {
       const geocodingError = new GeocodingError('Geocoding failed');
-      vi.mocked(GeocodingService.reverseGeocode).mockRejectedValue(geocodingError);
+      vi.mocked(GeocodingService.reverseGeocode).mockRejectedValue(
+        geocodingError
+      );
 
       render(
         <LocationProvider>
@@ -365,11 +404,13 @@ describe('LocationContext', () => {
 
   describe('traditional land info', () => {
     it('should add traditional land info for Australian locations', async () => {
-      vi.mocked(TraditionalLandService.isAustralianLocation).mockReturnValue(true);
+      vi.mocked(TraditionalLandService.isAustralianLocation).mockReturnValue(
+        true
+      );
       vi.mocked(TraditionalLandService.getTraditionalLandInfo).mockReturnValue({
         traditionalName: 'Gadigal Country',
         nation: 'Eora Nation',
-        acknowledgement: 'We acknowledge the Gadigal people'
+        acknowledgement: 'We acknowledge the Gadigal people',
       });
 
       render(
@@ -379,24 +420,28 @@ describe('LocationContext', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByTestId('traditional')).toHaveTextContent('Gadigal Country');
+        expect(screen.getByTestId('traditional')).toHaveTextContent(
+          'Gadigal Country'
+        );
       });
 
-      expect(TraditionalLandService.getTraditionalLandInfo).toHaveBeenCalledWith(
-        'Sydney',
-        'Sydney',
-        'NSW'
-      );
+      expect(
+        TraditionalLandService.getTraditionalLandInfo
+      ).toHaveBeenCalledWith('Sydney', 'Sydney', 'NSW');
 
       expect(analytics.trackLocationUpdated).toHaveBeenCalledWith({
         update_type: 'initial',
-        has_traditional_land_info: true
+        has_traditional_land_info: true,
       });
     });
 
     it('should handle missing traditional land info', async () => {
-      vi.mocked(TraditionalLandService.isAustralianLocation).mockReturnValue(true);
-      vi.mocked(TraditionalLandService.getTraditionalLandInfo).mockReturnValue(null);
+      vi.mocked(TraditionalLandService.isAustralianLocation).mockReturnValue(
+        true
+      );
+      vi.mocked(TraditionalLandService.getTraditionalLandInfo).mockReturnValue(
+        null
+      );
 
       render(
         <LocationProvider>
@@ -405,12 +450,14 @@ describe('LocationContext', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByTestId('traditional')).toHaveTextContent('No traditional info');
+        expect(screen.getByTestId('traditional')).toHaveTextContent(
+          'No traditional info'
+        );
       });
 
       expect(analytics.trackLocationUpdated).toHaveBeenCalledWith({
         update_type: 'initial',
-        has_traditional_land_info: false
+        has_traditional_land_info: false,
       });
     });
   });

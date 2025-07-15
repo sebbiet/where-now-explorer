@@ -5,11 +5,11 @@ interface UserPreferences {
   // Location preferences
   autoRefreshInterval: number; // in seconds
   enableLocationTracking: boolean;
-  
+
   // UI preferences
   showFirstNationsAcknowledgment: boolean;
   defaultTab: 'current' | 'destination';
-  
+
   // Privacy preferences
   saveDestinationHistory: boolean;
   shareApproximateLocation: boolean;
@@ -37,13 +37,16 @@ interface PreferencesContextType {
   resetPreferences: () => void;
 }
 
-const PreferencesContext = createContext<PreferencesContextType | undefined>(undefined);
+const PreferencesContext = createContext<PreferencesContextType | undefined>(
+  undefined
+);
 
 export const PreferencesProvider = ({ children }: { children: ReactNode }) => {
-  const [preferences, setPreferences, removePreferences] = useLocalStorage<UserPreferences>(
-    'where-now-preferences',
-    defaultPreferences
-  );
+  const [preferences, setPreferences, removePreferences] =
+    useLocalStorage<UserPreferences>(
+      'where-now-preferences',
+      defaultPreferences
+    );
 
   const updatePreference = <K extends keyof UserPreferences>(
     key: K,

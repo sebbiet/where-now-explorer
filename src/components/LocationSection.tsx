@@ -1,4 +1,3 @@
-
 import React, { memo } from 'react';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import LocationDisplay from '@/components/LocationDisplay';
@@ -8,12 +7,12 @@ import { useLocation } from '@/contexts/LocationContext';
 import { haptic } from '@/utils/haptic';
 
 const LocationSection = () => {
-  const { 
-    locationData, 
-    isLoadingLocation, 
-    isRefreshingLocation, 
-    countdown, 
-    handleRefresh
+  const {
+    locationData,
+    isLoadingLocation,
+    isRefreshingLocation,
+    countdown,
+    handleRefresh,
   } = useLocation();
 
   const handleRefreshClick = () => {
@@ -33,28 +32,29 @@ const LocationSection = () => {
   return (
     <div className="w-full">
       <LocationPin />
-      
+
       {/* Screen reader announcement for location updates */}
       <div className="sr-only" aria-live="polite" aria-atomic="true">
-        {isRefreshingLocation && "Refreshing your location..."}
-        {!isLoadingLocation && !isRefreshingLocation && locationData.city && (
-          `Your current location is ${locationData.street ? locationData.street + ', ' : ''}${locationData.city}, ${locationData.country}`
-        )}
+        {isRefreshingLocation && 'Refreshing your location...'}
+        {!isLoadingLocation &&
+          !isRefreshingLocation &&
+          locationData.city &&
+          `Your current location is ${locationData.street ? locationData.street + ', ' : ''}${locationData.city}, ${locationData.country}`}
       </div>
-      
-      <div className={isRefreshingLocation ? "animate-pulse" : ""}>
+
+      <div className={isRefreshingLocation ? 'animate-pulse' : ''}>
         <LocationDisplay locationData={locationData} />
-        
+
         {locationData.traditionalName && locationData.traditionalNation && (
-          <TraditionalLandAcknowledgment 
+          <TraditionalLandAcknowledgment
             traditionalName={locationData.traditionalName}
             traditionalNation={locationData.traditionalNation}
           />
         )}
       </div>
-      
+
       <div className="flex justify-center mt-8">
-        <button 
+        <button
           onClick={handleRefreshClick}
           className={`
             relative px-10 py-5 text-xl font-black text-white
@@ -70,11 +70,20 @@ const LocationSection = () => {
           aria-live="polite"
         >
           <span className="flex items-center gap-2">
-            <span className="text-2xl animate-spin" style={{animationDuration: '3s'}} role="img" aria-label="Refresh">🔄</span>
+            <span
+              className="text-2xl animate-spin"
+              style={{ animationDuration: '3s' }}
+              role="img"
+              aria-label="Refresh"
+            >
+              🔄
+            </span>
             <span>Refresh in {countdown}s</span>
-            <span className="text-2xl" role="img" aria-label="Timer">⏰</span>
+            <span className="text-2xl" role="img" aria-label="Timer">
+              ⏰
+            </span>
           </span>
-          
+
           {/* Animated background effect */}
           <div className="absolute inset-0 rounded-full bg-white opacity-0 hover:opacity-20 transition-opacity duration-300"></div>
         </button>

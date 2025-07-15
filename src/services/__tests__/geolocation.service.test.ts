@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { GeolocationService, GeolocationErrorCode, GeolocationError, GeolocationPosition } from '../geolocation.service';
+import {
+  GeolocationService,
+  GeolocationErrorCode,
+  GeolocationError,
+  GeolocationPosition,
+} from '../geolocation.service';
 import { analytics } from '../analytics.service';
 import { getErrorMessage } from '@/utils/errorMessages';
 
@@ -12,7 +17,9 @@ vi.mock('../analytics.service', () => ({
 }));
 
 vi.mock('@/utils/errorMessages', () => ({
-  getErrorMessage: vi.fn((category: string, key: string) => `${category}_${key}`),
+  getErrorMessage: vi.fn(
+    (category: string, key: string) => `${category}_${key}`
+  ),
 }));
 
 describe('GeolocationService', () => {
@@ -23,7 +30,7 @@ describe('GeolocationService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Setup navigator.geolocation mock
     Object.defineProperty(global.navigator, 'geolocation', {
       writable: true,
@@ -94,8 +101,10 @@ describe('GeolocationService', () => {
       });
 
       // Act & Assert
-      await expect(GeolocationService.getCurrentPosition()).rejects.toThrow(GeolocationError);
-      
+      await expect(GeolocationService.getCurrentPosition()).rejects.toThrow(
+        GeolocationError
+      );
+
       try {
         await GeolocationService.getCurrentPosition();
       } catch (error) {
@@ -104,10 +113,13 @@ describe('GeolocationService', () => {
         expect(error.message).toBe('LOCATION_PERMISSION_DENIED');
       }
 
-      expect(analytics.track).toHaveBeenCalledWith('location_permission_error', {
-        error_type: GeolocationErrorCode.PERMISSION_DENIED,
-        error_message: 'LOCATION_PERMISSION_DENIED',
-      });
+      expect(analytics.track).toHaveBeenCalledWith(
+        'location_permission_error',
+        {
+          error_type: GeolocationErrorCode.PERMISSION_DENIED,
+          error_message: 'LOCATION_PERMISSION_DENIED',
+        }
+      );
     });
 
     it('should handle timeout error', async () => {
@@ -125,8 +137,10 @@ describe('GeolocationService', () => {
       });
 
       // Act & Assert
-      await expect(GeolocationService.getCurrentPosition()).rejects.toThrow(GeolocationError);
-      
+      await expect(GeolocationService.getCurrentPosition()).rejects.toThrow(
+        GeolocationError
+      );
+
       try {
         await GeolocationService.getCurrentPosition();
       } catch (error) {
@@ -135,10 +149,13 @@ describe('GeolocationService', () => {
         expect(error.message).toBe('LOCATION_TIMEOUT');
       }
 
-      expect(analytics.track).toHaveBeenCalledWith('location_permission_error', {
-        error_type: GeolocationErrorCode.TIMEOUT,
-        error_message: 'LOCATION_TIMEOUT',
-      });
+      expect(analytics.track).toHaveBeenCalledWith(
+        'location_permission_error',
+        {
+          error_type: GeolocationErrorCode.TIMEOUT,
+          error_message: 'LOCATION_TIMEOUT',
+        }
+      );
     });
 
     it('should handle position unavailable error', async () => {
@@ -156,8 +173,10 @@ describe('GeolocationService', () => {
       });
 
       // Act & Assert
-      await expect(GeolocationService.getCurrentPosition()).rejects.toThrow(GeolocationError);
-      
+      await expect(GeolocationService.getCurrentPosition()).rejects.toThrow(
+        GeolocationError
+      );
+
       try {
         await GeolocationService.getCurrentPosition();
       } catch (error) {
@@ -166,10 +185,13 @@ describe('GeolocationService', () => {
         expect(error.message).toBe('LOCATION_UNAVAILABLE');
       }
 
-      expect(analytics.track).toHaveBeenCalledWith('location_permission_error', {
-        error_type: GeolocationErrorCode.POSITION_UNAVAILABLE,
-        error_message: 'LOCATION_UNAVAILABLE',
-      });
+      expect(analytics.track).toHaveBeenCalledWith(
+        'location_permission_error',
+        {
+          error_type: GeolocationErrorCode.POSITION_UNAVAILABLE,
+          error_message: 'LOCATION_UNAVAILABLE',
+        }
+      );
     });
 
     it('should handle unsupported browser', async () => {
@@ -180,8 +202,10 @@ describe('GeolocationService', () => {
       });
 
       // Act & Assert
-      await expect(GeolocationService.getCurrentPosition()).rejects.toThrow(GeolocationError);
-      
+      await expect(GeolocationService.getCurrentPosition()).rejects.toThrow(
+        GeolocationError
+      );
+
       try {
         await GeolocationService.getCurrentPosition();
       } catch (error) {
@@ -190,10 +214,13 @@ describe('GeolocationService', () => {
         expect(error.message).toBe('LOCATION_NOT_SUPPORTED');
       }
 
-      expect(analytics.track).toHaveBeenCalledWith('location_permission_error', {
-        error_type: 'unsupported',
-        error_message: 'LOCATION_NOT_SUPPORTED',
-      });
+      expect(analytics.track).toHaveBeenCalledWith(
+        'location_permission_error',
+        {
+          error_type: 'unsupported',
+          error_message: 'LOCATION_NOT_SUPPORTED',
+        }
+      );
     });
 
     it('should accept custom options', async () => {
@@ -259,7 +286,10 @@ describe('GeolocationService', () => {
       });
 
       // Act
-      const watchId = await GeolocationService.watchPosition(onPosition, onError);
+      const watchId = await GeolocationService.watchPosition(
+        onPosition,
+        onError
+      );
 
       // Assert
       expect(watchId).toBe(mockWatchId);
@@ -298,15 +328,20 @@ describe('GeolocationService', () => {
       });
 
       // Act
-      const watchId = await GeolocationService.watchPosition(onPosition, onError);
+      const watchId = await GeolocationService.watchPosition(
+        onPosition,
+        onError
+      );
 
       // Assert
       expect(watchId).toBe(456);
       expect(onPosition).not.toHaveBeenCalled();
-      expect(onError).toHaveBeenCalledWith(expect.objectContaining({
-        code: GeolocationErrorCode.PERMISSION_DENIED,
-        message: 'LOCATION_PERMISSION_DENIED',
-      }));
+      expect(onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: GeolocationErrorCode.PERMISSION_DENIED,
+          message: 'LOCATION_PERMISSION_DENIED',
+        })
+      );
     });
 
     it('should handle unsupported browser in watchPosition', async () => {
@@ -320,15 +355,20 @@ describe('GeolocationService', () => {
       const onError = vi.fn();
 
       // Act
-      const watchId = await GeolocationService.watchPosition(onPosition, onError);
+      const watchId = await GeolocationService.watchPosition(
+        onPosition,
+        onError
+      );
 
       // Assert
       expect(watchId).toBe(-1);
       expect(onPosition).not.toHaveBeenCalled();
-      expect(onError).toHaveBeenCalledWith(expect.objectContaining({
-        code: GeolocationErrorCode.UNSUPPORTED,
-        message: 'LOCATION_NOT_SUPPORTED',
-      }));
+      expect(onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          code: GeolocationErrorCode.UNSUPPORTED,
+          message: 'LOCATION_NOT_SUPPORTED',
+        })
+      );
     });
 
     it('should accept custom options in watchPosition', async () => {
@@ -346,7 +386,11 @@ describe('GeolocationService', () => {
       mockWatchPosition.mockReturnValue(mockWatchId);
 
       // Act
-      const watchId = await GeolocationService.watchPosition(onPosition, onError, customOptions);
+      const watchId = await GeolocationService.watchPosition(
+        onPosition,
+        onError,
+        customOptions
+      );
 
       // Assert
       expect(watchId).toBe(mockWatchId);

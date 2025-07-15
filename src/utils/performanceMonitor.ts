@@ -3,13 +3,24 @@
  * Tracks key performance metrics for the application
  */
 
+// Extended interface for layout shift entries
+interface LayoutShiftEntry extends PerformanceEntry {
+  value: number;
+  hadRecentInput: boolean;
+}
+
+// Extended interface for first input delay entries
+interface FirstInputEntry extends PerformanceEntry {
+  processingStart: number;
+}
+
 interface PerformanceMetrics {
   // Core Web Vitals
   fcp?: number; // First Contentful Paint
   lcp?: number; // Largest Contentful Paint
   fid?: number; // First Input Delay
   cls?: number; // Cumulative Layout Shift
-  
+
   // Custom metrics
   appLoadTime?: number;
   locationTime?: number;
@@ -54,7 +65,8 @@ class PerformanceMonitor {
       // Monitor FID
       const fidObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          this.metrics.fid = entry.processingStart - entry.startTime;
+          const fidEntry = entry as FirstInputEntry;
+          this.metrics.fid = fidEntry.processingStart - fidEntry.startTime;
         }
       });
       fidObserver.observe({ entryTypes: ['first-input'] });
@@ -64,15 +76,15 @@ class PerformanceMonitor {
       const clsObserver = new PerformanceObserver((list) => {
         let clsValue = 0;
         for (const entry of list.getEntries()) {
-          if (!entry.hadRecentInput) {
-            clsValue += (entry as any).value;
+          const clsEntry = entry as LayoutShiftEntry;
+          if (!clsEntry.hadRecentInput) {
+            clsValue += clsEntry.value;
           }
         }
         this.metrics.cls = clsValue;
       });
       clsObserver.observe({ entryTypes: ['layout-shift'] });
       this.observers.push(clsObserver);
-
     } catch (error) {
       console.warn('Performance monitoring not supported:', error);
     }
@@ -84,22 +96,19 @@ class PerformanceMonitor {
     window.addEventListener('load', () => {
       const loadTime = performance.now();
       this.metrics.appLoadTime = loadTime;
-      
+
       // Log performance metrics after load
       setTimeout(() => this.logMetrics(), 1000);
     });
   }
 
   // Track API call performance
-  public trackAPICall<T>(
-    apiName: string,
-    promise: Promise<T>
-  ): Promise<T> {
+  public trackAPICall<T>(apiName: string, promise: Promise<T>): Promise<T> {
     const startTime = performance.now();
-    
+
     return promise.finally(() => {
       const duration = performance.now() - startTime;
-      
+
       switch (apiName) {
         case 'geocoding':
           this.metrics.geocodingTime = duration;
@@ -111,7 +120,7 @@ class PerformanceMonitor {
           this.metrics.locationTime = duration;
           break;
       }
-      
+
       console.log(`${apiName} API call took ${duration.toFixed(2)}ms`);
     });
   }
@@ -124,7 +133,7 @@ class PerformanceMonitor {
   // Log metrics to console (development) or send to analytics (production)
   private logMetrics() {
     const metrics = this.getMetrics();
-    
+
     if (process.env.NODE_ENV === 'development') {
       console.group('🚀 Performance Metrics');
       console.log('First Contentful Paint:', metrics.fcp?.toFixed(2), 'ms');
@@ -132,7 +141,7 @@ class PerformanceMonitor {
       console.log('First Input Delay:', metrics.fid?.toFixed(2), 'ms');
       console.log('Cumulative Layout Shift:', metrics.cls?.toFixed(4));
       console.log('App Load Time:', metrics.appLoadTime?.toFixed(2), 'ms');
-      
+
       if (metrics.locationTime) {
         console.log('Location Time:', metrics.locationTime.toFixed(2), 'ms');
       }
@@ -153,15 +162,19 @@ class PerformanceMonitor {
     const scores = {
       fcp: this.scoreMetric(metrics.fcp, [1800, 3000]), // Good < 1.8s, Poor > 3s
       lcp: this.scoreMetric(metrics.lcp, [2500, 4000]), // Good < 2.5s, Poor > 4s
-      fid: this.scoreMetric(metrics.fid, [100, 300]),   // Good < 100ms, Poor > 300ms
-      cls: this.scoreMetric(metrics.cls, [0.1, 0.25]),  // Good < 0.1, Poor > 0.25
+      fid: this.scoreMetric(metrics.fid, [100, 300]), // Good < 100ms, Poor > 300ms
+      cls: this.scoreMetric(metrics.cls, [0.1, 0.25]), // Good < 0.1, Poor > 0.25
     };
 
-    const averageScore = Object.values(scores).reduce((a, b) => a + b, 0) / Object.keys(scores).length;
-    
+    const averageScore =
+      Object.values(scores).reduce((a, b) => a + b, 0) /
+      Object.keys(scores).length;
+
     if (process.env.NODE_ENV === 'development') {
-      console.log(`📊 Performance Score: ${(averageScore * 100).toFixed(0)}/100`);
-      
+      console.log(
+        `📊 Performance Score: ${(averageScore * 100).toFixed(0)}/100`
+      );
+
       if (averageScore < 0.5) {
         console.warn('⚠️ Performance needs improvement');
       } else if (averageScore > 0.8) {
@@ -170,9 +183,12 @@ class PerformanceMonitor {
     }
   }
 
-  private scoreMetric(value: number | undefined, thresholds: [number, number]): number {
+  private scoreMetric(
+    value: number | undefined,
+    thresholds: [number, number]
+  ): number {
     if (value === undefined) return 0;
-    
+
     const [good, poor] = thresholds;
     if (value <= good) return 1;
     if (value >= poor) return 0;
@@ -181,7 +197,7 @@ class PerformanceMonitor {
 
   // Clean up observers
   public destroy() {
-    this.observers.forEach(observer => observer.disconnect());
+    this.observers.forEach((observer) => observer.disconnect());
     this.observers = [];
   }
 }

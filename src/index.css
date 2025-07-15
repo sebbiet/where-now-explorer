@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap');
 @import './styles/mobile.css';
 
@@ -20,7 +19,7 @@
     white-space: nowrap;
     border-width: 0;
   }
-  
+
   /* Make screen reader content visible when focused */
   .focus\:not-sr-only:focus {
     position: static;
@@ -67,7 +66,7 @@
     --ring: 222.2 84% 4.9%;
 
     --radius: 1rem;
-    
+
     /* Animation durations */
     --duration-instant: 100ms;
     --duration-fast: 150ms;
@@ -82,7 +81,7 @@
     --duration-prolonged: 3000ms;
     --duration-lengthy: 6000ms;
     --duration-epic: 20000ms;
-    
+
     /* Animation delays */
     --delay-instant: 0ms;
     --delay-minimal: 500ms;
@@ -135,7 +134,8 @@
     padding: 0;
   }
 
-  html, body {
+  html,
+  body {
     background: transparent !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -151,7 +151,7 @@
   .bubble {
     @apply bg-white dark:bg-gray-800 rounded-3xl shadow-lg p-6;
   }
-  
+
   .kid-button {
     @apply rounded-2xl text-lg font-semibold px-6 py-3 transition-all
            shadow-md hover:shadow-lg active:scale-95 focus:outline-none focus:ring-4;
@@ -163,26 +163,33 @@
   .animate-float {
     animation: float var(--duration-lengthy) ease-in-out infinite;
   }
-  
+
   .animate-wiggle {
     animation: wiggle var(--duration-prolonged) ease-in-out infinite;
   }
-  
+
   .animate-fade-in {
     animation: fadeIn var(--duration-measured) ease-out;
   }
-  
+
   .animate-slide-up {
     animation: slideUp var(--duration-leisurely) ease-out;
   }
-  
+
   .custom-background {
-    background: linear-gradient(135deg, #dbeafe 0%, #fef3c7 35%, #f3e8ff 70%, #ddd6fe 100%) !important;
+    background: linear-gradient(
+      135deg,
+      #dbeafe 0%,
+      #fef3c7 35%,
+      #f3e8ff 70%,
+      #ddd6fe 100%
+    ) !important;
   }
 }
 
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0px) rotate(0deg);
   }
   33% {
@@ -194,7 +201,8 @@
 }
 
 @keyframes wiggle {
-  0%, 100% {
+  0%,
+  100% {
     transform: rotate(0deg) scale(1);
   }
   25% {

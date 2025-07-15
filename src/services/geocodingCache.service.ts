@@ -20,12 +20,12 @@ export class GeocodingCacheService {
   private static readonly POPULAR_CACHE_DURATION = 1000 * 60 * 60 * 24 * 7; // 7 days for popular items
   private static readonly MAX_CACHE_SIZE = 100;
   private static readonly POPULAR_THRESHOLD = 5; // Access count to be considered popular
-  
+
   private static cache: GeocodeCache = {
     geocode: new Map(),
     reverseGeocode: new Map(),
   };
-  
+
   private static popularity = new Map<string, PopularityData>();
 
   // Initialize cache from localStorage
@@ -64,14 +64,14 @@ export class GeocodingCacheService {
 
   private static cleanExpiredEntries(): void {
     const now = Date.now();
-    
+
     // Clean geocode cache
     for (const [key, entry] of this.cache.geocode.entries()) {
       if (now - entry.timestamp > this.CACHE_DURATION) {
         this.cache.geocode.delete(key);
       }
     }
-    
+
     // Clean reverse geocode cache
     for (const [key, entry] of this.cache.reverseGeocode.entries()) {
       if (now - entry.timestamp > this.CACHE_DURATION) {
@@ -89,7 +89,7 @@ export class GeocodingCacheService {
       // Keep only the most recent entries
       this.cache.geocode = new Map(entries.slice(-this.MAX_CACHE_SIZE));
     }
-    
+
     // Limit reverse geocode cache size
     if (this.cache.reverseGeocode.size > this.MAX_CACHE_SIZE) {
       const entries = Array.from(this.cache.reverseGeocode.entries());
@@ -101,28 +101,32 @@ export class GeocodingCacheService {
   static getGeocodeCache(query: string, options?: any): GeocodeResult[] | null {
     const key = this.createGeocodeKey(query, options);
     const entry = this.cache.geocode.get(key);
-    
+
     if (!entry) return null;
-    
+
     // Update popularity tracking
     this.updatePopularity(key);
-    
+
     // Check if cache is expired
-    const cacheDuration = this.isPopular(key) 
-      ? this.POPULAR_CACHE_DURATION 
+    const cacheDuration = this.isPopular(key)
+      ? this.POPULAR_CACHE_DURATION
       : this.CACHE_DURATION;
-      
+
     if (Date.now() - entry.timestamp > cacheDuration) {
       this.cache.geocode.delete(key);
       this.popularity.delete(key);
       this.saveCache();
       return null;
     }
-    
+
     return entry.data;
   }
 
-  static setGeocodeCache(query: string, options: any, data: GeocodeResult[]): void {
+  static setGeocodeCache(
+    query: string,
+    options: any,
+    data: GeocodeResult[]
+  ): void {
     const key = this.createGeocodeKey(query, options);
     this.cache.geocode.set(key, {
       data,
@@ -132,31 +136,38 @@ export class GeocodingCacheService {
     this.saveCache();
   }
 
-  static getReverseGeocodeCache(lat: number, lon: number): ReverseGeocodeResult | null {
+  static getReverseGeocodeCache(
+    lat: number,
+    lon: number
+  ): ReverseGeocodeResult | null {
     const key = this.createReverseGeocodeKey(lat, lon);
     const entry = this.cache.reverseGeocode.get(key);
-    
+
     if (!entry) return null;
-    
+
     // Update popularity tracking
     this.updatePopularity(key);
-    
+
     // Check if cache is expired
-    const cacheDuration = this.isPopular(key) 
-      ? this.POPULAR_CACHE_DURATION 
+    const cacheDuration = this.isPopular(key)
+      ? this.POPULAR_CACHE_DURATION
       : this.CACHE_DURATION;
-      
+
     if (Date.now() - entry.timestamp > cacheDuration) {
       this.cache.reverseGeocode.delete(key);
       this.popularity.delete(key);
       this.saveCache();
       return null;
     }
-    
+
     return entry.data;
   }
 
-  static setReverseGeocodeCache(lat: number, lon: number, data: ReverseGeocodeResult): void {
+  static setReverseGeocodeCache(
+    lat: number,
+    lon: number,
+    data: ReverseGeocodeResult
+  ): void {
     const key = this.createReverseGeocodeKey(lat, lon);
     this.cache.reverseGeocode.set(key, {
       data,
@@ -196,10 +207,13 @@ export class GeocodingCacheService {
    * Update popularity data for a cache key
    */
   private static updatePopularity(key: string): void {
-    const existing = this.popularity.get(key) || { accessCount: 0, lastAccessed: 0 };
+    const existing = this.popularity.get(key) || {
+      accessCount: 0,
+      lastAccessed: 0,
+    };
     this.popularity.set(key, {
       accessCount: existing.accessCount + 1,
-      lastAccessed: Date.now()
+      lastAccessed: Date.now(),
     });
   }
 
@@ -214,19 +228,22 @@ export class GeocodingCacheService {
   /**
    * Pre-cache nearby locations for better performance
    */
-  static async preCacheNearbyLocations(lat: number, lon: number): Promise<void> {
+  static async preCacheNearbyLocations(
+    lat: number,
+    lon: number
+  ): Promise<void> {
     // Pre-cache locations in a grid around the current location
     const gridSize = 0.01; // About 1km
     const offsets = [-1, 0, 1];
-    
+
     for (const latOffset of offsets) {
       for (const lonOffset of offsets) {
         if (latOffset === 0 && lonOffset === 0) continue; // Skip current location
-        
-        const nearbyLat = lat + (latOffset * gridSize);
-        const nearbyLon = lon + (lonOffset * gridSize);
+
+        const nearbyLat = lat + latOffset * gridSize;
+        const nearbyLon = lon + lonOffset * gridSize;
         const key = this.createReverseGeocodeKey(nearbyLat, nearbyLon);
-        
+
         // Only pre-cache if not already cached
         if (!this.cache.reverseGeocode.has(key)) {
           // Mark for pre-caching (actual implementation would fetch these)

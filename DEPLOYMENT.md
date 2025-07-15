@@ -30,6 +30,7 @@ git push origin main
 ```
 
 The GitHub Action will automatically:
+
 - Build the project
 - Deploy to GitHub Pages
 - Make it available at: https://thereyetapp.com/
@@ -44,6 +45,7 @@ npm run deploy
 ```
 
 This command will:
+
 1. Build the project with the correct base path
 2. Deploy the `dist` folder to the `gh-pages` branch
 3. GitHub Pages will serve from this branch
@@ -63,6 +65,7 @@ To enable debug panel access in production:
 4. Access the debug panel in production by appending `?debug=your-secret-debug-key` to the URL
 
 **Important Security Notes:**
+
 - Never commit your `.env` file to version control
 - Use a strong, unique key that's hard to guess
 - Change the key periodically for better security
@@ -81,6 +84,7 @@ The app is configured with the base path `/` in `vite.config.ts` for deployment 
 ### Custom Domain (Optional)
 
 If you want to use a custom domain:
+
 1. Update the `public/CNAME` file with your domain
 2. Configure your domain's DNS to point to GitHub Pages
 3. Enable custom domain in repository settings
@@ -106,10 +110,11 @@ If the app doesn't load correctly:
 The debug panel can be accessed in production using a secret key:
 
 1. **Set up environment variable** (for deployment):
+
    ```bash
    # Create .env file (DO NOT commit this file)
    cp .env.example .env
-   
+
    # Edit .env and set your secret key
    VITE_DEBUG_KEY=your-very-secret-key-here
    ```
@@ -124,6 +129,7 @@ The debug panel can be accessed in production using a secret key:
    ```
 
 **Security Notes:**
+
 - Never commit the actual debug key to version control
 - Use a strong, unique key that's hard to guess
 - Change the key periodically for better security

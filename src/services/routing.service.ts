@@ -53,7 +53,7 @@ export interface RouteResult {
 export enum RoutingProfile {
   DRIVING = 'driving',
   WALKING = 'walking',
-  CYCLING = 'cycling'
+  CYCLING = 'cycling',
 }
 
 export interface CalculateRouteOptions {
@@ -76,7 +76,7 @@ export class RoutingError extends ServiceError {
 
 class RoutingServiceImpl extends BaseService {
   private static readonly BASE_URL = 'https://router.project-osrm.org/route/v1';
-  
+
   constructor() {
     super('routing', {
       rateLimitKey: 'routing',
@@ -84,19 +84,22 @@ class RoutingServiceImpl extends BaseService {
       timeout: 10000,
       enableMonitoring: true,
       enableDeduplication: true,
-      enablePerformanceTracking: true
+      enablePerformanceTracking: true,
     });
   }
 
   async calculateRoute(options: CalculateRouteOptions): Promise<RouteResult> {
     try {
       const { origin, destination, profile = RoutingProfile.DRIVING } = options;
-      
+
       // Validate input coordinates
-      this.validateInput({ origin, destination }, {
-        origin: (o) => this.isValidCoordinates(o.latitude, o.longitude),
-        destination: (d) => this.isValidCoordinates(d.latitude, d.longitude)
-      });
+      this.validateInput(
+        { origin, destination },
+        {
+          origin: (o) => this.isValidCoordinates(o.latitude, o.longitude),
+          destination: (d) => this.isValidCoordinates(d.latitude, d.longitude),
+        }
+      );
 
       // Check offline cache first
       if (!offlineMode.getOnlineStatus()) {
@@ -107,22 +110,22 @@ class RoutingServiceImpl extends BaseService {
         overview: (options.overview ?? false).toString(),
         steps: (options.steps ?? false).toString(),
         alternatives: (options.alternatives ?? false).toString(),
-        geometries: options.geometries || 'polyline'
+        geometries: options.geometries || 'polyline',
       });
 
       const url = `${RoutingServiceImpl.BASE_URL}/${profile}/${origin.longitude},${origin.latitude};${destination.longitude},${destination.latitude}?${params}`;
-      
+
       // Primary routing operation
       const primaryOperation = async () => {
         const data = await this.executeRequest<RouteResponse>(url);
-        
+
         if (data.code !== 'Ok') {
           throw new RoutingError(
             data.message || 'Failed to find a route',
             data.code
           );
         }
-        
+
         if (!data.routes || data.routes.length === 0) {
           throw new RoutingError(
             'No route found between the specified locations',
@@ -146,16 +149,16 @@ class RoutingServiceImpl extends BaseService {
           );
         }
       );
-      
+
       const route = data.routes[0];
       const distanceKm = route.distance / 1000;
       const durationMinutes = Math.round(route.duration / 60);
-      
+
       return {
         distanceKm,
         durationMinutes,
         formattedDistance: this.formatDistance(distanceKm),
-        formattedDuration: this.formatDuration(durationMinutes)
+        formattedDuration: this.formatDuration(durationMinutes),
       };
     } catch (error) {
       this.handleError(error, 'calculateRoute');
@@ -173,15 +176,15 @@ class RoutingServiceImpl extends BaseService {
     if (durationMinutes < 60) {
       return `${durationMinutes} minute${durationMinutes !== 1 ? 's' : ''}`;
     }
-    
+
     const hours = Math.floor(durationMinutes / 60);
     const minutes = durationMinutes % 60;
-    
+
     let result = `${hours} hour${hours > 1 ? 's' : ''}`;
     if (minutes > 0) {
       result += ` ${minutes} min`;
     }
-    
+
     return result;
   }
 
@@ -192,9 +195,9 @@ class RoutingServiceImpl extends BaseService {
   }
 
   formatArrivalTime(arrivalTime: Date): string {
-    return arrivalTime.toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return arrivalTime.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
     });
   }
 
@@ -205,9 +208,12 @@ class RoutingServiceImpl extends BaseService {
     return (
       typeof latitude === 'number' &&
       typeof longitude === 'number' &&
-      latitude >= -90 && latitude <= 90 &&
-      longitude >= -180 && longitude <= 180 &&
-      !isNaN(latitude) && !isNaN(longitude)
+      latitude >= -90 &&
+      latitude <= 90 &&
+      longitude >= -180 &&
+      longitude <= 180 &&
+      !isNaN(latitude) &&
+      !isNaN(longitude)
     );
   }
 }
@@ -218,7 +224,9 @@ const routingServiceInstance = new RoutingServiceImpl();
 // Export static-like interface for backward compatibility
 export class RoutingService {
   // New options-based interface
-  static async calculateRoute(options: CalculateRouteOptions): Promise<RouteResult>;
+  static async calculateRoute(
+    options: CalculateRouteOptions
+  ): Promise<RouteResult>;
   // Backward compatibility interface
   static async calculateRoute(
     origin: { latitude: number; longitude: number },
@@ -231,9 +239,11 @@ export class RoutingService {
       geometries?: 'polyline' | 'polyline6' | 'geojson';
     }
   ): Promise<RouteResult>;
-  
+
   static async calculateRoute(
-    originOrOptions: CalculateRouteOptions | { latitude: number; longitude: number },
+    originOrOptions:
+      | CalculateRouteOptions
+      | { latitude: number; longitude: number },
     destination?: { latitude: number; longitude: number },
     profile: RoutingProfile = RoutingProfile.DRIVING,
     routingOptions?: {
@@ -246,14 +256,16 @@ export class RoutingService {
     // Check if using new options-based interface
     if (destination === undefined && 'origin' in originOrOptions) {
       // New interface - options object
-      return routingServiceInstance.calculateRoute(originOrOptions as CalculateRouteOptions);
+      return routingServiceInstance.calculateRoute(
+        originOrOptions as CalculateRouteOptions
+      );
     } else {
       // Backward compatibility interface
       const options: CalculateRouteOptions = {
         origin: originOrOptions as { latitude: number; longitude: number },
         destination: destination!,
         profile,
-        ...routingOptions
+        ...routingOptions,
       };
       return routingServiceInstance.calculateRoute(options);
     }

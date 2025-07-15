@@ -16,7 +16,8 @@ declare global {
 }
 
 export const useInstallPrompt = () => {
-  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [installPrompt, setInstallPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
 
@@ -51,7 +52,10 @@ export const useInstallPrompt = () => {
     window.addEventListener('appinstalled', handleAppInstalled);
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener(
+        'beforeinstallprompt',
+        handleBeforeInstallPrompt
+      );
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
@@ -62,16 +66,16 @@ export const useInstallPrompt = () => {
     try {
       // Show the install prompt
       await installPrompt.prompt();
-      
+
       // Wait for the user to respond to the prompt
       const { outcome } = await installPrompt.userChoice;
-      
+
       if (outcome === 'accepted') {
         setIsInstallable(false);
         setInstallPrompt(null);
         return true;
       }
-      
+
       return false;
     } catch (error) {
       console.error('Error showing install prompt:', error);
@@ -82,6 +86,6 @@ export const useInstallPrompt = () => {
   return {
     isInstallable,
     isInstalled,
-    promptInstall
+    promptInstall,
   };
 };

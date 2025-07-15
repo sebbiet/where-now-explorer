@@ -1,12 +1,13 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
+
     <!-- Security Headers -->
-    <meta http-equiv="Content-Security-Policy" content="
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
       default-src 'self';
       script-src 'self' 'unsafe-inline' https://www.googletagmanager.com;
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
@@ -18,62 +19,98 @@
       base-uri 'self';
       form-action 'self';
       upgrade-insecure-requests;
-    " />
+    "
+    />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
-    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
-    <meta http-equiv="Permissions-Policy" content="
+    <meta
+      http-equiv="Referrer-Policy"
+      content="strict-origin-when-cross-origin"
+    />
+    <meta
+      http-equiv="Permissions-Policy"
+      content="
       geolocation=(self),
       microphone=(),
       camera=(),
       payment=(),
       usb=(),
       bluetooth=()
-    " />
+    "
+    />
     <title>There yet app! - Are we there yet?</title>
-    <meta name="description" content="A fun family-friendly location tracking app for travel adventures. See where you are and track progress to your destination!" />
+    <meta
+      name="description"
+      content="A fun family-friendly location tracking app for travel adventures. See where you are and track progress to your destination!"
+    />
     <meta name="author" content="Sebastian Tiller" />
-    <meta name="keywords" content="location tracker, family travel, kids app, are we there yet, destination tracker, travel app, family friendly" />
+    <meta
+      name="keywords"
+      content="location tracker, family travel, kids app, are we there yet, destination tracker, travel app, family friendly"
+    />
     <meta name="application-name" content="There yet app!" />
     <meta name="theme-color" content="#3b82f6" />
     <link rel="canonical" href="https://thereyetapp.com/" />
     <link rel="manifest" href="/manifest.json" />
-    
+
     <!-- Preload critical resources -->
-    <link rel="dns-prefetch" href="//nominatim.openstreetmap.org">
-    <link rel="dns-prefetch" href="//router.project-osrm.org">
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>" />
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link rel="dns-prefetch" href="//nominatim.openstreetmap.org" />
+    <link rel="dns-prefetch" href="//router.project-osrm.org" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
     <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-S9T5V0V3KZ"></script>
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-S9T5V0V3KZ"
+    ></script>
     <script>
       window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
+      function gtag() {
+        dataLayer.push(arguments);
+      }
       gtag('js', new Date());
 
       gtag('config', 'G-S9T5V0V3KZ');
     </script>
     <meta property="og:title" content="There yet app! - Are we there yet?" />
-    <meta property="og:description" content="A fun family-friendly location tracking app for travel adventures. See where you are and track progress to your destination!" />
+    <meta
+      property="og:description"
+      content="A fun family-friendly location tracking app for travel adventures. See where you are and track progress to your destination!"
+    />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://thereyetapp.com/" />
     <meta property="og:site_name" content="Where Now Explorer" />
     <meta property="og:image" content="https://thereyetapp.com/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="There yet app! - Location tracking app interface" />
+    <meta
+      property="og:image:alt"
+      content="There yet app! - Location tracking app interface"
+    />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@sebish" />
     <meta name="twitter:creator" content="@sebish" />
     <meta name="twitter:title" content="There yet app! - Are we there yet?" />
-    <meta name="twitter:description" content="A fun family-friendly location tracking app for travel adventures. See where you are and track progress to your destination!" />
+    <meta
+      name="twitter:description"
+      content="A fun family-friendly location tracking app for travel adventures. See where you are and track progress to your destination!"
+    />
     <meta name="twitter:image" content="https://thereyetapp.com/og-image.png" />
-    <meta name="twitter:image:alt" content="There yet app! - Location tracking app interface" />
+    <meta
+      name="twitter:image:alt"
+      content="There yet app! - Location tracking app interface"
+    />
   </head>
 
   <body>

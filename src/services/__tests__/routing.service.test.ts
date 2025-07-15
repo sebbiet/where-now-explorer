@@ -1,7 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { RoutingService, RoutingError, RoutingProfile, RouteResponse } from '../routing.service';
+import {
+  RoutingService,
+  RoutingError,
+  RoutingProfile,
+  RouteResponse,
+} from '../routing.service';
 import { offlineMode } from '../offlineMode.service';
-import { deduplicateRoutingRequest, deduplicateGeocodingRequest } from '@/utils/requestDeduplication';
+import {
+  deduplicateRoutingRequest,
+  deduplicateGeocodingRequest,
+} from '@/utils/requestDeduplication';
 
 // Mock dependencies
 vi.mock('../offlineMode.service', () => ({
@@ -11,7 +19,9 @@ vi.mock('../offlineMode.service', () => ({
 }));
 
 vi.mock('@/utils/requestDeduplication', () => ({
-  deduplicateRoutingRequest: vi.fn((origin, destination, profile, operation) => operation()),
+  deduplicateRoutingRequest: vi.fn((origin, destination, profile, operation) =>
+    operation()
+  ),
   deduplicateGeocodingRequest: vi.fn((type, params, operation) => operation()),
 }));
 
@@ -34,7 +44,7 @@ describe('RoutingService', () => {
   });
 
   describe('getRoute', () => {
-    const validOrigin = { latitude: 40.7128, longitude: -74.0060 };
+    const validOrigin = { latitude: 40.7128, longitude: -74.006 };
     const validDestination = { latitude: 34.0522, longitude: -118.2437 };
 
     it('should calculate route with driving mode', async () => {
@@ -277,7 +287,7 @@ describe('RoutingService', () => {
     it('should handle offline mode', async () => {
       // Arrange
       vi.mocked(offlineMode.getOnlineStatus).mockReturnValue(false);
-      
+
       const mockResponse: RouteResponse = {
         code: 'Ok',
         routes: [
@@ -301,7 +311,9 @@ describe('RoutingService', () => {
       });
 
       // Assert
-      expect(console.log).toHaveBeenCalledWith('Offline mode: checking cached routes');
+      expect(console.log).toHaveBeenCalledWith(
+        'Offline mode: checking cached routes'
+      );
     });
   });
 
@@ -314,7 +326,7 @@ describe('RoutingService', () => {
 
     it('should format distance in meters for values less than 1km', () => {
       expect(RoutingService.formatDistance(0.5)).toBe('500 meters');
-      expect(RoutingService.formatDistance(0.750)).toBe('750 meters');
+      expect(RoutingService.formatDistance(0.75)).toBe('750 meters');
       expect(RoutingService.formatDistance(0.001)).toBe('1 meters');
     });
   });
@@ -383,7 +395,7 @@ describe('RoutingService', () => {
 
       // Act
       const result = await RoutingService.calculateRoute(
-        { latitude: 40.7128, longitude: -74.0060 },
+        { latitude: 40.7128, longitude: -74.006 },
         { latitude: 34.0522, longitude: -118.2437 },
         RoutingProfile.WALKING
       );
@@ -413,7 +425,7 @@ describe('RoutingService', () => {
 
       // Act
       await RoutingService.calculateRoute(
-        { latitude: 40.7128, longitude: -74.0060 },
+        { latitude: 40.7128, longitude: -74.006 },
         { latitude: 34.0522, longitude: -118.2437 },
         RoutingProfile.DRIVING,
         {
@@ -455,7 +467,7 @@ describe('RoutingService', () => {
 
       // Act
       await RoutingService.calculateRoute({
-        origin: { latitude: 40.7128, longitude: -74.0060 },
+        origin: { latitude: 40.7128, longitude: -74.006 },
         destination: { latitude: 34.0522, longitude: -118.2437 },
         overview: true,
         steps: true,
@@ -492,7 +504,7 @@ describe('RoutingService', () => {
 
       // Act
       await RoutingService.calculateRoute({
-        origin: { latitude: 40.7128, longitude: -74.0060 },
+        origin: { latitude: 40.7128, longitude: -74.006 },
         destination: { latitude: 34.0522, longitude: -118.2437 },
       });
 

@@ -3,13 +3,13 @@
  * Prevents duplicate concurrent requests to the same endpoint
  */
 
-interface PendingRequest {
-  promise: Promise<any>;
+interface PendingRequest<T = unknown> {
+  promise: Promise<T>;
   timestamp: number;
 }
 
 class RequestDeduplicator {
-  private pendingRequests = new Map<string, PendingRequest>();
+  private pendingRequests = new Map<string, PendingRequest<unknown>>();
   private readonly REQUEST_TIMEOUT = 30000; // 30 seconds
 
   /**
@@ -18,15 +18,15 @@ class RequestDeduplicator {
   generateRequestSignature(
     url: string,
     method: string = 'GET',
-    params?: Record<string, any>
+    params?: Record<string, string | number | boolean>
   ): string {
     const sortedParams = params
       ? Object.keys(params)
           .sort()
-          .map(key => `${key}=${params[key]}`)
+          .map((key) => `${key}=${params[key]}`)
           .join('&')
       : '';
-    
+
     return `${method}:${url}${sortedParams ? '?' + sortedParams : ''}`;
   }
 
@@ -48,16 +48,15 @@ class RequestDeduplicator {
     }
 
     // Create new request
-    const promise = requestFn()
-      .finally(() => {
-        // Remove from pending when complete
-        this.pendingRequests.delete(signature);
-      });
+    const promise = requestFn().finally(() => {
+      // Remove from pending when complete
+      this.pendingRequests.delete(signature);
+    });
 
     // Store pending request
     this.pendingRequests.set(signature, {
       promise,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
 
     return promise;
@@ -76,7 +75,7 @@ class RequestDeduplicator {
       }
     });
 
-    expired.forEach(signature => {
+    expired.forEach((signature) => {
       this.pendingRequests.delete(signature);
       console.warn(`Removed expired pending request: ${signature}`);
     });
@@ -104,33 +103,36 @@ export const requestDeduplicator = new RequestDeduplicator();
 /**
  * Higher-order function to wrap a request function with deduplication
  */
-export function withDeduplication<T extends (...args: any[]) => Promise<any>>(
-  fn: T,
-  getSignature: (...args: Parameters<T>) => string
-): T {
-  return (async (...args: Parameters<T>) => {
+export function withDeduplication<TArgs extends readonly unknown[], TResult>(
+  fn: (...args: TArgs) => Promise<TResult>,
+  getSignature: (...args: TArgs) => string
+): (...args: TArgs) => Promise<TResult> {
+  return async (...args: TArgs): Promise<TResult> => {
     const signature = getSignature(...args);
-    return requestDeduplicator.deduplicate(
-      signature,
-      () => fn(...args)
-    );
-  }) as T;
+    return requestDeduplicator.deduplicate(signature, () => fn(...args));
+  };
 }
 
 /**
  * Deduplicate geocoding requests
  */
+interface GeocodingParams {
+  latitude?: number;
+  longitude?: number;
+  query?: string;
+}
+
 export function deduplicateGeocodingRequest<T>(
   type: 'geocode' | 'reverse',
-  params: any,
+  params: GeocodingParams,
   requestFn: () => Promise<T>
 ): Promise<T> {
   let signature: string;
-  
+
   if (type === 'reverse') {
     // Round coordinates to reduce duplicate requests for nearby locations
-    const lat = Math.round(params.latitude * 10000) / 10000;
-    const lon = Math.round(params.longitude * 10000) / 10000;
+    const lat = Math.round((params.latitude ?? 0) * 10000) / 10000;
+    const lon = Math.round((params.longitude ?? 0) * 10000) / 10000;
     signature = `reverse:${lat},${lon}`;
   } else {
     signature = `geocode:${params.query?.toLowerCase().trim()}`;

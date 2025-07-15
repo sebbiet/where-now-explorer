@@ -1,26 +1,67 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
+import {
+  render,
+  screen,
+  waitFor,
+  fireEvent,
+  act,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import InstallPrompt from '../InstallPrompt';
 
+// TypeScript interfaces for PWA and test mocks
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: string[];
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed';
+    platform: string;
+  }>;
+  prompt(): Promise<void>;
+  preventDefault(): void;
+}
+
+interface LoadingButtonProps {
+  children: React.ReactNode;
+  isLoading: boolean;
+  loadingText: string;
+  onClick: () => void;
+  className?: string;
+  [key: string]: unknown;
+}
+
+interface MockSetTimeoutReturn {
+  fn: () => void;
+  delay: number;
+  id: number;
+}
+
+type MockSetTimeoutFn = (fn: () => void, delay: number) => MockSetTimeoutReturn;
+
 // Mock dependencies
 vi.mock('@/hooks/useInstallPrompt', () => ({
-  useInstallPrompt: vi.fn()
+  useInstallPrompt: vi.fn(),
 }));
 
 vi.mock('@/utils/haptic', () => ({
   haptic: {
     light: vi.fn(),
-    medium: vi.fn()
-  }
+    medium: vi.fn(),
+  },
 }));
 
 vi.mock('@/utils/loadingStates', () => ({
-  LoadingButton: ({ children, isLoading, loadingText, onClick, className, ...props }: any) => (
+  LoadingButton: ({
+    children,
+    isLoading,
+    loadingText,
+    onClick,
+    className,
+    ...props
+  }: LoadingButtonProps) => (
     <button onClick={onClick} className={className} {...props}>
       {isLoading ? loadingText : children}
     </button>
-  )
+  ),
 }));
 
 // Mock localStorage
@@ -28,12 +69,12 @@ const mockLocalStorage = {
   getItem: vi.fn(),
   setItem: vi.fn(),
   removeItem: vi.fn(),
-  clear: vi.fn()
+  clear: vi.fn(),
 };
 
 Object.defineProperty(global, 'localStorage', {
   value: mockLocalStorage,
-  writable: true
+  writable: true,
 });
 
 // Mock setTimeout
@@ -41,23 +82,34 @@ const originalSetTimeout = global.setTimeout;
 const originalClearTimeout = global.clearTimeout;
 
 describe('InstallPrompt', () => {
-  const mockUseInstallPrompt = vi.mocked(await import('@/hooks/useInstallPrompt')).useInstallPrompt;
-  const mockHaptic = vi.mocked(await import('@/utils/haptic')).haptic;
+  // Get references to the mocked functions using a simpler approach
+  let mockUseInstallPrompt: ReturnType<typeof vi.fn>;
+  let mockHaptic: {
+    light: ReturnType<typeof vi.fn>;
+    medium: ReturnType<typeof vi.fn>;
+  };
+
+  beforeAll(async () => {
+    const installPromptModule = await import('@/hooks/useInstallPrompt');
+    const hapticModule = await import('@/utils/haptic');
+    mockUseInstallPrompt = vi.mocked(installPromptModule.useInstallPrompt);
+    mockHaptic = vi.mocked(hapticModule.haptic);
+  });
 
   const defaultHookReturn = {
     isInstallable: true,
     isInstalled: false,
-    promptInstall: vi.fn()
+    promptInstall: vi.fn(),
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Mock timers
     global.setTimeout = vi.fn((fn, delay) => {
       // Store the function to call it manually in tests
-      return { fn, delay, id: Math.random() } as any;
-    });
+      return { fn, delay, id: Math.random() } as MockSetTimeoutReturn;
+    }) as unknown as typeof setTimeout;
     global.clearTimeout = vi.fn();
 
     // Reset localStorage
@@ -78,36 +130,43 @@ describe('InstallPrompt', () => {
     it('should not show prompt when not installable', () => {
       mockUseInstallPrompt.mockReturnValue({
         ...defaultHookReturn,
-        isInstallable: false
+        isInstallable: false,
       });
 
       render(<InstallPrompt />);
 
-      expect(screen.queryByText('Install Where Now Explorer')).not.toBeInTheDocument();
+      expect(
+        screen.queryByText('Install Where Now Explorer')
+      ).not.toBeInTheDocument();
     });
 
     it('should not show prompt when already installed', () => {
       mockUseInstallPrompt.mockReturnValue({
         ...defaultHookReturn,
-        isInstalled: true
+        isInstalled: true,
       });
 
       render(<InstallPrompt />);
 
-      expect(screen.queryByText('Install Where Now Explorer')).not.toBeInTheDocument();
+      expect(
+        screen.queryByText('Install Where Now Explorer')
+      ).not.toBeInTheDocument();
     });
 
     it('should not show prompt immediately when installable', () => {
       render(<InstallPrompt />);
 
-      expect(screen.queryByText('Install Where Now Explorer')).not.toBeInTheDocument();
+      expect(
+        screen.queryByText('Install Where Now Explorer')
+      ).not.toBeInTheDocument();
     });
 
     it('should show prompt after delay when installable', async () => {
       render(<InstallPrompt />);
 
       // Get the setTimeout call and execute it
-      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]?.value as any;
+      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]
+        ?.value as MockSetTimeoutReturn;
       expect(setTimeoutCall).toBeDefined();
       expect(setTimeoutCall.delay).toBe(5000);
 
@@ -116,7 +175,9 @@ describe('InstallPrompt', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText('Install Where Now Explorer')).toBeInTheDocument();
+        expect(
+          screen.getByText('Install Where Now Explorer')
+        ).toBeInTheDocument();
       });
     });
   });
@@ -125,7 +186,8 @@ describe('InstallPrompt', () => {
     beforeEach(() => {
       // Setup to show the prompt
       render(<InstallPrompt />);
-      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]?.value as any;
+      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]
+        ?.value as MockSetTimeoutReturn;
       act(() => {
         setTimeoutCall.fn();
       });
@@ -133,11 +195,23 @@ describe('InstallPrompt', () => {
 
     it('should display install prompt with correct content', async () => {
       await waitFor(() => {
-        expect(screen.getByText('Install Where Now Explorer')).toBeInTheDocument();
-        expect(screen.getByText('Add to your home screen for the best experience - works offline too!')).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Install App' })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Not Now' })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Dismiss install prompt' })).toBeInTheDocument();
+        expect(
+          screen.getByText('Install Where Now Explorer')
+        ).toBeInTheDocument();
+        expect(
+          screen.getByText(
+            'Add to your home screen for the best experience - works offline too!'
+          )
+        ).toBeInTheDocument();
+        expect(
+          screen.getByRole('button', { name: 'Install App' })
+        ).toBeInTheDocument();
+        expect(
+          screen.getByRole('button', { name: 'Not Now' })
+        ).toBeInTheDocument();
+        expect(
+          screen.getByRole('button', { name: 'Dismiss install prompt' })
+        ).toBeInTheDocument();
       });
     });
 
@@ -149,8 +223,14 @@ describe('InstallPrompt', () => {
 
     it('should have proper styling classes', async () => {
       await waitFor(() => {
-        const prompt = screen.getByText('Install Where Now Explorer').closest('div');
-        expect(prompt?.closest('.fixed')).toHaveClass('bottom-20', 'left-4', 'right-4');
+        const prompt = screen
+          .getByText('Install Where Now Explorer')
+          .closest('div');
+        expect(prompt?.closest('.fixed')).toHaveClass(
+          'bottom-20',
+          'left-4',
+          'right-4'
+        );
       });
     });
   });
@@ -160,19 +240,22 @@ describe('InstallPrompt', () => {
       const mockPromptInstall = vi.fn().mockResolvedValue(true);
       mockUseInstallPrompt.mockReturnValue({
         ...defaultHookReturn,
-        promptInstall: mockPromptInstall
+        promptInstall: mockPromptInstall,
       });
 
       render(<InstallPrompt />);
-      
+
       // Show the prompt
-      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]?.value as any;
+      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]
+        ?.value as MockSetTimeoutReturn;
       act(() => {
         setTimeoutCall.fn();
       });
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: 'Install App' })).toBeInTheDocument();
+        expect(
+          screen.getByRole('button', { name: 'Install App' })
+        ).toBeInTheDocument();
       });
 
       const installButton = screen.getByRole('button', { name: 'Install App' });
@@ -183,25 +266,30 @@ describe('InstallPrompt', () => {
     });
 
     it('should show loading state during installation', async () => {
-      const mockPromptInstall = vi.fn().mockImplementation(() => 
-        new Promise(resolve => setTimeout(() => resolve(true), 100))
-      );
-      
+      const mockPromptInstall = vi
+        .fn()
+        .mockImplementation(
+          () => new Promise((resolve) => setTimeout(() => resolve(true), 100))
+        );
+
       mockUseInstallPrompt.mockReturnValue({
         ...defaultHookReturn,
-        promptInstall: mockPromptInstall
+        promptInstall: mockPromptInstall,
       });
 
       render(<InstallPrompt />);
-      
+
       // Show the prompt
-      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]?.value as any;
+      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]
+        ?.value as MockSetTimeoutReturn;
       act(() => {
         setTimeoutCall.fn();
       });
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: 'Install App' })).toBeInTheDocument();
+        expect(
+          screen.getByRole('button', { name: 'Install App' })
+        ).toBeInTheDocument();
       });
 
       const installButton = screen.getByRole('button', { name: 'Install App' });
@@ -217,26 +305,31 @@ describe('InstallPrompt', () => {
       const mockPromptInstall = vi.fn().mockResolvedValue(true);
       mockUseInstallPrompt.mockReturnValue({
         ...defaultHookReturn,
-        promptInstall: mockPromptInstall
+        promptInstall: mockPromptInstall,
       });
 
       render(<InstallPrompt />);
-      
+
       // Show the prompt
-      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]?.value as any;
+      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]
+        ?.value as MockSetTimeoutReturn;
       act(() => {
         setTimeoutCall.fn();
       });
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: 'Install App' })).toBeInTheDocument();
+        expect(
+          screen.getByRole('button', { name: 'Install App' })
+        ).toBeInTheDocument();
       });
 
       const installButton = screen.getByRole('button', { name: 'Install App' });
       await userEvent.click(installButton);
 
       await waitFor(() => {
-        expect(screen.queryByText('Install Where Now Explorer')).not.toBeInTheDocument();
+        expect(
+          screen.queryByText('Install Where Now Explorer')
+        ).not.toBeInTheDocument();
       });
     });
 
@@ -244,19 +337,22 @@ describe('InstallPrompt', () => {
       const mockPromptInstall = vi.fn().mockResolvedValue(false);
       mockUseInstallPrompt.mockReturnValue({
         ...defaultHookReturn,
-        promptInstall: mockPromptInstall
+        promptInstall: mockPromptInstall,
       });
 
       render(<InstallPrompt />);
-      
+
       // Show the prompt
-      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]?.value as any;
+      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]
+        ?.value as MockSetTimeoutReturn;
       act(() => {
         setTimeoutCall.fn();
       });
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: 'Install App' })).toBeInTheDocument();
+        expect(
+          screen.getByRole('button', { name: 'Install App' })
+        ).toBeInTheDocument();
       });
 
       const installButton = screen.getByRole('button', { name: 'Install App' });
@@ -264,29 +360,38 @@ describe('InstallPrompt', () => {
 
       // Should still show the prompt since installation failed
       await waitFor(() => {
-        expect(screen.getByText('Install Where Now Explorer')).toBeInTheDocument();
+        expect(
+          screen.getByText('Install Where Now Explorer')
+        ).toBeInTheDocument();
       });
     });
 
     it('should handle installation errors', async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      const mockPromptInstall = vi.fn().mockRejectedValue(new Error('Install failed'));
-      
+      const consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
+      const mockPromptInstall = vi
+        .fn()
+        .mockRejectedValue(new Error('Install failed'));
+
       mockUseInstallPrompt.mockReturnValue({
         ...defaultHookReturn,
-        promptInstall: mockPromptInstall
+        promptInstall: mockPromptInstall,
       });
 
       render(<InstallPrompt />);
-      
+
       // Show the prompt
-      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]?.value as any;
+      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]
+        ?.value as MockSetTimeoutReturn;
       act(() => {
         setTimeoutCall.fn();
       });
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: 'Install App' })).toBeInTheDocument();
+        expect(
+          screen.getByRole('button', { name: 'Install App' })
+        ).toBeInTheDocument();
       });
 
       const installButton = screen.getByRole('button', { name: 'Install App' });
@@ -304,72 +409,95 @@ describe('InstallPrompt', () => {
   describe('dismiss functionality', () => {
     it('should dismiss prompt when X button is clicked', async () => {
       render(<InstallPrompt />);
-      
+
       // Show the prompt
-      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]?.value as any;
+      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]
+        ?.value as MockSetTimeoutReturn;
       act(() => {
         setTimeoutCall.fn();
       });
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: 'Dismiss install prompt' })).toBeInTheDocument();
+        expect(
+          screen.getByRole('button', { name: 'Dismiss install prompt' })
+        ).toBeInTheDocument();
       });
 
-      const dismissButton = screen.getByRole('button', { name: 'Dismiss install prompt' });
+      const dismissButton = screen.getByRole('button', {
+        name: 'Dismiss install prompt',
+      });
       await userEvent.click(dismissButton);
 
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith('pwa-install-dismissed', 'true');
+      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+        'pwa-install-dismissed',
+        'true'
+      );
       expect(mockHaptic.light).toHaveBeenCalled();
-      
+
       await waitFor(() => {
-        expect(screen.queryByText('Install Where Now Explorer')).not.toBeInTheDocument();
+        expect(
+          screen.queryByText('Install Where Now Explorer')
+        ).not.toBeInTheDocument();
       });
     });
 
     it('should dismiss prompt when "Not Now" button is clicked', async () => {
       render(<InstallPrompt />);
-      
+
       // Show the prompt
-      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]?.value as any;
+      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]
+        ?.value as MockSetTimeoutReturn;
       act(() => {
         setTimeoutCall.fn();
       });
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: 'Not Now' })).toBeInTheDocument();
+        expect(
+          screen.getByRole('button', { name: 'Not Now' })
+        ).toBeInTheDocument();
       });
 
       const notNowButton = screen.getByRole('button', { name: 'Not Now' });
       await userEvent.click(notNowButton);
 
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith('pwa-install-dismissed', 'true');
+      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+        'pwa-install-dismissed',
+        'true'
+      );
       expect(mockHaptic.light).toHaveBeenCalled();
-      
+
       await waitFor(() => {
-        expect(screen.queryByText('Install Where Now Explorer')).not.toBeInTheDocument();
+        expect(
+          screen.queryByText('Install Where Now Explorer')
+        ).not.toBeInTheDocument();
       });
     });
 
     it('should disable "Not Now" button during installation', async () => {
-      const mockPromptInstall = vi.fn().mockImplementation(() => 
-        new Promise(resolve => setTimeout(() => resolve(true), 100))
-      );
-      
+      const mockPromptInstall = vi
+        .fn()
+        .mockImplementation(
+          () => new Promise((resolve) => setTimeout(() => resolve(true), 100))
+        );
+
       mockUseInstallPrompt.mockReturnValue({
         ...defaultHookReturn,
-        promptInstall: mockPromptInstall
+        promptInstall: mockPromptInstall,
       });
 
       render(<InstallPrompt />);
-      
+
       // Show the prompt
-      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]?.value as any;
+      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]
+        ?.value as MockSetTimeoutReturn;
       act(() => {
         setTimeoutCall.fn();
       });
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: 'Install App' })).toBeInTheDocument();
+        expect(
+          screen.getByRole('button', { name: 'Install App' })
+        ).toBeInTheDocument();
       });
 
       const installButton = screen.getByRole('button', { name: 'Install App' });
@@ -387,39 +515,51 @@ describe('InstallPrompt', () => {
       render(<InstallPrompt />);
 
       // Even after timeout, should not show
-      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]?.value as any;
+      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]?.value as
+        | MockSetTimeoutReturn
+        | undefined;
       if (setTimeoutCall) {
         act(() => {
           setTimeoutCall.fn();
         });
       }
 
-      expect(screen.queryByText('Install Where Now Explorer')).not.toBeInTheDocument();
+      expect(
+        screen.queryByText('Install Where Now Explorer')
+      ).not.toBeInTheDocument();
     });
 
     it('should check localStorage on mount', () => {
       render(<InstallPrompt />);
 
-      expect(mockLocalStorage.getItem).toHaveBeenCalledWith('pwa-install-dismissed');
+      expect(mockLocalStorage.getItem).toHaveBeenCalledWith(
+        'pwa-install-dismissed'
+      );
     });
 
     it('should persist dismissal state', async () => {
       render(<InstallPrompt />);
-      
+
       // Show the prompt
-      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]?.value as any;
+      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]
+        ?.value as MockSetTimeoutReturn;
       act(() => {
         setTimeoutCall.fn();
       });
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: 'Not Now' })).toBeInTheDocument();
+        expect(
+          screen.getByRole('button', { name: 'Not Now' })
+        ).toBeInTheDocument();
       });
 
       const notNowButton = screen.getByRole('button', { name: 'Not Now' });
       await userEvent.click(notNowButton);
 
-      expect(mockLocalStorage.setItem).toHaveBeenCalledWith('pwa-install-dismissed', 'true');
+      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+        'pwa-install-dismissed',
+        'true'
+      );
     });
   });
 
@@ -427,19 +567,23 @@ describe('InstallPrompt', () => {
     it('should not show if installPrompt hook indicates not installable', () => {
       mockUseInstallPrompt.mockReturnValue({
         ...defaultHookReturn,
-        isInstallable: false
+        isInstallable: false,
       });
 
       render(<InstallPrompt />);
 
-      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]?.value as any;
+      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]?.value as
+        | MockSetTimeoutReturn
+        | undefined;
       if (setTimeoutCall) {
         act(() => {
           setTimeoutCall.fn();
         });
       }
 
-      expect(screen.queryByText('Install Where Now Explorer')).not.toBeInTheDocument();
+      expect(
+        screen.queryByText('Install Where Now Explorer')
+      ).not.toBeInTheDocument();
     });
 
     it('should integrate with useInstallPrompt hook properly', () => {
@@ -451,7 +595,7 @@ describe('InstallPrompt', () => {
 
   describe('mock PWA events', () => {
     it('should handle component lifecycle correctly', () => {
-      const { unmount, rerender } = render(<InstallPrompt />);
+      const { unmount } = render(<InstallPrompt />);
 
       // Should setup timeout on mount
       expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), 5000);
@@ -467,7 +611,7 @@ describe('InstallPrompt', () => {
       // Change installable state
       mockUseInstallPrompt.mockReturnValue({
         ...defaultHookReturn,
-        isInstallable: false
+        isInstallable: false,
       });
 
       rerender(<InstallPrompt />);
@@ -478,7 +622,7 @@ describe('InstallPrompt', () => {
 
     it('should handle timeout cleanup when conditions change', () => {
       mockLocalStorage.getItem.mockReturnValue(null);
-      
+
       const { rerender } = render(<InstallPrompt />);
 
       // Verify timeout was set
@@ -487,7 +631,7 @@ describe('InstallPrompt', () => {
       // Change to already installed
       mockUseInstallPrompt.mockReturnValue({
         ...defaultHookReturn,
-        isInstalled: true
+        isInstalled: true,
       });
 
       rerender(<InstallPrompt />);
@@ -508,30 +652,33 @@ describe('InstallPrompt', () => {
 
     it('should handle multiple rapid clicks on install button', async () => {
       let resolveInstall: (value: boolean) => void;
-      const installPromise = new Promise<boolean>(resolve => {
+      const installPromise = new Promise<boolean>((resolve) => {
         resolveInstall = resolve;
       });
-      
+
       const mockPromptInstall = vi.fn().mockReturnValue(installPromise);
       mockUseInstallPrompt.mockReturnValue({
         ...defaultHookReturn,
-        promptInstall: mockPromptInstall
+        promptInstall: mockPromptInstall,
       });
 
       render(<InstallPrompt />);
-      
+
       // Show the prompt
-      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]?.value as any;
+      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]
+        ?.value as MockSetTimeoutReturn;
       act(() => {
         setTimeoutCall.fn();
       });
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: 'Install App' })).toBeInTheDocument();
+        expect(
+          screen.getByRole('button', { name: 'Install App' })
+        ).toBeInTheDocument();
       });
 
       const installButton = screen.getByRole('button', { name: 'Install App' });
-      
+
       // Click multiple times rapidly
       fireEvent.click(installButton);
       fireEvent.click(installButton);
@@ -548,26 +695,29 @@ describe('InstallPrompt', () => {
 
     it('should handle component unmount during installation', async () => {
       let resolveInstall: (value: boolean) => void;
-      const installPromise = new Promise<boolean>(resolve => {
+      const installPromise = new Promise<boolean>((resolve) => {
         resolveInstall = resolve;
       });
-      
+
       const mockPromptInstall = vi.fn().mockReturnValue(installPromise);
       mockUseInstallPrompt.mockReturnValue({
         ...defaultHookReturn,
-        promptInstall: mockPromptInstall
+        promptInstall: mockPromptInstall,
       });
 
       const { unmount } = render(<InstallPrompt />);
-      
+
       // Show the prompt
-      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]?.value as any;
+      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]
+        ?.value as MockSetTimeoutReturn;
       act(() => {
         setTimeoutCall.fn();
       });
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: 'Install App' })).toBeInTheDocument();
+        expect(
+          screen.getByRole('button', { name: 'Install App' })
+        ).toBeInTheDocument();
       });
 
       const installButton = screen.getByRole('button', { name: 'Install App' });
@@ -588,37 +738,49 @@ describe('InstallPrompt', () => {
   describe('accessibility', () => {
     it('should have proper ARIA labels', async () => {
       render(<InstallPrompt />);
-      
+
       // Show the prompt
-      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]?.value as any;
+      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]
+        ?.value as MockSetTimeoutReturn;
       act(() => {
         setTimeoutCall.fn();
       });
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: 'Dismiss install prompt' })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Install App' })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: 'Not Now' })).toBeInTheDocument();
+        expect(
+          screen.getByRole('button', { name: 'Dismiss install prompt' })
+        ).toBeInTheDocument();
+        expect(
+          screen.getByRole('button', { name: 'Install App' })
+        ).toBeInTheDocument();
+        expect(
+          screen.getByRole('button', { name: 'Not Now' })
+        ).toBeInTheDocument();
       });
     });
 
     it('should be keyboard accessible', async () => {
       const user = userEvent.setup();
       render(<InstallPrompt />);
-      
+
       // Show the prompt
-      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]?.value as any;
+      const setTimeoutCall = vi.mocked(setTimeout).mock.results[0]
+        ?.value as MockSetTimeoutReturn;
       act(() => {
         setTimeoutCall.fn();
       });
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: 'Install App' })).toBeInTheDocument();
+        expect(
+          screen.getByRole('button', { name: 'Install App' })
+        ).toBeInTheDocument();
       });
 
       // Should be able to tab through buttons
       await user.tab();
-      expect(screen.getByRole('button', { name: 'Dismiss install prompt' })).toHaveFocus();
+      expect(
+        screen.getByRole('button', { name: 'Dismiss install prompt' })
+      ).toHaveFocus();
 
       await user.tab();
       expect(screen.getByRole('button', { name: 'Install App' })).toHaveFocus();

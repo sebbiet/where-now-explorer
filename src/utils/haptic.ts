@@ -9,6 +9,16 @@ interface HapticOptions {
   type?: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft';
 }
 
+interface TapticAPI {
+  impact: (options: { style: string }) => void;
+  notification: (options: { type: string }) => void;
+  selection: () => void;
+}
+
+interface WindowWithTaptic extends Window {
+  Taptic?: TapticAPI;
+}
+
 class HapticFeedback {
   private isSupported: boolean;
 
@@ -22,11 +32,12 @@ class HapticFeedback {
    */
   light() {
     if (!this.isSupported) return;
-    
+
     try {
       // iOS haptic feedback
-      if ('Taptic' in window && (window as any).Taptic?.impact) {
-        (window as any).Taptic.impact({ style: 'light' });
+      const windowWithTaptic = window as WindowWithTaptic;
+      if ('Taptic' in window && windowWithTaptic.Taptic?.impact) {
+        windowWithTaptic.Taptic.impact({ style: 'light' });
       } else {
         // Android/standard vibration API
         navigator.vibrate(10);
@@ -41,10 +52,11 @@ class HapticFeedback {
    */
   medium() {
     if (!this.isSupported) return;
-    
+
     try {
-      if ('Taptic' in window && (window as any).Taptic?.impact) {
-        (window as any).Taptic.impact({ style: 'medium' });
+      const windowWithTaptic = window as WindowWithTaptic;
+      if ('Taptic' in window && windowWithTaptic.Taptic?.impact) {
+        windowWithTaptic.Taptic.impact({ style: 'medium' });
       } else {
         navigator.vibrate(20);
       }
@@ -58,10 +70,11 @@ class HapticFeedback {
    */
   heavy() {
     if (!this.isSupported) return;
-    
+
     try {
-      if ('Taptic' in window && (window as any).Taptic?.impact) {
-        (window as any).Taptic.impact({ style: 'heavy' });
+      const windowWithTaptic = window as WindowWithTaptic;
+      if ('Taptic' in window && windowWithTaptic.Taptic?.impact) {
+        windowWithTaptic.Taptic.impact({ style: 'heavy' });
       } else {
         navigator.vibrate(30);
       }
@@ -75,10 +88,11 @@ class HapticFeedback {
    */
   success() {
     if (!this.isSupported) return;
-    
+
     try {
-      if ('Taptic' in window && (window as any).Taptic?.notification) {
-        (window as any).Taptic.notification({ type: 'success' });
+      const windowWithTaptic = window as WindowWithTaptic;
+      if ('Taptic' in window && windowWithTaptic.Taptic?.notification) {
+        windowWithTaptic.Taptic.notification({ type: 'success' });
       } else {
         // Pattern: short, pause, short
         navigator.vibrate([20, 50, 20]);
@@ -93,10 +107,11 @@ class HapticFeedback {
    */
   error() {
     if (!this.isSupported) return;
-    
+
     try {
-      if ('Taptic' in window && (window as any).Taptic?.notification) {
-        (window as any).Taptic.notification({ type: 'error' });
+      const windowWithTaptic = window as WindowWithTaptic;
+      if ('Taptic' in window && windowWithTaptic.Taptic?.notification) {
+        windowWithTaptic.Taptic.notification({ type: 'error' });
       } else {
         // Pattern: long vibration
         navigator.vibrate(50);
@@ -111,10 +126,11 @@ class HapticFeedback {
    */
   selection() {
     if (!this.isSupported) return;
-    
+
     try {
-      if ('Taptic' in window && (window as any).Taptic?.selection) {
-        (window as any).Taptic.selection();
+      const windowWithTaptic = window as WindowWithTaptic;
+      if ('Taptic' in window && windowWithTaptic.Taptic?.selection) {
+        windowWithTaptic.Taptic.selection();
       } else {
         navigator.vibrate(5);
       }
@@ -128,7 +144,7 @@ class HapticFeedback {
    */
   custom(pattern: number | number[]) {
     if (!this.isSupported) return;
-    
+
     try {
       navigator.vibrate(pattern);
     } catch (error) {

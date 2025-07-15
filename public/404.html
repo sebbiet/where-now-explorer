@@ -1,7 +1,7 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Redirecting...</title>
     <script>
       // Single Page Apps for GitHub Pages
@@ -11,9 +11,16 @@
 
       const l = window.location;
       l.replace(
-        l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-        l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/#' +
-        l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/')
+        l.protocol +
+          '//' +
+          l.hostname +
+          (l.port ? ':' + l.port : '') +
+          l.pathname
+            .split('/')
+            .slice(0, 1 + pathSegmentsToKeep)
+            .join('/') +
+          '/#' +
+          l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/')
       );
     </script>
   </head>

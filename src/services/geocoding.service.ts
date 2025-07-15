@@ -1,5 +1,9 @@
 import { GeocodingCacheService } from './geocodingCache.service';
-import { sanitizeDestination, validateCoordinates, validateApiResponse } from '@/utils/sanitization';
+import {
+  sanitizeDestination,
+  validateCoordinates,
+  validateApiResponse,
+} from '@/utils/sanitization';
 import { fallbackGeocoding } from './fallbackGeocoding.service';
 import { BaseService, ServiceError, ValidationError } from './base.service';
 import { getErrorMessage } from '@/utils/errorMessages';
@@ -62,7 +66,11 @@ export interface GeocodeOptions {
 // Keep GeocodingError for backward compatibility
 export class GeocodingError extends ServiceError {
   constructor(message: string, statusCode?: number | string) {
-    super(message, typeof statusCode === 'string' ? statusCode : 'GEOCODING_ERROR', typeof statusCode === 'number' ? statusCode : 500);
+    super(
+      message,
+      typeof statusCode === 'string' ? statusCode : 'GEOCODING_ERROR',
+      typeof statusCode === 'number' ? statusCode : 500
+    );
     this.name = 'GeocodingError';
   }
 }
@@ -71,7 +79,7 @@ class GeocodingServiceImpl extends BaseService {
   private static readonly BASE_URL = 'https://nominatim.openstreetmap.org';
   private static readonly USER_AGENT = 'AreWeThereYetApp/1.0';
   private static readonly DEFAULT_HEADERS = {
-    'User-Agent': GeocodingServiceImpl.USER_AGENT
+    'User-Agent': GeocodingServiceImpl.USER_AGENT,
   };
 
   constructor() {
@@ -81,22 +89,30 @@ class GeocodingServiceImpl extends BaseService {
       timeout: 10000,
       enableMonitoring: true,
       enableDeduplication: true,
-      enablePerformanceTracking: true
+      enablePerformanceTracking: true,
     });
   }
 
-  async reverseGeocode(options: ReverseGeocodeOptions): Promise<ReverseGeocodeResult> {
+  async reverseGeocode(
+    options: ReverseGeocodeOptions
+  ): Promise<ReverseGeocodeResult> {
     try {
       const { latitude, longitude, minimal } = options;
-      
+
       // Validate coordinates using BaseService validation
-      this.validateInput({ latitude, longitude }, {
-        latitude: (lat) => validateCoordinates(lat, longitude),
-        longitude: (lon) => validateCoordinates(latitude, lon)
-      });
+      this.validateInput(
+        { latitude, longitude },
+        {
+          latitude: (lat) => validateCoordinates(lat, longitude),
+          longitude: (lon) => validateCoordinates(latitude, lon),
+        }
+      );
 
       // Check cache first
-      const cached = GeocodingCacheService.getReverseGeocodeCache(latitude, longitude);
+      const cached = GeocodingCacheService.getReverseGeocodeCache(
+        latitude,
+        longitude
+      );
       if (cached) {
         return cached;
       }
@@ -110,8 +126,8 @@ class GeocodingServiceImpl extends BaseService {
         'accept-language': 'en',
         ...(minimal && {
           extratags: '0',
-          namedetails: '0'
-        })
+          namedetails: '0',
+        }),
       });
 
       const url = `${GeocodingServiceImpl.BASE_URL}/reverse?${params.toString()}`;
@@ -119,34 +135,38 @@ class GeocodingServiceImpl extends BaseService {
       // Primary operation
       const primaryOperation = async () => {
         const data = await this.executeRequest<any>(url, {
-          headers: GeocodingServiceImpl.DEFAULT_HEADERS
+          headers: GeocodingServiceImpl.DEFAULT_HEADERS,
         });
 
         // Validate API response structure
         if (!validateApiResponse(data, ['address'])) {
-          throw new ValidationError(getErrorMessage('GEOCODING', 'INVALID_RESPONSE'));
+          throw new ValidationError(
+            getErrorMessage('GEOCODING', 'INVALID_RESPONSE')
+          );
         }
 
         if (!data.address || typeof data.address !== 'object') {
-          throw new ValidationError(getErrorMessage('GEOCODING', 'INVALID_RESPONSE'));
+          throw new ValidationError(
+            getErrorMessage('GEOCODING', 'INVALID_RESPONSE')
+          );
         }
 
         return data;
       };
 
       // Execute with fallback support
-      const data = await this.executeWithFallbacks(
-        primaryOperation,
-        [{
+      const data = await this.executeWithFallbacks(primaryOperation, [
+        {
           name: 'fallback-geocoding',
           priority: 1,
-          execute: () => fallbackGeocoding.reverseGeocodeWithFallback(
-            latitude,
-            longitude,
-            primaryOperation
-          )
-        }]
-      );
+          execute: () =>
+            fallbackGeocoding.reverseGeocodeWithFallback(
+              latitude,
+              longitude,
+              primaryOperation
+            ),
+        },
+      ]);
 
       // Execute with deduplication
       const result = await this.executeWithDeduplication(
@@ -156,16 +176,21 @@ class GeocodingServiceImpl extends BaseService {
           const transformedResult = {
             street: data.address.road,
             suburb: data.address.suburb || data.address.neighbourhood,
-            city: data.address.city || data.address.town || data.address.village,
+            city:
+              data.address.city || data.address.town || data.address.village,
             county: data.address.county,
             state: data.address.state,
             country: data.address.country,
             latitude,
-            longitude
+            longitude,
           };
 
           // Cache the result
-          GeocodingCacheService.setReverseGeocodeCache(latitude, longitude, transformedResult);
+          GeocodingCacheService.setReverseGeocodeCache(
+            latitude,
+            longitude,
+            transformedResult
+          );
 
           return transformedResult;
         }
@@ -179,17 +204,31 @@ class GeocodingServiceImpl extends BaseService {
 
   async geocode(options: GeocodeOptions): Promise<GeocodeResult[]> {
     try {
-      const { query, limit = 1, addressdetails = true, countrycodes, bounded, viewbox } = options;
-      
+      const {
+        query,
+        limit = 1,
+        addressdetails = true,
+        countrycodes,
+        bounded,
+        viewbox,
+      } = options;
+
       // Sanitize and validate input
       const sanitizedQuery = sanitizeDestination(query);
-      
+
       if (!sanitizedQuery.trim()) {
-        throw new ValidationError(getErrorMessage('VALIDATION', 'REQUIRED_FIELD', { field: 'Search query' }));
+        throw new ValidationError(
+          getErrorMessage('VALIDATION', 'REQUIRED_FIELD', {
+            field: 'Search query',
+          })
+        );
       }
 
       // Check cache first
-      const cached = GeocodingCacheService.getGeocodeCache(sanitizedQuery, options);
+      const cached = GeocodingCacheService.getGeocodeCache(
+        sanitizedQuery,
+        options
+      );
       if (cached) {
         return cached;
       }
@@ -205,7 +244,7 @@ class GeocodingServiceImpl extends BaseService {
         polygon_geojson: '0',
         polygon_kml: '0',
         polygon_svg: '0',
-        polygon_text: '0'
+        polygon_text: '0',
       });
 
       if (countrycodes?.length) {
@@ -222,23 +261,23 @@ class GeocodingServiceImpl extends BaseService {
       // Primary operation
       const primaryOperation = async () => {
         return this.executeRequest<GeocodeResult[]>(url, {
-          headers: GeocodingServiceImpl.DEFAULT_HEADERS
+          headers: GeocodingServiceImpl.DEFAULT_HEADERS,
         });
       };
 
       // Execute with fallback support
-      const data = await this.executeWithFallbacks(
-        primaryOperation,
-        [{
+      const data = await this.executeWithFallbacks(primaryOperation, [
+        {
           name: 'fallback-geocoding',
           priority: 1,
-          execute: () => fallbackGeocoding.geocodeWithFallback(
-            sanitizedQuery,
-            options,
-            primaryOperation
-          )
-        }]
-      );
+          execute: () =>
+            fallbackGeocoding.geocodeWithFallback(
+              sanitizedQuery,
+              options,
+              primaryOperation
+            ),
+        },
+      ]);
 
       // Execute with deduplication
       const result = await this.executeWithDeduplication(
@@ -246,7 +285,9 @@ class GeocodingServiceImpl extends BaseService {
         { query: sanitizedQuery },
         async () => {
           if (!Array.isArray(data)) {
-            throw new ValidationError(getErrorMessage('GEOCODING', 'INVALID_RESPONSE'));
+            throw new ValidationError(
+              getErrorMessage('GEOCODING', 'INVALID_RESPONSE')
+            );
           }
 
           // Cache the result
@@ -274,19 +315,19 @@ class GeocodingServiceImpl extends BaseService {
         return result.address.tourism;
       }
     }
-    
+
     return result.display_name.split(',')[0];
   }
 
   formatAddress(address: ReverseGeocodeResult): string {
     const parts = [];
-    
+
     if (address.street) parts.push(address.street);
     if (address.suburb) parts.push(address.suburb);
     if (address.city) parts.push(address.city);
     if (address.state) parts.push(address.state);
     if (address.country) parts.push(address.country);
-    
+
     return parts.join(', ');
   }
 }
@@ -297,14 +338,16 @@ const geocodingServiceInstance = new GeocodingServiceImpl();
 // Export static-like interface for backward compatibility
 export class GeocodingService {
   // New options-based interface
-  static async reverseGeocode(options: ReverseGeocodeOptions): Promise<ReverseGeocodeResult>;
+  static async reverseGeocode(
+    options: ReverseGeocodeOptions
+  ): Promise<ReverseGeocodeResult>;
   // Backward compatibility interface
   static async reverseGeocode(
     latitude: number,
     longitude: number,
     options?: { minimal?: boolean }
   ): Promise<ReverseGeocodeResult>;
-  
+
   static async reverseGeocode(
     optionsOrLatitude: ReverseGeocodeOptions | number,
     longitude?: number,
@@ -318,7 +361,7 @@ export class GeocodingService {
       const options: ReverseGeocodeOptions = {
         latitude: optionsOrLatitude,
         longitude: longitude!,
-        minimal: legacyOptions?.minimal
+        minimal: legacyOptions?.minimal,
       };
       return geocodingServiceInstance.reverseGeocode(options);
     }
@@ -337,7 +380,7 @@ export class GeocodingService {
       viewbox?: [number, number, number, number];
     }
   ): Promise<GeocodeResult[]>;
-  
+
   static async geocode(
     queryOrOptions: GeocodeOptions | string,
     legacyOptions?: {
@@ -355,7 +398,7 @@ export class GeocodingService {
       // Backward compatibility interface
       const options: GeocodeOptions = {
         query: queryOrOptions,
-        ...legacyOptions
+        ...legacyOptions,
       };
       return geocodingServiceInstance.geocode(options);
     }

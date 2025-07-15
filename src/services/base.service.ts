@@ -58,7 +58,7 @@ export class NetworkError extends ServiceError {
     super(message, {
       code: 'NETWORK_ERROR',
       statusCode: options.statusCode,
-      originalError: options.originalError
+      originalError: options.originalError,
     });
     this.name = 'NetworkError';
   }
@@ -71,7 +71,7 @@ export class ValidationError extends ServiceError {
     super(message, {
       code: 'VALIDATION_ERROR',
       statusCode: 400,
-      originalError: options.originalError
+      originalError: options.originalError,
     });
     this.name = 'ValidationError';
     this.field = options.field;
@@ -85,7 +85,7 @@ export class RateLimitError extends ServiceError {
     super(message, {
       code: 'RATE_LIMIT_EXCEEDED',
       statusCode: 429,
-      originalError: options.originalError
+      originalError: options.originalError,
     });
     this.name = 'RateLimitError';
     this.resetTime = options.resetTime;
@@ -99,7 +99,7 @@ export class TimeoutError extends ServiceError {
     super(message, {
       code: 'TIMEOUT',
       statusCode: 408,
-      originalError: options.originalError
+      originalError: options.originalError,
     });
     this.name = 'TimeoutError';
     this.timeout = options.timeout;
@@ -167,19 +167,16 @@ export abstract class BaseService {
         'Network request failed. Please check your internet connection.',
         {
           statusCode: 0,
-          originalError: error
+          originalError: error,
         }
       );
     }
 
     if (error.name === 'AbortError') {
-      throw new TimeoutError(
-        'Request timed out. Please try again.',
-        {
-          timeout: this.config.timeout,
-          originalError: error
-        }
-      );
+      throw new TimeoutError('Request timed out. Please try again.', {
+        timeout: this.config.timeout,
+        originalError: error,
+      });
     }
 
     // Handle HTTP errors
@@ -188,7 +185,7 @@ export abstract class BaseService {
       const message = this.getHttpErrorMessage(status);
       throw new NetworkError(message, {
         statusCode: status,
-        originalError: error
+        originalError: error,
       });
     }
 
@@ -198,7 +195,7 @@ export abstract class BaseService {
       {
         code: 'UNKNOWN_ERROR',
         statusCode: 500,
-        originalError: error
+        originalError: error,
       }
     );
   }
@@ -242,9 +239,12 @@ export abstract class BaseService {
       // Add timeout if specified
       if (options.timeout || this.config.timeout) {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), options.timeout || this.config.timeout);
+        const timeoutId = setTimeout(
+          () => controller.abort(),
+          options.timeout || this.config.timeout
+        );
         fetchOptions.signal = controller.signal;
-        
+
         fetchPromise = fetch(url, fetchOptions).finally(() => {
           clearTimeout(timeoutId);
         });
@@ -253,9 +253,10 @@ export abstract class BaseService {
       }
 
       // Execute with monitoring if enabled
-      const monitoredFetch = options.skipMonitoring || !this.config.enableMonitoring
-        ? () => fetchPromise
-        : withApiMonitoring(this.serviceName, () => fetchPromise);
+      const monitoredFetch =
+        options.skipMonitoring || !this.config.enableMonitoring
+          ? () => fetchPromise
+          : withApiMonitoring(this.serviceName, () => fetchPromise);
 
       const response = await monitoredFetch();
 
@@ -274,12 +275,13 @@ export abstract class BaseService {
     // Execute with retry logic unless explicitly skipped
     const operation = options.skipRetry
       ? fetchOperation
-      : () => retryWithBackoff(fetchOperation, {
-          maxAttempts: this.config.maxRetries,
-          onRetry: (attempt, delay) => {
-            this.logRetry(attempt, delay);
-          }
-        });
+      : () =>
+          retryWithBackoff(fetchOperation, {
+            maxAttempts: this.config.maxRetries,
+            onRetry: (attempt, delay) => {
+              this.logRetry(attempt, delay);
+            },
+          });
 
     // Execute with performance tracking if enabled
     if (this.config.enablePerformanceTracking) {
@@ -304,7 +306,9 @@ export abstract class BaseService {
     }
 
     // Try fallback providers in priority order
-    const sortedProviders = fallbackProviders.sort((a, b) => a.priority - b.priority);
+    const sortedProviders = fallbackProviders.sort(
+      (a, b) => a.priority - b.priority
+    );
     const errors: Error[] = [];
 
     for (const provider of sortedProviders) {
@@ -319,10 +323,10 @@ export abstract class BaseService {
 
     // All providers failed
     throw new ServiceError(
-      `All ${this.serviceName} providers failed. Last errors: ${errors.map(e => e.message).join(', ')}`,
+      `All ${this.serviceName} providers failed. Last errors: ${errors.map((e) => e.message).join(', ')}`,
       {
         code: 'ALL_PROVIDERS_FAILED',
-        statusCode: 500
+        statusCode: 500,
       }
     );
   }
@@ -345,13 +349,13 @@ export abstract class BaseService {
   /**
    * Validate input parameters
    */
-  protected validateInput(input: any, validationRules: Record<string, (value: any) => boolean>): void {
+  protected validateInput(
+    input: any,
+    validationRules: Record<string, (value: any) => boolean>
+  ): void {
     for (const [field, validator] of Object.entries(validationRules)) {
       if (!validator(input[field])) {
-        throw new ValidationError(
-          `Invalid ${field} provided`,
-          { field }
-        );
+        throw new ValidationError(`Invalid ${field} provided`, { field });
       }
     }
   }
@@ -407,7 +411,9 @@ export abstract class BaseService {
     if (error) {
       console.warn(`[${this.serviceName}] ${provider} provider failed:`, error);
     } else {
-      console.log(`[${this.serviceName}] Attempting operation with ${provider} provider`);
+      console.log(
+        `[${this.serviceName}] Attempting operation with ${provider} provider`
+      );
     }
   }
 }

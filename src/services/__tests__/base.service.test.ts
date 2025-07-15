@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { 
-  BaseService, 
-  ServiceError, 
-  NetworkError, 
-  ValidationError, 
-  RateLimitError, 
+import {
+  BaseService,
+  ServiceError,
+  NetworkError,
+  ValidationError,
+  RateLimitError,
   TimeoutError,
-  ServiceConfig 
+  ServiceConfig,
 } from '../base.service';
 import { rateLimiter } from '../rateLimiter.service';
 import { retryWithBackoff } from '@/utils/retry';
@@ -66,15 +66,25 @@ class TestService extends BaseService {
     return this.checkRateLimit();
   }
 
-  testValidateInput(input: any, rules: Record<string, (value: any) => boolean>): void {
+  testValidateInput(
+    input: any,
+    rules: Record<string, (value: any) => boolean>
+  ): void {
     return this.validateInput(input, rules);
   }
 
-  async testExecuteWithFallbacks<T>(primary: () => Promise<T>, fallbacks?: any[]): Promise<T> {
+  async testExecuteWithFallbacks<T>(
+    primary: () => Promise<T>,
+    fallbacks?: any[]
+  ): Promise<T> {
     return this.executeWithFallbacks(primary, fallbacks);
   }
 
-  async testExecuteWithDeduplication<T>(type: string, key: any, operation: () => Promise<T>): Promise<T> {
+  async testExecuteWithDeduplication<T>(
+    type: string,
+    key: any,
+    operation: () => Promise<T>
+  ): Promise<T> {
     return this.executeWithDeduplication(type, key, operation);
   }
 }
@@ -88,12 +98,14 @@ describe('BaseService', () => {
     console.log = vi.fn();
     console.warn = vi.fn();
     service = new TestService();
-    
+
     // Default mock implementations
     vi.mocked(rateLimiter.isAllowed).mockReturnValue(true);
     vi.mocked(rateLimiter.getTimeUntilReset).mockReturnValue(5000);
     vi.mocked(retryWithBackoff).mockImplementation((fn) => fn());
-    vi.mocked(withPerformanceTracking).mockImplementation(async (service, fn) => fn());
+    vi.mocked(withPerformanceTracking).mockImplementation(async (service, fn) =>
+      fn()
+    );
   });
 
   afterEach(() => {
@@ -106,10 +118,14 @@ describe('BaseService', () => {
   describe('error type detection', () => {
     it('should detect and preserve ServiceError instances', () => {
       // Arrange
-      const serviceError = new ServiceError('Test error', { code: 'TEST_ERROR' });
+      const serviceError = new ServiceError('Test error', {
+        code: 'TEST_ERROR',
+      });
 
       // Act & Assert
-      expect(() => service.testHandleError(serviceError, 'test')).toThrow(serviceError);
+      expect(() => service.testHandleError(serviceError, 'test')).toThrow(
+        serviceError
+      );
     });
 
     it('should detect fetch/network errors', () => {
@@ -117,13 +133,17 @@ describe('BaseService', () => {
       const fetchError = new TypeError('Failed to fetch');
 
       // Act & Assert
-      expect(() => service.testHandleError(fetchError, 'test')).toThrow(NetworkError);
+      expect(() => service.testHandleError(fetchError, 'test')).toThrow(
+        NetworkError
+      );
       try {
         service.testHandleError(fetchError, 'test');
       } catch (error) {
         expect(error).toBeInstanceOf(NetworkError);
         expect((error as NetworkError).statusCode).toBe(0);
-        expect((error as NetworkError).message).toContain('Network request failed');
+        expect((error as NetworkError).message).toContain(
+          'Network request failed'
+        );
       }
     });
 
@@ -133,7 +153,9 @@ describe('BaseService', () => {
       abortError.name = 'AbortError';
 
       // Act & Assert
-      expect(() => service.testHandleError(abortError, 'test')).toThrow(TimeoutError);
+      expect(() => service.testHandleError(abortError, 'test')).toThrow(
+        TimeoutError
+      );
       try {
         service.testHandleError(abortError, 'test');
       } catch (error) {
@@ -147,7 +169,9 @@ describe('BaseService', () => {
       const httpError = { status: 404, message: 'Not found' };
 
       // Act & Assert
-      expect(() => service.testHandleError(httpError, 'test')).toThrow(NetworkError);
+      expect(() => service.testHandleError(httpError, 'test')).toThrow(
+        NetworkError
+      );
       try {
         service.testHandleError(httpError, 'test');
       } catch (error) {
@@ -162,7 +186,9 @@ describe('BaseService', () => {
       const unknownError = new Error('Something went wrong');
 
       // Act & Assert
-      expect(() => service.testHandleError(unknownError, 'test')).toThrow(ServiceError);
+      expect(() => service.testHandleError(unknownError, 'test')).toThrow(
+        ServiceError
+      );
       try {
         service.testHandleError(unknownError, 'test');
       } catch (error) {
@@ -177,7 +203,7 @@ describe('BaseService', () => {
     it('should retry on failure with exponential backoff', async () => {
       // Arrange
       const mockResponse = { data: 'success' };
-      
+
       vi.mocked(global.fetch)
         .mockRejectedValueOnce(new Error('First failure'))
         .mockRejectedValueOnce(new Error('Second failure'))
@@ -230,7 +256,7 @@ describe('BaseService', () => {
         ok: true,
         json: vi.fn().mockResolvedValueOnce({ result: 'test' }),
       } as any);
-      
+
       vi.mocked(retryWithBackoff).mockImplementation((fn) => fn());
 
       // Act
@@ -249,9 +275,11 @@ describe('BaseService', () => {
   describe('max retry limit', () => {
     it('should stop retrying after max attempts', async () => {
       // Arrange
-      const mockError = new NetworkError('Persistent failure', { statusCode: 500 });
+      const mockError = new NetworkError('Persistent failure', {
+        statusCode: 500,
+      });
       vi.mocked(global.fetch).mockRejectedValue(mockError);
-      
+
       vi.mocked(retryWithBackoff).mockImplementation(async (fn) => {
         try {
           return await fn();
@@ -261,7 +289,9 @@ describe('BaseService', () => {
       });
 
       // Act & Assert
-      await expect(service.testExecuteRequest('/test')).rejects.toThrow(NetworkError);
+      await expect(service.testExecuteRequest('/test')).rejects.toThrow(
+        NetworkError
+      );
     });
 
     it('should skip retry when configured', async () => {
@@ -273,7 +303,7 @@ describe('BaseService', () => {
       await expect(
         service.testExecuteRequest('/test', { skipRetry: true })
       ).rejects.toThrow(NetworkError);
-      
+
       expect(retryWithBackoff).not.toHaveBeenCalled();
     });
   });
@@ -312,14 +342,18 @@ describe('BaseService', () => {
       };
 
       // Act & Assert
-      expect(() => service.testValidateInput(input, rules)).toThrow(ValidationError);
-      
+      expect(() => service.testValidateInput(input, rules)).toThrow(
+        ValidationError
+      );
+
       try {
         service.testValidateInput(input, rules);
       } catch (error) {
         expect(error).toBeInstanceOf(ValidationError);
         expect((error as ValidationError).field).toBe('name');
-        expect((error as ValidationError).message).toBe('Invalid name provided');
+        expect((error as ValidationError).message).toBe(
+          'Invalid name provided'
+        );
       }
     });
   });
@@ -329,13 +363,14 @@ describe('BaseService', () => {
     // but we can test that proper encoding happens in requests
     it('should properly encode URL parameters', async () => {
       // Arrange
-      const url = 'https://api.example.com/search?query=test value&special=<script>';
-      
+      const url =
+        'https://api.example.com/search?query=test value&special=<script>';
+
       vi.mocked(global.fetch).mockResolvedValueOnce({
         ok: true,
         json: vi.fn().mockResolvedValueOnce({}),
       } as any);
-      
+
       vi.mocked(retryWithBackoff).mockImplementation((fn) => fn());
 
       // Act
@@ -368,14 +403,18 @@ describe('BaseService', () => {
       vi.mocked(rateLimiter.getTimeUntilReset).mockReturnValue(3000);
 
       // Act & Assert
-      await expect(service.testExecuteRequest('/test')).rejects.toThrow(RateLimitError);
-      
+      await expect(service.testExecuteRequest('/test')).rejects.toThrow(
+        RateLimitError
+      );
+
       try {
         await service.testExecuteRequest('/test');
       } catch (error) {
         expect(error).toBeInstanceOf(RateLimitError);
         expect((error as RateLimitError).resetTime).toBe(3000);
-        expect((error as RateLimitError).message).toContain('Please wait 3 seconds');
+        expect((error as RateLimitError).message).toContain(
+          'Please wait 3 seconds'
+        );
       }
     });
 
@@ -399,25 +438,28 @@ describe('BaseService', () => {
     it('should apply monitoring when enabled', async () => {
       // Arrange
       const monitoredService = new TestService({ enableMonitoring: true });
-      
+
       vi.mocked(global.fetch).mockResolvedValueOnce({
         ok: true,
         json: vi.fn().mockResolvedValueOnce({}),
       } as any);
-      
+
       vi.mocked(retryWithBackoff).mockImplementation((fn) => fn());
 
       // Act
       await monitoredService.testExecuteRequest('/test');
 
       // Assert
-      expect(withApiMonitoring).toHaveBeenCalledWith('test-service', expect.any(Function));
+      expect(withApiMonitoring).toHaveBeenCalledWith(
+        'test-service',
+        expect.any(Function)
+      );
     });
 
     it('should skip monitoring when disabled', async () => {
       // Arrange
       const unmonitoredService = new TestService({ enableMonitoring: false });
-      
+
       vi.mocked(global.fetch).mockResolvedValueOnce({
         ok: true,
         json: vi.fn().mockResolvedValueOnce({}),
@@ -437,13 +479,18 @@ describe('BaseService', () => {
         json: vi.fn().mockResolvedValueOnce({}),
       } as any);
 
-      vi.mocked(withPerformanceTracking).mockImplementation((service, fn) => fn());
+      vi.mocked(withPerformanceTracking).mockImplementation((service, fn) =>
+        fn()
+      );
 
       // Act
       await service.testExecuteRequest('/test');
 
       // Assert
-      expect(withPerformanceTracking).toHaveBeenCalledWith('test-service', expect.any(Function));
+      expect(withPerformanceTracking).toHaveBeenCalledWith(
+        'test-service',
+        expect.any(Function)
+      );
     });
   });
 
@@ -456,7 +503,7 @@ describe('BaseService', () => {
           json: vi.fn().mockResolvedValueOnce({}),
         } as any);
       });
-      
+
       vi.mocked(retryWithBackoff).mockImplementation((fn) => fn());
 
       // Act
@@ -474,9 +521,15 @@ describe('BaseService', () => {
   describe('fallback providers', () => {
     it('should try fallback providers when primary fails', async () => {
       // Arrange
-      const primaryOp = vi.fn().mockRejectedValueOnce(new Error('Primary failed'));
-      const fallback1 = vi.fn().mockRejectedValueOnce(new Error('Fallback 1 failed'));
-      const fallback2 = vi.fn().mockResolvedValueOnce({ data: 'fallback success' });
+      const primaryOp = vi
+        .fn()
+        .mockRejectedValueOnce(new Error('Primary failed'));
+      const fallback1 = vi
+        .fn()
+        .mockRejectedValueOnce(new Error('Fallback 1 failed'));
+      const fallback2 = vi
+        .fn()
+        .mockResolvedValueOnce({ data: 'fallback success' });
 
       const fallbackProviders = [
         { name: 'fallback1', execute: fallback1, priority: 1 },
@@ -484,7 +537,10 @@ describe('BaseService', () => {
       ];
 
       // Act
-      const result = await service.testExecuteWithFallbacks(primaryOp, fallbackProviders);
+      const result = await service.testExecuteWithFallbacks(
+        primaryOp,
+        fallbackProviders
+      );
 
       // Assert
       expect(result).toEqual({ data: 'fallback success' });
@@ -499,9 +555,15 @@ describe('BaseService', () => {
 
     it('should throw when all providers fail', async () => {
       // Arrange
-      const primaryOp = vi.fn().mockRejectedValueOnce(new Error('Primary failed'));
-      const fallback1 = vi.fn().mockRejectedValueOnce(new Error('Fallback 1 failed'));
-      const fallback2 = vi.fn().mockRejectedValueOnce(new Error('Fallback 2 failed'));
+      const primaryOp = vi
+        .fn()
+        .mockRejectedValueOnce(new Error('Primary failed'));
+      const fallback1 = vi
+        .fn()
+        .mockRejectedValueOnce(new Error('Fallback 1 failed'));
+      const fallback2 = vi
+        .fn()
+        .mockRejectedValueOnce(new Error('Fallback 2 failed'));
 
       const fallbackProviders = [
         { name: 'fallback1', execute: fallback1, priority: 1 },
@@ -516,17 +578,24 @@ describe('BaseService', () => {
 
     it('should respect priority order', async () => {
       // Arrange
-      const primaryOp = vi.fn().mockRejectedValueOnce(new Error('Primary failed'));
-      const fallback1 = vi.fn().mockResolvedValueOnce({ data: 'high priority' });
+      const primaryOp = vi
+        .fn()
+        .mockRejectedValueOnce(new Error('Primary failed'));
+      const fallback1 = vi
+        .fn()
+        .mockResolvedValueOnce({ data: 'high priority' });
       const fallback2 = vi.fn().mockResolvedValueOnce({ data: 'low priority' });
 
       const fallbackProviders = [
         { name: 'fallback2', execute: fallback2, priority: 10 }, // Lower priority
-        { name: 'fallback1', execute: fallback1, priority: 1 },  // Higher priority
+        { name: 'fallback1', execute: fallback1, priority: 1 }, // Higher priority
       ];
 
       // Act
-      const result = await service.testExecuteWithFallbacks(primaryOp, fallbackProviders);
+      const result = await service.testExecuteWithFallbacks(
+        primaryOp,
+        fallbackProviders
+      );
 
       // Assert
       expect(result).toEqual({ data: 'high priority' });
@@ -541,7 +610,11 @@ describe('BaseService', () => {
       const operation = vi.fn().mockResolvedValue({ data: 'result' });
 
       // Act
-      await service.testExecuteWithDeduplication('test-type', { key: 'test' }, operation);
+      await service.testExecuteWithDeduplication(
+        'test-type',
+        { key: 'test' },
+        operation
+      );
 
       // Assert
       expect(deduplicateGeocodingRequest).toHaveBeenCalledWith(
@@ -575,13 +648,29 @@ describe('BaseService', () => {
       // Test various status codes
       const statusTests = [
         { status: 400, message: 'Bad request. Please check your input.' },
-        { status: 401, message: 'Unauthorized. Please check your credentials.' },
-        { status: 403, message: 'Forbidden. You do not have permission to access this resource.' },
+        {
+          status: 401,
+          message: 'Unauthorized. Please check your credentials.',
+        },
+        {
+          status: 403,
+          message:
+            'Forbidden. You do not have permission to access this resource.',
+        },
         { status: 404, message: 'Resource not found.' },
         { status: 429, message: 'Too many requests. Please slow down.' },
-        { status: 500, message: 'Internal server error. Please try again later.' },
-        { status: 502, message: 'Bad gateway. The server is temporarily unavailable.' },
-        { status: 503, message: 'Service unavailable. Please try again later.' },
+        {
+          status: 500,
+          message: 'Internal server error. Please try again later.',
+        },
+        {
+          status: 502,
+          message: 'Bad gateway. The server is temporarily unavailable.',
+        },
+        {
+          status: 503,
+          message: 'Service unavailable. Please try again later.',
+        },
         { status: 999, message: 'HTTP error 999' }, // Unknown status
       ];
 
@@ -591,7 +680,7 @@ describe('BaseService', () => {
           status,
           json: vi.fn(),
         } as any);
-        
+
         vi.mocked(retryWithBackoff).mockImplementation(async (fn) => {
           try {
             return await fn();
@@ -600,7 +689,9 @@ describe('BaseService', () => {
           }
         });
 
-        await expect(service.testExecuteRequest('/test')).rejects.toThrow(message);
+        await expect(service.testExecuteRequest('/test')).rejects.toThrow(
+          message
+        );
       }
     });
   });

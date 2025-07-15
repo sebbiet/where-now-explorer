@@ -49,7 +49,7 @@ class ProductionAnalyticsService {
     this.sessionId = this.generateSessionId();
     this.session = this.initializeSession();
     this.metrics = this.initializeMetrics();
-    
+
     if (typeof window !== 'undefined') {
       this.setupEventListeners();
       this.startPerformanceMonitoring();
@@ -68,20 +68,20 @@ class ProductionAnalyticsService {
         sessionId: this.sessionId,
         timestamp: Date.now(),
         url: window.location.href,
-        userAgent: navigator.userAgent
+        userAgent: navigator.userAgent,
       },
       timestamp: Date.now(),
-      sessionId: this.sessionId
+      sessionId: this.sessionId,
     };
 
     this.eventQueue.push(event);
     this.session.actions++;
     this.session.lastActivity = Date.now();
 
-    logger.debug('Analytics event tracked', { 
-      event: name, 
+    logger.debug('Analytics event tracked', {
+      event: name,
       properties,
-      service: 'ProductionAnalytics' 
+      service: 'ProductionAnalytics',
     });
 
     // Flush immediately for critical events
@@ -98,7 +98,7 @@ class ProductionAnalyticsService {
       path,
       title: title || document.title,
       referrer: document.referrer,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
 
     this.session.pageViews++;
@@ -108,22 +108,30 @@ class ProductionAnalyticsService {
   /**
    * Track user interactions
    */
-  trackUserInteraction(element: string, action: string, properties: Record<string, unknown> = {}): void {
+  trackUserInteraction(
+    element: string,
+    action: string,
+    properties: Record<string, unknown> = {}
+  ): void {
     this.trackEvent('user_interaction', {
       element,
       action,
-      ...properties
+      ...properties,
     });
   }
 
   /**
    * Track performance metrics
    */
-  trackPerformance(metric: string, value: number, properties: Record<string, unknown> = {}): void {
+  trackPerformance(
+    metric: string,
+    value: number,
+    properties: Record<string, unknown> = {}
+  ): void {
     this.trackEvent('performance_metric', {
       metric,
       value,
-      ...properties
+      ...properties,
     });
 
     // Update internal metrics
@@ -144,7 +152,7 @@ class ProductionAnalyticsService {
       message: error.message,
       stack: error.stack,
       name: error.name,
-      ...context
+      ...context,
     });
 
     this.session.errors++;
@@ -154,21 +162,28 @@ class ProductionAnalyticsService {
   /**
    * Track feature usage
    */
-  trackFeatureUsage(feature: string, properties: Record<string, unknown> = {}): void {
+  trackFeatureUsage(
+    feature: string,
+    properties: Record<string, unknown> = {}
+  ): void {
     this.trackEvent('feature_used', {
       feature,
-      ...properties
+      ...properties,
     });
   }
 
   /**
    * Track conversion events
    */
-  trackConversion(goal: string, value?: number, properties: Record<string, unknown> = {}): void {
+  trackConversion(
+    goal: string,
+    value?: number,
+    properties: Record<string, unknown> = {}
+  ): void {
     this.trackEvent('conversion', {
       goal,
       value,
-      ...properties
+      ...properties,
     });
   }
 
@@ -212,7 +227,7 @@ class ProductionAnalyticsService {
       apiResponseTimes: {},
       errorRate: 0,
       bounceRate: 0,
-      sessionDuration: 0
+      sessionDuration: 0,
     };
   }
 
@@ -231,11 +246,12 @@ class ProductionAnalyticsService {
     document.addEventListener('click', (event) => {
       const target = event.target as HTMLElement;
       if (target.tagName === 'BUTTON' || target.closest('button')) {
-        const button = target.tagName === 'BUTTON' ? target : target.closest('button');
+        const button =
+          target.tagName === 'BUTTON' ? target : target.closest('button');
         this.trackUserInteraction('button', 'click', {
           text: button?.textContent?.trim(),
           id: button?.id,
-          className: button?.className
+          className: button?.className,
         });
       }
     });
@@ -246,7 +262,7 @@ class ProductionAnalyticsService {
       this.trackUserInteraction('form', 'submit', {
         id: form.id,
         action: form.action,
-        method: form.method
+        method: form.method,
       });
     });
 
@@ -266,7 +282,7 @@ class ProductionAnalyticsService {
         duration: Date.now() - this.session.startTime,
         pageViews: this.session.pageViews,
         actions: this.session.actions,
-        errors: this.session.errors
+        errors: this.session.errors,
       });
       this.flushEvents();
     });
@@ -294,11 +310,16 @@ class ProductionAnalyticsService {
         list.getEntries().forEach((entry) => {
           if (entry.entryType === 'navigation') {
             const navEntry = entry as PerformanceNavigationTiming;
-            this.trackPerformance('navigation_timing', navEntry.loadEventEnd - navEntry.navigationStart, {
-              type: 'navigation',
-              domContentLoaded: navEntry.domContentLoadedEventEnd - navEntry.navigationStart,
-              firstPaint: navEntry.loadEventStart - navEntry.navigationStart
-            });
+            this.trackPerformance(
+              'navigation_timing',
+              navEntry.loadEventEnd - navEntry.navigationStart,
+              {
+                type: 'navigation',
+                domContentLoaded:
+                  navEntry.domContentLoadedEventEnd - navEntry.navigationStart,
+                firstPaint: navEntry.loadEventStart - navEntry.navigationStart,
+              }
+            );
           }
         });
       });
@@ -313,7 +334,7 @@ class ProductionAnalyticsService {
     // Update session duration every minute
     setInterval(() => {
       this.metrics.sessionDuration = Date.now() - this.session.startTime;
-      
+
       // Auto-flush events every 5 minutes
       if (this.eventQueue.length > 0) {
         this.flushEvents();
@@ -322,10 +343,11 @@ class ProductionAnalyticsService {
 
     // Track session heartbeat every 30 seconds
     setInterval(() => {
-      if (Date.now() - this.session.lastActivity < 60000) { // Active in last minute
+      if (Date.now() - this.session.lastActivity < 60000) {
+        // Active in last minute
         this.trackEvent('session_heartbeat', {
           duration: Date.now() - this.session.startTime,
-          isActive: !document.hidden
+          isActive: !document.hidden,
         });
       }
     }, 30000);
@@ -354,7 +376,10 @@ class ProductionAnalyticsService {
     if (this.isProduction) {
       this.sendToAnalytics(events);
     } else {
-      logger.debug('Analytics events (dev mode)', { events, service: 'ProductionAnalytics' });
+      logger.debug('Analytics events (dev mode)', {
+        events,
+        service: 'ProductionAnalytics',
+      });
     }
   }
 
@@ -366,7 +391,7 @@ class ProductionAnalyticsService {
       // Send to Google Analytics 4 if available
       if (typeof window !== 'undefined' && (window as any).gtag) {
         const gtag = (window as any).gtag;
-        events.forEach(event => {
+        events.forEach((event) => {
           gtag('event', event.name, event.properties);
         });
       }
@@ -382,14 +407,14 @@ class ProductionAnalyticsService {
           body: JSON.stringify({
             events,
             session: this.session,
-            metrics: this.metrics
-          })
+            metrics: this.metrics,
+          }),
         });
       }
     } catch (error) {
       logger.error('Failed to send analytics events', error as Error, {
         service: 'ProductionAnalytics',
-        eventCount: events.length
+        eventCount: events.length,
       });
     }
   }
@@ -399,7 +424,7 @@ class ProductionAnalyticsService {
    */
   private updateMetrics(): void {
     this.metrics.sessionDuration = Date.now() - this.session.startTime;
-    
+
     // Calculate bounce rate (single page view sessions)
     if (this.session.pageViews === 1 && this.session.actions <= 1) {
       this.metrics.bounceRate = 1;
@@ -416,7 +441,11 @@ class ProductionAnalyticsService {
     if (/tablet|ipad|playbook|silk/i.test(userAgent)) {
       return 'tablet';
     }
-    if (/mobile|iphone|ipod|android|blackberry|opera|mini|windows\sce|palm|smartphone|iemobile/i.test(userAgent)) {
+    if (
+      /mobile|iphone|ipod|android|blackberry|opera|mini|windows\sce|palm|smartphone|iemobile/i.test(
+        userAgent
+      )
+    ) {
       return 'mobile';
     }
     return 'desktop';

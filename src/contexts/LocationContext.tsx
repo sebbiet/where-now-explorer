@@ -1,6 +1,17 @@
-import React, { createContext, useState, useContext, useCallback, ReactNode, useEffect } from 'react';
-import { toast } from "sonner";
-import { GeolocationService, GeolocationError, GeolocationErrorCode } from '@/services/geolocation.service';
+import React, {
+  createContext,
+  useState,
+  useContext,
+  useCallback,
+  ReactNode,
+  useEffect,
+} from 'react';
+import { toast } from 'sonner';
+import {
+  GeolocationService,
+  GeolocationError,
+  GeolocationErrorCode,
+} from '@/services/geolocation.service';
 import { GeocodingService, GeocodingError } from '@/services/geocoding.service';
 import { TraditionalLandService } from '@/services/traditionalLand.service';
 import { usePreferences } from '@/contexts/PreferencesContext';
@@ -40,7 +51,9 @@ interface LocationContextType {
   toggleMockLocation: () => void;
 }
 
-const LocationContext = createContext<LocationContextType | undefined>(undefined);
+const LocationContext = createContext<LocationContextType | undefined>(
+  undefined
+);
 
 export const LocationProvider = ({ children }: { children: ReactNode }) => {
   const { preferences } = usePreferences();
@@ -49,21 +62,23 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
   const [countdown, setCountdown] = useState(preferences.autoRefreshInterval);
   const [isRefreshingLocation, setIsRefreshingLocation] = useState(false);
   const [isTabActive, setIsTabActive] = useState(true);
-  
+
   // Mock location state for testing (development only)
   const [useMockLocation, setUseMockLocation] = useState(false);
-  const [mockLocation, setMockLocationState] = useState<MockLocation | null>(null);
-  
+  const [mockLocation, setMockLocationState] = useState<MockLocation | null>(
+    null
+  );
+
   // Mock location helper functions (development only)
   const setMockLocation = useCallback((location: MockLocation | null) => {
     if (process.env.NODE_ENV === 'development') {
       setMockLocationState(location);
     }
   }, []);
-  
+
   const toggleMockLocation = useCallback(() => {
     if (process.env.NODE_ENV === 'development') {
-      setUseMockLocation(prev => !prev);
+      setUseMockLocation((prev) => !prev);
     }
   }, []);
 
@@ -75,13 +90,17 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
     } else {
       setIsRefreshingLocation(true);
     }
-    
+
     try {
       let latitude: number;
       let longitude: number;
-      
+
       // Use mock location if enabled in development
-      if (process.env.NODE_ENV === 'development' && useMockLocation && mockLocation) {
+      if (
+        process.env.NODE_ENV === 'development' &&
+        useMockLocation &&
+        mockLocation
+      ) {
         latitude = mockLocation.latitude;
         longitude = mockLocation.longitude;
       } else {
@@ -89,11 +108,15 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
         latitude = position.coords.latitude;
         longitude = position.coords.longitude;
       }
-      
-      const addressData = await GeocodingService.reverseGeocode(latitude, longitude, {
-        minimal: true // Only request essential fields
-      });
-      
+
+      const addressData = await GeocodingService.reverseGeocode(
+        latitude,
+        longitude,
+        {
+          minimal: true, // Only request essential fields
+        }
+      );
+
       // Check if in Australia and add traditional land info
       let hasTradLandInfo = false;
       if (TraditionalLandService.isAustralianLocation(addressData.country)) {
@@ -102,13 +125,13 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
           addressData.suburb,
           addressData.state
         );
-        
+
         if (traditionalInfo) {
           hasTradLandInfo = true;
           setLocationData({
             ...addressData,
             traditionalName: traditionalInfo.traditionalName,
-            traditionalNation: traditionalInfo.nation
+            traditionalNation: traditionalInfo.nation,
           });
         } else {
           setLocationData(addressData);
@@ -116,74 +139,74 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setLocationData(addressData);
       }
-      
+
       // Track successful location update
       analytics.trackLocationUpdated({
-        update_type: Object.keys(locationData).length === 0 ? 'initial' : 'refresh',
+        update_type:
+          Object.keys(locationData).length === 0 ? 'initial' : 'refresh',
         has_traditional_land_info: hasTradLandInfo,
       });
     } catch (error) {
-      logger.error("Error getting location", error as Error, {
+      logger.error('Error getting location', error as Error, {
         component: 'LocationContext',
-        operation: 'fetchLocation'
+        operation: 'fetchLocation',
       });
-      
+
       // Provide more helpful error messages based on the error type
       if (error instanceof GeolocationError) {
         switch (error.code) {
           case GeolocationErrorCode.PERMISSION_DENIED:
-            toast.error(
-              "📍 Location access denied",
-              {
-                description: "Click the location icon in your browser's address bar to enable permissions.",
-                action: {
-                  label: "Learn how",
-                  onClick: () => {
-                    alert("1. Look for a location icon in your browser's address bar\n2. Click it and select 'Allow'\n3. Refresh the page");
-                  }
-                }
-              }
-            );
+            toast.error('📍 Location access denied', {
+              description:
+                "Click the location icon in your browser's address bar to enable permissions.",
+              action: {
+                label: 'Learn how',
+                onClick: () => {
+                  alert(
+                    "1. Look for a location icon in your browser's address bar\n2. Click it and select 'Allow'\n3. Refresh the page"
+                  );
+                },
+              },
+            });
             break;
           case GeolocationErrorCode.POSITION_UNAVAILABLE:
-            toast.error(
-              "📍 Can't find your location",
-              {
-                description: "Please check if location services are enabled on your device.",
-                action: {
-                  label: "Try again",
-                  onClick: () => fetchLocation()
-                }
-              }
-            );
+            toast.error("📍 Can't find your location", {
+              description:
+                'Please check if location services are enabled on your device.',
+              action: {
+                label: 'Try again',
+                onClick: () => fetchLocation(),
+              },
+            });
             break;
           case GeolocationErrorCode.TIMEOUT:
-            toast.error(
-              "📍 Location request timed out",
-              {
-                description: "This is taking longer than usual.",
-                action: {
-                  label: "Retry",
-                  onClick: () => fetchLocation()
-                }
-              }
-            );
+            toast.error('📍 Location request timed out', {
+              description: 'This is taking longer than usual.',
+              action: {
+                label: 'Retry',
+                onClick: () => fetchLocation(),
+              },
+            });
             break;
           case GeolocationErrorCode.UNSUPPORTED:
-            toast.error("📍 Your browser doesn't support location services. Please try Chrome, Firefox, or Safari.");
+            toast.error(
+              "📍 Your browser doesn't support location services. Please try Chrome, Firefox, or Safari."
+            );
             break;
           default:
             toast.error(`📍 ${error.message}`, {
               action: {
-                label: "Retry",
-                onClick: () => fetchLocation()
-              }
+                label: 'Retry',
+                onClick: () => fetchLocation(),
+              },
             });
         }
       } else if (error instanceof GeocodingError) {
         toast.error("📍 Couldn't get your address. Please try again later.");
       } else {
-        toast.error("📍 Couldn't find your location. Please make sure location services are enabled.");
+        toast.error(
+          "📍 Couldn't find your location. Please make sure location services are enabled."
+        );
       }
     } finally {
       setIsLoadingLocation(false);
@@ -199,7 +222,7 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
       refresh_type: 'manual',
       countdown_remaining: countdown,
     });
-    
+
     fetchLocation();
     setCountdown(preferences.autoRefreshInterval);
   };
@@ -221,9 +244,14 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
         });
       }
     }, 1000);
-    
+
     return () => clearInterval(countdownId);
-  }, [fetchLocation, isTabActive, preferences.autoRefreshInterval, preferences.enableLocationTracking]);
+  }, [
+    fetchLocation,
+    isTabActive,
+    preferences.autoRefreshInterval,
+    preferences.enableLocationTracking,
+  ]);
 
   // Initial location fetch
   useEffect(() => {
@@ -251,7 +279,6 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-
   const value = {
     locationData,
     isLoadingLocation,
@@ -263,7 +290,7 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
     useMockLocation,
     mockLocation,
     setMockLocation,
-    toggleMockLocation
+    toggleMockLocation,
   };
 
   return (

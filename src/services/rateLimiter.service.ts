@@ -34,11 +34,13 @@ class RateLimiterService {
     const windowStart = now - rule.windowMs;
 
     // Clean old logs outside the current window
-    this.requestLogs = this.requestLogs.filter(log => log.timestamp >= windowStart);
+    this.requestLogs = this.requestLogs.filter(
+      (log) => log.timestamp >= windowStart
+    );
 
     // Count requests to this endpoint in the current window
-    const requestsInWindow = this.requestLogs.filter(log => 
-      log.endpoint === endpoint && log.timestamp >= windowStart
+    const requestsInWindow = this.requestLogs.filter(
+      (log) => log.endpoint === endpoint && log.timestamp >= windowStart
     ).length;
 
     return requestsInWindow < rule.maxRequests;
@@ -50,7 +52,7 @@ class RateLimiterService {
   recordRequest(endpoint: string): void {
     this.requestLogs.push({
       endpoint,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   }
 
@@ -63,24 +65,26 @@ class RateLimiterService {
     const windowStart = now - rule.windowMs;
 
     const oldestRequestInWindow = this.requestLogs
-      .filter(log => log.endpoint === endpoint && log.timestamp >= windowStart)
+      .filter(
+        (log) => log.endpoint === endpoint && log.timestamp >= windowStart
+      )
       .sort((a, b) => a.timestamp - b.timestamp)[0];
 
     if (!oldestRequestInWindow) {
       return 0;
     }
 
-    return Math.max(0, (oldestRequestInWindow.timestamp + rule.windowMs) - now);
+    return Math.max(0, oldestRequestInWindow.timestamp + rule.windowMs - now);
   }
 
   /**
    * Wrap a function with rate limiting
    */
-  withRateLimit<T extends (...args: any[]) => Promise<any>>(
+  withRateLimit<TArgs extends readonly unknown[], TReturn>(
     endpoint: string,
-    fn: T
-  ): T {
-    return (async (...args: Parameters<T>) => {
+    fn: (...args: TArgs) => Promise<TReturn>
+  ): (...args: TArgs) => Promise<TReturn> {
+    return async (...args: TArgs): Promise<TReturn> => {
       if (!this.isAllowed(endpoint)) {
         const resetTime = this.getTimeUntilReset(endpoint);
         throw new Error(
@@ -90,7 +94,7 @@ class RateLimiterService {
 
       this.recordRequest(endpoint);
       return await fn(...args);
-    }) as T;
+    };
   }
 
   /**

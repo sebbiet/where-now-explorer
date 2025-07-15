@@ -6,23 +6,23 @@ import React from 'react';
 
 // Mock dependencies
 vi.mock('@/hooks/usePullToRefresh', () => ({
-  usePullToRefresh: vi.fn()
+  usePullToRefresh: vi.fn(),
 }));
 
 vi.mock('../LoadingSpinner', () => ({
-  default: () => <div data-testid="loading-spinner">Loading...</div>
+  default: () => <div data-testid="loading-spinner">Loading...</div>,
 }));
 
 describe('PullToRefresh', () => {
   const mockOnRefresh = vi.fn();
   const mockContainerRef = { current: document.createElement('div') };
-  
+
   const defaultHookReturn = {
     containerRef: mockContainerRef,
     isPulling: false,
     pullDistance: 0,
     isRefreshing: false,
-    pullProgress: 0
+    pullProgress: 0,
   };
 
   beforeEach(() => {
@@ -42,7 +42,9 @@ describe('PullToRefresh', () => {
         </PullToRefresh>
       );
 
-      expect(screen.getByTestId('child-content')).toHaveTextContent('Child content');
+      expect(screen.getByTestId('child-content')).toHaveTextContent(
+        'Child content'
+      );
       expect(screen.queryByTestId('loading-spinner')).not.toBeInTheDocument();
     });
 
@@ -56,7 +58,7 @@ describe('PullToRefresh', () => {
       expect(usePullToRefresh).toHaveBeenCalledWith({
         onRefresh: mockOnRefresh,
         threshold: 80,
-        disabled: true
+        disabled: true,
       });
     });
 
@@ -70,7 +72,7 @@ describe('PullToRefresh', () => {
       expect(usePullToRefresh).toHaveBeenCalledWith({
         onRefresh: mockOnRefresh,
         threshold: 80,
-        disabled: false
+        disabled: false,
       });
     });
   });
@@ -81,7 +83,7 @@ describe('PullToRefresh', () => {
         ...defaultHookReturn,
         isPulling: true,
         pullDistance: 50,
-        pullProgress: 0.5
+        pullProgress: 0.5,
       });
 
       render(
@@ -93,7 +95,7 @@ describe('PullToRefresh', () => {
       // Pull indicator should be visible
       const indicator = screen.getByText('↓');
       expect(indicator).toBeInTheDocument();
-      
+
       // Content should be transformed
       const content = screen.getByTestId('child-content').parentElement;
       expect(content).toHaveStyle('transform: translateY(50px)');
@@ -104,7 +106,7 @@ describe('PullToRefresh', () => {
         ...defaultHookReturn,
         isPulling: true,
         pullDistance: 40,
-        pullProgress: 0.8
+        pullProgress: 0.8,
       });
 
       render(
@@ -122,7 +124,7 @@ describe('PullToRefresh', () => {
         ...defaultHookReturn,
         isPulling: true,
         pullDistance: 150, // More than 100
-        pullProgress: 1
+        pullProgress: 1,
       });
 
       render(
@@ -133,7 +135,7 @@ describe('PullToRefresh', () => {
 
       const indicator = screen.getByText('↓').closest('div');
       expect(indicator).toHaveStyle('transform: translateY(100px)');
-      
+
       const content = screen.getByTestId('child-content').parentElement;
       expect(content).toHaveStyle('transform: translateY(100px)');
     });
@@ -145,7 +147,7 @@ describe('PullToRefresh', () => {
         ...defaultHookReturn,
         isPulling: true,
         pullDistance: 80,
-        pullProgress: 1
+        pullProgress: 1,
       });
 
       render(
@@ -163,7 +165,7 @@ describe('PullToRefresh', () => {
         ...defaultHookReturn,
         isPulling: true,
         pullDistance: 30,
-        pullProgress: 0.3
+        pullProgress: 0.3,
       });
 
       render(
@@ -172,7 +174,9 @@ describe('PullToRefresh', () => {
         </PullToRefresh>
       );
 
-      const indicatorContainer = screen.getByText('↓').closest('div')?.parentElement;
+      const indicatorContainer = screen
+        .getByText('↓')
+        .closest('div')?.parentElement;
       expect(indicatorContainer).toHaveStyle('opacity: 0.6'); // pullProgress * 2 = 0.6
     });
   });
@@ -181,7 +185,7 @@ describe('PullToRefresh', () => {
     it('should show loading spinner when refreshing', () => {
       vi.mocked(usePullToRefresh).mockReturnValue({
         ...defaultHookReturn,
-        isRefreshing: true
+        isRefreshing: true,
       });
 
       render(
@@ -197,7 +201,7 @@ describe('PullToRefresh', () => {
     it('should transform content when refreshing', () => {
       vi.mocked(usePullToRefresh).mockReturnValue({
         ...defaultHookReturn,
-        isRefreshing: true
+        isRefreshing: true,
       });
 
       render(
@@ -222,7 +226,7 @@ describe('PullToRefresh', () => {
       // Start with refreshing state
       vi.mocked(usePullToRefresh).mockReturnValue({
         ...defaultHookReturn,
-        isRefreshing: true
+        isRefreshing: true,
       });
 
       rerender(
@@ -237,7 +241,7 @@ describe('PullToRefresh', () => {
       vi.mocked(usePullToRefresh).mockReturnValue({
         ...defaultHookReturn,
         isRefreshing: false,
-        isPulling: false
+        isPulling: false,
       });
 
       rerender(
@@ -247,7 +251,7 @@ describe('PullToRefresh', () => {
       );
 
       expect(screen.queryByTestId('loading-spinner')).not.toBeInTheDocument();
-      
+
       const content = screen.getByTestId('child-content').parentElement;
       expect(content).toHaveStyle('transform: translateY(0)');
     });
@@ -257,7 +261,7 @@ describe('PullToRefresh', () => {
     it('should not show pull indicator when disabled', () => {
       vi.mocked(usePullToRefresh).mockReturnValue({
         ...defaultHookReturn,
-        isPulling: false // Hook should handle disabled state
+        isPulling: false, // Hook should handle disabled state
       });
 
       render(
@@ -267,7 +271,7 @@ describe('PullToRefresh', () => {
       );
 
       expect(screen.queryByText('↓')).not.toBeInTheDocument();
-      
+
       const content = screen.getByTestId('child-content').parentElement;
       expect(content).toHaveStyle('transform: translateY(0)');
     });
@@ -290,7 +294,7 @@ describe('PullToRefresh', () => {
       vi.mocked(usePullToRefresh).mockReturnValue({
         ...defaultHookReturn,
         isPulling: true,
-        pullProgress: 0.4
+        pullProgress: 0.4,
       });
 
       render(
@@ -299,7 +303,9 @@ describe('PullToRefresh', () => {
         </PullToRefresh>
       );
 
-      const indicatorContainer = screen.getByText('↓').closest('div')?.parentElement;
+      const indicatorContainer = screen
+        .getByText('↓')
+        .closest('div')?.parentElement;
       expect(indicatorContainer).toHaveStyle('opacity: 0.8'); // Math.min(0.4 * 2, 1)
     });
 
@@ -307,7 +313,7 @@ describe('PullToRefresh', () => {
       vi.mocked(usePullToRefresh).mockReturnValue({
         ...defaultHookReturn,
         isPulling: true,
-        pullProgress: 0.8
+        pullProgress: 0.8,
       });
 
       render(
@@ -316,14 +322,16 @@ describe('PullToRefresh', () => {
         </PullToRefresh>
       );
 
-      const indicatorContainer = screen.getByText('↓').closest('div')?.parentElement;
+      const indicatorContainer = screen
+        .getByText('↓')
+        .closest('div')?.parentElement;
       expect(indicatorContainer).toHaveStyle('opacity: 1'); // Math.min(0.8 * 2, 1) = 1
     });
 
     it('should have correct CSS classes for styling', () => {
       vi.mocked(usePullToRefresh).mockReturnValue({
         ...defaultHookReturn,
-        isPulling: true
+        isPulling: true,
       });
 
       render(
@@ -333,14 +341,19 @@ describe('PullToRefresh', () => {
       );
 
       const indicator = screen.getByText('↓').closest('.bg-white');
-      expect(indicator).toHaveClass('dark:bg-gray-800', 'rounded-full', 'p-3', 'shadow-lg');
+      expect(indicator).toHaveClass(
+        'dark:bg-gray-800',
+        'rounded-full',
+        'p-3',
+        'shadow-lg'
+      );
     });
   });
 
   describe('async refresh handling', () => {
     it('should handle promise-based onRefresh', async () => {
       const asyncRefresh = vi.fn().mockResolvedValue(undefined);
-      
+
       render(
         <PullToRefresh onRefresh={asyncRefresh}>
           <div>Content</div>
@@ -354,7 +367,7 @@ describe('PullToRefresh', () => {
 
     it('should handle synchronous onRefresh', () => {
       const syncRefresh = vi.fn();
-      
+
       render(
         <PullToRefresh onRefresh={syncRefresh}>
           <div>Content</div>
@@ -380,10 +393,10 @@ describe('PullToRefresh', () => {
         expect.objectContaining({
           onRefresh: mockOnRefresh,
           threshold: 80,
-          disabled: false
+          disabled: false,
         })
       );
-      
+
       // Container should have relative positioning for the pull indicator
       const containerElement = container.container.firstChild as HTMLElement;
       expect(containerElement).toHaveClass('relative');
@@ -396,7 +409,7 @@ describe('PullToRefresh', () => {
         ...defaultHookReturn,
         isPulling: true,
         pullDistance: 0,
-        pullProgress: 0
+        pullProgress: 0,
       });
 
       render(
@@ -414,7 +427,7 @@ describe('PullToRefresh', () => {
         ...defaultHookReturn,
         isPulling: true,
         pullDistance: -10,
-        pullProgress: 0
+        pullProgress: 0,
       });
 
       render(

@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { FeatureFlagsService, featureFlags, useFeatureFlag, useFeatureFlagValue, type FeatureFlag } from '../featureFlags.service';
+import {
+  FeatureFlagsService,
+  featureFlags,
+  useFeatureFlag,
+  useFeatureFlagValue,
+  type FeatureFlag,
+} from '../featureFlags.service';
 import { renderHook } from '@testing-library/react';
 
 // Mock dependencies
@@ -8,13 +14,13 @@ vi.mock('@/utils/logger', () => ({
     warn: vi.fn(),
     debug: vi.fn(),
     info: vi.fn(),
-    error: vi.fn()
-  }
+    error: vi.fn(),
+  },
 }));
 
 // Mock environment variables
 const mockEnv = {
-  PROD: false
+  PROD: false,
 };
 vi.mock('import.meta.env', () => mockEnv);
 
@@ -23,11 +29,11 @@ const mockLocalStorage = {
   getItem: vi.fn(),
   setItem: vi.fn(),
   removeItem: vi.fn(),
-  clear: vi.fn()
+  clear: vi.fn(),
 };
 Object.defineProperty(global, 'localStorage', {
   value: mockLocalStorage,
-  writable: true
+  writable: true,
 });
 
 // Mock fetch
@@ -36,7 +42,7 @@ global.fetch = vi.fn();
 // Mock navigator.userAgent
 Object.defineProperty(navigator, 'userAgent', {
   value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-  writable: true
+  writable: true,
 });
 
 describe('FeatureFlagsService', () => {
@@ -46,14 +52,14 @@ describe('FeatureFlagsService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Mock timers
     global.setInterval = vi.fn() as any;
     global.clearInterval = vi.fn();
-    
+
     // Reset localStorage mocks
     mockLocalStorage.getItem.mockReturnValue(null);
-    
+
     // Reset environment
     mockEnv.PROD = false;
 
@@ -64,7 +70,7 @@ describe('FeatureFlagsService', () => {
     vi.restoreAllMocks();
     global.setInterval = originalSetInterval;
     global.clearInterval = originalClearInterval;
-    
+
     if (service) {
       service.destroy();
     }
@@ -75,7 +81,7 @@ describe('FeatureFlagsService', () => {
       const testFlag: FeatureFlag = {
         key: 'testFlag',
         enabled: true,
-        rolloutPercentage: 100
+        rolloutPercentage: 100,
       };
 
       service.setFlag('testFlag', testFlag);
@@ -86,7 +92,7 @@ describe('FeatureFlagsService', () => {
       const testFlag: FeatureFlag = {
         key: 'testFlag',
         enabled: false,
-        rolloutPercentage: 100
+        rolloutPercentage: 100,
       };
 
       service.setFlag('testFlag', testFlag);
@@ -96,8 +102,8 @@ describe('FeatureFlagsService', () => {
     it('should return default value for non-existent flags', () => {
       const serviceWithDefaults = new FeatureFlagsService({
         defaultValues: {
-          missingFlag: true
-        }
+          missingFlag: true,
+        },
       });
 
       expect(serviceWithDefaults.isEnabled('missingFlag')).toBe(true);
@@ -116,13 +122,13 @@ describe('FeatureFlagsService', () => {
       const lowRolloutFlag: FeatureFlag = {
         key: 'lowRollout',
         enabled: true,
-        rolloutPercentage: 50  // Should exclude bucket 75
+        rolloutPercentage: 50, // Should exclude bucket 75
       };
 
       const highRolloutFlag: FeatureFlag = {
         key: 'highRollout',
         enabled: true,
-        rolloutPercentage: 100  // Should include bucket 75
+        rolloutPercentage: 100, // Should include bucket 75
       };
 
       serviceWithSeed.setFlag('lowRollout', lowRolloutFlag);
@@ -147,7 +153,7 @@ describe('FeatureFlagsService', () => {
     it('should use existing user bucket seed for consistency', () => {
       const existingSeed = 'existing-seed-123';
       mockLocalStorage.getItem.mockReturnValue(existingSeed);
-      
+
       new FeatureFlagsService();
 
       expect(mockLocalStorage.setItem).not.toHaveBeenCalled();
@@ -161,14 +167,15 @@ describe('FeatureFlagsService', () => {
         enabled: true,
         rolloutPercentage: 100,
         conditions: {
-          userAgent: ['Mobile', 'Android']
-        }
+          userAgent: ['Mobile', 'Android'],
+        },
       };
 
       // Mock mobile user agent
       Object.defineProperty(navigator, 'userAgent', {
-        value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) Mobile/15E148',
-        writable: true
+        value:
+          'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) Mobile/15E148',
+        writable: true,
       });
 
       service.setFlag('mobileFeature', mobileFlag);
@@ -181,14 +188,14 @@ describe('FeatureFlagsService', () => {
         enabled: true,
         rolloutPercentage: 100,
         conditions: {
-          userAgent: ['Mobile', 'Android']
-        }
+          userAgent: ['Mobile', 'Android'],
+        },
       };
 
       // Mock desktop user agent
       Object.defineProperty(navigator, 'userAgent', {
         value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        writable: true
+        writable: true,
       });
 
       service.setFlag('mobileFeature', mobileFlag);
@@ -201,13 +208,13 @@ describe('FeatureFlagsService', () => {
         enabled: true,
         rolloutPercentage: 100,
         conditions: {
-          userAgent: ['WINDOWS']
-        }
+          userAgent: ['WINDOWS'],
+        },
       };
 
       Object.defineProperty(navigator, 'userAgent', {
         value: 'Mozilla/5.0 (windows nt 10.0; win64; x64)',
-        writable: true
+        writable: true,
       });
 
       service.setFlag('testFlag', testFlag);
@@ -222,8 +229,8 @@ describe('FeatureFlagsService', () => {
         enabled: true,
         rolloutPercentage: 100,
         conditions: {
-          location: ['Australia', 'US']
-        }
+          location: ['Australia', 'US'],
+        },
       };
 
       service.setFlag('locationFeature', locationFlag);
@@ -245,9 +252,9 @@ describe('FeatureFlagsService', () => {
         conditions: {
           timeRange: {
             start: oneHourAgo,
-            end: oneHourFromNow
-          }
-        }
+            end: oneHourFromNow,
+          },
+        },
       };
 
       service.setFlag('timeBasedFeature', timeBasedFlag);
@@ -266,9 +273,9 @@ describe('FeatureFlagsService', () => {
         conditions: {
           timeRange: {
             start: twoHoursAgo,
-            end: oneHourAgo
-          }
-        }
+            end: oneHourAgo,
+          },
+        },
       };
 
       service.setFlag('expiredFeature', expiredFlag);
@@ -287,9 +294,9 @@ describe('FeatureFlagsService', () => {
         conditions: {
           timeRange: {
             start: oneHourFromNow,
-            end: twoHoursFromNow
-          }
-        }
+            end: twoHoursFromNow,
+          },
+        },
       };
 
       service.setFlag('futureFeature', futureFlag);
@@ -302,7 +309,7 @@ describe('FeatureFlagsService', () => {
       const testFlag: FeatureFlag = {
         key: 'hookTest',
         enabled: true,
-        rolloutPercentage: 100
+        rolloutPercentage: 100,
       };
 
       featureFlags.setFlag('hookTest', testFlag);
@@ -321,18 +328,22 @@ describe('FeatureFlagsService', () => {
           description: 'Test flag',
           owner: 'test',
           createdAt: new Date(),
-          lastModified: new Date()
-        } as any
+          lastModified: new Date(),
+        } as any,
       };
 
       featureFlags.setFlag('valueTest', testFlag);
 
-      const { result } = renderHook(() => useFeatureFlagValue('valueTest', 'default'));
+      const { result } = renderHook(() =>
+        useFeatureFlagValue('valueTest', 'default')
+      );
       expect(result.current).toBe('test-value');
     });
 
     it('should return default value when hook flag is disabled', () => {
-      const { result } = renderHook(() => useFeatureFlagValue('disabledFlag', 'default-value'));
+      const { result } = renderHook(() =>
+        useFeatureFlagValue('disabledFlag', 'default-value')
+      );
       expect(result.current).toBe('default-value');
     });
   });
@@ -342,8 +353,8 @@ describe('FeatureFlagsService', () => {
       const serviceWithDefaults = new FeatureFlagsService({
         defaultValues: {
           defaultTrue: true,
-          defaultFalse: false
-        }
+          defaultFalse: false,
+        },
       });
 
       expect(serviceWithDefaults.isEnabled('defaultTrue')).toBe(true);
@@ -355,14 +366,14 @@ describe('FeatureFlagsService', () => {
     it('should prioritize actual flags over default values', () => {
       const serviceWithDefaults = new FeatureFlagsService({
         defaultValues: {
-          overrideTest: true
-        }
+          overrideTest: true,
+        },
       });
 
       const actualFlag: FeatureFlag = {
         key: 'overrideTest',
         enabled: false,
-        rolloutPercentage: 100
+        rolloutPercentage: 100,
       };
 
       serviceWithDefaults.setFlag('overrideTest', actualFlag);
@@ -383,8 +394,8 @@ describe('FeatureFlagsService', () => {
           description: 'Test',
           owner: 'test',
           createdAt: new Date(),
-          lastModified: new Date()
-        } as any
+          lastModified: new Date(),
+        } as any,
       };
 
       service.setFlag('valueFlag', valueFlag);
@@ -395,7 +406,7 @@ describe('FeatureFlagsService', () => {
       const disabledFlag: FeatureFlag = {
         key: 'disabledFlag',
         enabled: false,
-        rolloutPercentage: 100
+        rolloutPercentage: 100,
       };
 
       service.setFlag('disabledFlag', disabledFlag);
@@ -406,7 +417,7 @@ describe('FeatureFlagsService', () => {
       const noValueFlag: FeatureFlag = {
         key: 'noValueFlag',
         enabled: true,
-        rolloutPercentage: 100
+        rolloutPercentage: 100,
       };
 
       service.setFlag('noValueFlag', noValueFlag);
@@ -418,14 +429,14 @@ describe('FeatureFlagsService', () => {
     it('should return all flag statuses', () => {
       const serviceWithDefaults = new FeatureFlagsService({
         defaultValues: {
-          defaultFlag: true
-        }
+          defaultFlag: true,
+        },
       });
 
       const testFlag: FeatureFlag = {
         key: 'testFlag',
         enabled: true,
-        rolloutPercentage: 100
+        rolloutPercentage: 100,
       };
 
       serviceWithDefaults.setFlag('testFlag', testFlag);
@@ -441,8 +452,8 @@ describe('FeatureFlagsService', () => {
       const serviceWithDefaults = new FeatureFlagsService({
         defaultValues: {
           missingFlag: false,
-          anotherMissing: true
-        }
+          anotherMissing: true,
+        },
       });
 
       const allFlags = serviceWithDefaults.getAllFlags();
@@ -459,17 +470,17 @@ describe('FeatureFlagsService', () => {
         remoteFlag: {
           key: 'remoteFlag',
           enabled: true,
-          rolloutPercentage: 75
-        }
+          rolloutPercentage: 75,
+        },
       };
 
       vi.mocked(fetch).mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve(remoteFlags)
+        json: () => Promise.resolve(remoteFlags),
       } as Response);
 
       const serviceWithRemote = new FeatureFlagsService({
-        remoteConfigUrl: 'https://example.com/flags'
+        remoteConfigUrl: 'https://example.com/flags',
       });
 
       await serviceWithRemote.refreshFlags();
@@ -484,7 +495,7 @@ describe('FeatureFlagsService', () => {
       vi.mocked(fetch).mockRejectedValue(new Error('Network error'));
 
       const serviceWithRemote = new FeatureFlagsService({
-        remoteConfigUrl: 'https://example.com/flags'
+        remoteConfigUrl: 'https://example.com/flags',
       });
 
       // Should not throw
@@ -497,11 +508,11 @@ describe('FeatureFlagsService', () => {
       vi.mocked(fetch).mockResolvedValue({
         ok: false,
         status: 404,
-        statusText: 'Not Found'
+        statusText: 'Not Found',
       } as Response);
 
       const serviceWithRemote = new FeatureFlagsService({
-        remoteConfigUrl: 'https://example.com/flags'
+        remoteConfigUrl: 'https://example.com/flags',
       });
 
       await expect(serviceWithRemote.refreshFlags()).resolves.toBeUndefined();
@@ -512,7 +523,7 @@ describe('FeatureFlagsService', () => {
     it('should start periodic refresh when configured', () => {
       new FeatureFlagsService({
         remoteConfigUrl: 'https://example.com/flags',
-        refreshInterval: 5000
+        refreshInterval: 5000,
       });
 
       expect(setInterval).toHaveBeenCalledWith(expect.any(Function), 5000);
@@ -520,7 +531,7 @@ describe('FeatureFlagsService', () => {
 
     it('should not start periodic refresh without remote URL', () => {
       new FeatureFlagsService({
-        refreshInterval: 5000
+        refreshInterval: 5000,
       });
 
       expect(setInterval).not.toHaveBeenCalled();
@@ -530,11 +541,11 @@ describe('FeatureFlagsService', () => {
   describe('service lifecycle', () => {
     it('should initialize default flags on creation', () => {
       const newService = new FeatureFlagsService();
-      
+
       // Should have default flags
       expect(newService.isEnabled('enablePerformanceMonitoring')).toBe(true);
       expect(newService.isEnabled('enableAdvancedAnalytics')).toBe(true);
-      
+
       newService.destroy();
     });
 
@@ -555,7 +566,7 @@ describe('FeatureFlagsService', () => {
     it('should clean up intervals on destroy', () => {
       const serviceWithInterval = new FeatureFlagsService({
         remoteConfigUrl: 'https://example.com/flags',
-        refreshInterval: 5000
+        refreshInterval: 5000,
       });
 
       serviceWithInterval.destroy();
@@ -574,15 +585,15 @@ describe('FeatureFlagsService', () => {
           userAgent: ['Mobile'],
           timeRange: {
             start: new Date(Date.now() - 60 * 60 * 1000),
-            end: new Date(Date.now() + 60 * 60 * 1000)
-          }
-        }
+            end: new Date(Date.now() + 60 * 60 * 1000),
+          },
+        },
       };
 
       // Should fail due to desktop user agent
       Object.defineProperty(navigator, 'userAgent', {
         value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-        writable: true
+        writable: true,
       });
 
       service.setFlag('complexFlag', complexFlag);
@@ -590,8 +601,9 @@ describe('FeatureFlagsService', () => {
 
       // Should pass with mobile user agent
       Object.defineProperty(navigator, 'userAgent', {
-        value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) Mobile/15E148',
-        writable: true
+        value:
+          'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) Mobile/15E148',
+        writable: true,
       });
 
       expect(service.isEnabled('complexFlag')).toBe(true);
@@ -602,7 +614,7 @@ describe('FeatureFlagsService', () => {
         key: 'emptyConditions',
         enabled: true,
         rolloutPercentage: 100,
-        conditions: {}
+        conditions: {},
       };
 
       service.setFlag('emptyConditions', emptyConditionsFlag);
@@ -614,10 +626,12 @@ describe('FeatureFlagsService', () => {
     it('should handle malformed user bucket seed', () => {
       mockLocalStorage.getItem.mockReturnValue('');
       const serviceWithEmptySeed = new FeatureFlagsService();
-      
+
       // Should still function
-      expect(typeof serviceWithEmptySeed.isEnabled('enablePerformanceMonitoring')).toBe('boolean');
-      
+      expect(
+        typeof serviceWithEmptySeed.isEnabled('enablePerformanceMonitoring')
+      ).toBe('boolean');
+
       serviceWithEmptySeed.destroy();
     });
 
@@ -625,7 +639,7 @@ describe('FeatureFlagsService', () => {
       const originalUserAgent = navigator.userAgent;
       Object.defineProperty(navigator, 'userAgent', {
         value: undefined,
-        writable: true
+        writable: true,
       });
 
       const userAgentFlag: FeatureFlag = {
@@ -633,8 +647,8 @@ describe('FeatureFlagsService', () => {
         enabled: true,
         rolloutPercentage: 100,
         conditions: {
-          userAgent: ['Mobile']
-        }
+          userAgent: ['Mobile'],
+        },
       };
 
       service.setFlag('userAgentFlag', userAgentFlag);
@@ -643,7 +657,7 @@ describe('FeatureFlagsService', () => {
       // Restore
       Object.defineProperty(navigator, 'userAgent', {
         value: originalUserAgent,
-        writable: true
+        writable: true,
       });
     });
   });

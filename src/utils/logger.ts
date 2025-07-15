@@ -7,7 +7,7 @@ export enum LogLevel {
   DEBUG = 0,
   INFO = 1,
   WARN = 2,
-  ERROR = 3
+  ERROR = 3,
 }
 
 export interface LogContext {
@@ -33,21 +33,34 @@ class Logger {
   private minLevel = this.isProduction ? LogLevel.WARN : LogLevel.DEBUG;
   private logs: LogEntry[] = [];
   private maxLogs = 1000; // Keep last 1000 log entries in memory
-  
+
   // Analytics integration (if available)
-  private analytics: any = null;
+  private analytics:
+    | ((
+        command: string,
+        action: string,
+        parameters?: Record<string, unknown>
+      ) => void)
+    | null = null;
 
   constructor() {
     // Initialize analytics if available
     if (typeof window !== 'undefined') {
       // Check for gtag availability (may be loaded asynchronously)
-      if ((window as any).gtag) {
-        this.analytics = (window as any).gtag;
+      const windowWithGtag = window as unknown as {
+        gtag?: (
+          command: string,
+          action: string,
+          parameters?: Record<string, unknown>
+        ) => void;
+      };
+      if (windowWithGtag.gtag) {
+        this.analytics = windowWithGtag.gtag;
       } else {
         // Try again after page load
         window.addEventListener('load', () => {
-          if ((window as any).gtag) {
-            this.analytics = (window as any).gtag;
+          if (windowWithGtag.gtag) {
+            this.analytics = windowWithGtag.gtag;
           }
         });
       }
@@ -86,8 +99,13 @@ class Logger {
    * Error logging - errors that need attention
    */
   error(message: string, error?: Error, context: LogContext = {}): void {
-    this.log(LogLevel.ERROR, message, { ...context, error: error?.message }, error);
-    
+    this.log(
+      LogLevel.ERROR,
+      message,
+      { ...context, error: error?.message },
+      error
+    );
+
     // Send critical errors to analytics in production
     if (this.isProduction && this.analytics && error) {
       this.analytics('event', 'exception', {
@@ -96,8 +114,8 @@ class Logger {
         custom_map: {
           component: context.component,
           service: context.service,
-          operation: context.operation
-        }
+          operation: context.operation,
+        },
       });
     }
   }
@@ -105,12 +123,16 @@ class Logger {
   /**
    * Performance timing logging
    */
-  performance(operation: string, duration: number, context: LogContext = {}): void {
+  performance(
+    operation: string,
+    duration: number,
+    context: LogContext = {}
+  ): void {
     this.info(`Performance: ${operation} took ${duration}ms`, {
       ...context,
       operation,
       duration,
-      type: 'performance'
+      type: 'performance',
     });
 
     // Send performance metrics to analytics
@@ -118,7 +140,7 @@ class Logger {
       this.analytics('event', 'timing_complete', {
         name: operation,
         value: Math.round(duration),
-        custom_map: context
+        custom_map: context,
       });
     }
   }
@@ -130,14 +152,14 @@ class Logger {
     this.info(`User action: ${action}`, {
       ...context,
       action,
-      type: 'user_action'
+      type: 'user_action',
     });
 
     // Send user actions to analytics
     if (this.analytics) {
       this.analytics('event', 'custom_action', {
         action_name: action,
-        custom_map: context
+        custom_map: context,
       });
     }
   }
@@ -145,7 +167,12 @@ class Logger {
   /**
    * Core logging method
    */
-  private log(level: LogLevel, message: string, context: LogContext = {}, error?: Error): void {
+  private log(
+    level: LogLevel,
+    message: string,
+    context: LogContext = {},
+    error?: Error
+  ): void {
     if (level < this.minLevel) {
       return;
     }
@@ -155,10 +182,10 @@ class Logger {
       message,
       context: {
         ...context,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       },
       timestamp: Date.now(),
-      error
+      error,
     };
 
     // Store in memory (useful for debugging)
@@ -170,8 +197,9 @@ class Logger {
     // In development, use console
     if (!this.isProduction) {
       const levelName = LogLevel[level];
-      const contextStr = Object.keys(context).length > 0 ? JSON.stringify(context, null, 2) : '';
-      
+      const contextStr =
+        Object.keys(context).length > 0 ? JSON.stringify(context, null, 2) : '';
+
       switch (level) {
         case LogLevel.DEBUG:
           console.debug(`[${levelName}] ${message}`, contextStr);
@@ -226,7 +254,7 @@ export const logPerformance = (operation: string) => {
       const duration = performance.now() - start;
       logger.performance(operation, duration, context);
       return duration;
-    }
+    },
   };
 };
 
@@ -240,7 +268,10 @@ export const logAsyncOperation = async <T>(
     logger.debug(`Starting ${operation}`, context);
     const result = await fn();
     const duration = perf.end(context);
-    logger.debug(`Completed ${operation} in ${Math.round(duration)}ms`, context);
+    logger.debug(
+      `Completed ${operation} in ${Math.round(duration)}ms`,
+      context
+    );
     return result;
   } catch (error) {
     perf.end({ ...context, error: true });
@@ -256,13 +287,13 @@ if (typeof window !== 'undefined') {
       filename: event.filename,
       lineno: event.lineno,
       colno: event.colno,
-      type: 'global_error'
+      type: 'global_error',
     });
   });
 
   window.addEventListener('unhandledrejection', (event) => {
     logger.error('Unhandled promise rejection', new Error(event.reason), {
-      type: 'unhandled_rejection'
+      type: 'unhandled_rejection',
     });
   });
 }
