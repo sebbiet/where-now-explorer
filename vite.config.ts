@@ -10,6 +10,16 @@ export default defineConfig(({ mode }) => ({
     host: '::',
     port: 8080,
     https: false, // Set to true if you need HTTPS for geolocation
+    proxy: {
+      '/api/geocoding': {
+        target: 'https://nominatim.openstreetmap.org',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/geocoding/, ''),
+        headers: {
+          'User-Agent': 'AreWeThereYetApp/1.0 (Development)',
+        },
+      },
+    },
   },
   plugins: [react()],
   resolve: {

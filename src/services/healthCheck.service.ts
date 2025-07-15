@@ -330,8 +330,8 @@ class HealthCheckService {
     // External API connectivity check
     this.registerCheck('external-apis', async () => {
       try {
-        // Test with one of our allowed geocoding endpoints
-        const testUrl = 'https://nominatim.openstreetmap.org/status.php';
+        // Test with our proxied geocoding endpoint
+        const testUrl = '/api/geocoding/status.php';
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 3000);
 
@@ -356,7 +356,7 @@ class HealthCheckService {
             duration: 0,
             details: {
               statusCode: response.status,
-              endpoint: 'nominatim',
+              endpoint: 'nominatim-proxy',
             },
           };
         } catch (fetchError) {

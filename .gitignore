@@ -37,3 +37,6 @@ claude-artifacts/
 .aider*
 .assistant/
 .continue/
+
+# Test files
+test-proxy.js

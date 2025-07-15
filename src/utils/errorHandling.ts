@@ -2,8 +2,8 @@ import { toast } from '@/hooks/use-toast';
 import {
   GeolocationError,
   GeolocationErrorCode,
-  GeocodingError,
-} from '@/types/location';
+} from '@/services/geolocation.service';
+import { GeocodingError } from '@/services/geocoding.service';
 
 export interface ErrorHandlerOptions {
   onRetry?: () => void;

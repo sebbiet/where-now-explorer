@@ -141,8 +141,20 @@ export class GeocodingError extends ServiceError {
 }
 
 class GeocodingServiceImpl extends BaseService {
-  private static readonly BASE_URL = 'https://nominatim.openstreetmap.org';
+  private static readonly DIRECT_URL = 'https://nominatim.openstreetmap.org';
   private static readonly USER_AGENT = 'AreWeThereYetApp/1.0';
+
+  private get baseUrl(): string {
+    // Use proxy URL if configured, otherwise fall back to default
+    const proxyUrl = import.meta.env.VITE_GEOCODING_PROXY_URL;
+    if (proxyUrl) {
+      return proxyUrl.endsWith('/') ? proxyUrl.slice(0, -1) : proxyUrl;
+    }
+
+    // Always use the proxy (Vite proxy in dev, Netlify proxy in prod)
+    return '/api/geocoding';
+  }
+
   private static readonly DEFAULT_HEADERS = {
     'User-Agent': GeocodingServiceImpl.USER_AGENT,
   };
@@ -211,7 +223,7 @@ class GeocodingServiceImpl extends BaseService {
         }),
       });
 
-      const url = `${GeocodingServiceImpl.BASE_URL}/reverse?${params.toString()}`;
+      const url = `${this.baseUrl}/reverse?${params.toString()}`;
 
       // Primary operation
       const primaryOperation = async () => {
@@ -354,7 +366,7 @@ class GeocodingServiceImpl extends BaseService {
         params.append('viewbox', viewbox.join(','));
       }
 
-      const url = `${GeocodingServiceImpl.BASE_URL}/search?${params.toString()}`;
+      const url = `${this.baseUrl}/search?${params.toString()}`;
 
       // Primary operation
       const primaryOperation = async () => {

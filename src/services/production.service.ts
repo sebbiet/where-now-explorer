@@ -174,7 +174,8 @@ export class ProductionService {
 
     // Track unhandled errors in analytics
     window.addEventListener('error', (event) => {
-      productionAnalytics.trackError(event.error, {
+      const error = event.error || new Error(event.message || 'Unknown error');
+      productionAnalytics.trackError(error, {
         filename: event.filename,
         lineno: event.lineno,
         colno: event.colno,
@@ -183,8 +184,13 @@ export class ProductionService {
     });
 
     window.addEventListener('unhandledrejection', (event) => {
-      productionAnalytics.trackError(new Error(event.reason), {
+      const error =
+        event.reason instanceof Error
+          ? event.reason
+          : new Error(String(event.reason) || 'Unhandled promise rejection');
+      productionAnalytics.trackError(error, {
         type: 'unhandled_rejection',
+        reason: event.reason,
       });
     });
 

@@ -147,13 +147,36 @@ class ProductionAnalyticsService {
   /**
    * Track errors with context
    */
-  trackError(error: Error, context: Record<string, unknown> = {}): void {
-    this.trackEvent('error', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
-      ...context,
-    });
+  trackError(
+    error: Error | unknown,
+    context: Record<string, unknown> = {}
+  ): void {
+    // Handle null or undefined errors
+    if (!error) {
+      this.trackEvent('error', {
+        message: 'Unknown error occurred',
+        stack: undefined,
+        name: 'UnknownError',
+        isNull: true,
+        ...context,
+      });
+    } else if (error instanceof Error) {
+      this.trackEvent('error', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+        ...context,
+      });
+    } else {
+      // Handle non-Error objects
+      this.trackEvent('error', {
+        message: String(error),
+        stack: undefined,
+        name: 'NonErrorObject',
+        rawError: error,
+        ...context,
+      });
+    }
 
     this.session.errors++;
     this.metrics.errorRate = this.session.errors / this.session.actions;

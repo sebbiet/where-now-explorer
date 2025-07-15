@@ -120,7 +120,7 @@ export const DestinationSearch: React.FC<DestinationSearchProps> = ({
 
   return (
     <div
-      className="w-full max-w-4xl mt-6 relative backdrop-blur-2xl rounded-3xl p-8"
+      className="w-full max-w-4xl mt-6 relative backdrop-blur-2xl rounded-3xl p-4 sm:p-6 md:p-8"
       style={{
         background: 'rgba(255, 255, 255, 0.85)',
         boxShadow: `
@@ -144,9 +144,9 @@ export const DestinationSearch: React.FC<DestinationSearchProps> = ({
       />
 
       <div className="relative z-10">
-        <div className="flex items-center mb-8">
-          <Navigation className="w-10 h-10 text-yellow-500 dark:text-yellow-400 mr-4" />
-          <h2 className="text-3xl md:text-4xl font-black text-gray-800 dark:text-white">
+        <div className="flex items-center mb-6 sm:mb-8">
+          <Navigation className="w-8 h-8 sm:w-10 sm:h-10 text-yellow-500 dark:text-yellow-400 mr-3 sm:mr-4 flex-shrink-0" />
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-800 dark:text-white">
             Where are we going?
           </h2>
         </div>
@@ -158,7 +158,7 @@ export const DestinationSearch: React.FC<DestinationSearchProps> = ({
           aria-label="Destination search form"
         >
           <div className="relative w-full">
-            <Popover open={open} onOpenChange={setOpen}>
+            <Popover open={open} onOpenChange={setOpen} modal={false}>
               <PopoverTrigger asChild>
                 <SearchInput
                   value={inputValue}
@@ -169,9 +169,10 @@ export const DestinationSearch: React.FC<DestinationSearchProps> = ({
                 />
               </PopoverTrigger>
               <PopoverContent
-                className="p-0 w-[var(--radix-popover-trigger-width)] bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 rounded-xl shadow-xl"
+                className="p-0 w-[var(--radix-popover-trigger-width)] bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 rounded-xl shadow-xl z-50"
                 align="start"
                 sideOffset={5}
+                onOpenAutoFocus={(e) => e.preventDefault()}
               >
                 <SuggestionsList
                   suggestions={suggestions}
@@ -184,7 +185,7 @@ export const DestinationSearch: React.FC<DestinationSearchProps> = ({
 
           <p
             id="search-instructions"
-            className="text-base text-gray-600 dark:text-gray-300 font-medium"
+            className="text-sm sm:text-base text-gray-600 dark:text-gray-300 font-medium px-2 sm:px-0"
           >
             Type at least 3 letters to see suggestions. Try popular places,
             landmarks, cities, or addresses.
@@ -192,7 +193,7 @@ export const DestinationSearch: React.FC<DestinationSearchProps> = ({
 
           <Button
             type="submit"
-            className="kid-button w-full bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-800 hover:from-yellow-300 hover:to-orange-300 font-black text-xl py-5 shadow-lg hover:shadow-xl"
+            className="kid-button w-full bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-800 hover:from-yellow-300 hover:to-orange-300 font-black text-lg sm:text-xl py-4 sm:py-5 shadow-lg hover:shadow-xl touch-manipulation"
             disabled={isSubmitDisabled}
           >
             Calculate Distance
