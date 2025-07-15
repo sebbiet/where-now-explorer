@@ -56,6 +56,7 @@ This project is built with:
 - **React**: UI library
 - **shadcn/ui**: Component library
 - **Tailwind CSS**: Utility-first CSS framework
+- **Vitest**: Unit testing framework with Testing Library
 
 ## Available Scripts
 
@@ -64,6 +65,9 @@ npm run dev        # Start development server on port 8080
 npm run build      # Build for production
 npm run lint       # Run ESLint
 npm run preview    # Preview production build
+npm test           # Run unit tests with Vitest
+npm run test:run   # Run tests once (CI mode)
+npm run coverage   # Generate test coverage report
 ```
 
 ## License

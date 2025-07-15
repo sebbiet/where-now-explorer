@@ -9,6 +9,9 @@ npm run dev        # Start development server on port 8080
 npm run build      # Production build
 npm run lint       # Run ESLint
 npm run preview    # Preview production build
+npm test           # Run unit tests with Vitest
+npm run test:run   # Run tests once (CI mode)
+npm run coverage   # Generate test coverage report
 ```
 
 ## Architecture Overview
@@ -34,7 +37,8 @@ This is a React + TypeScript web application built with Vite. The "There yet app
 
 - TypeScript is configured with relaxed settings (no strict null checks)
 - Path alias `@/` maps to `src/` directory
-- No testing framework currently configured
+- Testing framework: Vitest with Testing Library for React components
+- Comprehensive unit test suite covering services, hooks, and components
 - Deployed to custom domain with GitHub Actions
 
 ### Component Patterns
