@@ -60,7 +60,18 @@ export const DestinationSearch: React.FC<DestinationSearchProps> = ({
       setIsSearching(true);
 
       try {
+        logger.info('Searching for places', {
+          query,
+          baseGeocodeOptions,
+        });
+
         const data = await GeocodingService.geocode(query, baseGeocodeOptions);
+
+        logger.info('Geocoding results received', {
+          query,
+          resultCount: data.length,
+          results: data,
+        });
 
         // Transform results using the address formatting utility
         const formattedSuggestions = data.map(createSuggestionItem);

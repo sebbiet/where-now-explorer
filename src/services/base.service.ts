@@ -267,9 +267,16 @@ export abstract class BaseService {
 
       // Handle HTTP errors
       if (!response.ok) {
+        let errorBody = '';
+        try {
+          errorBody = await response.text();
+        } catch (e) {
+          // Ignore if we can't read the body
+        }
+
         const error = new NetworkError(
-          this.getHttpErrorMessage(response.status),
-          { statusCode: response.status }
+          `${this.getHttpErrorMessage(response.status)}${errorBody ? `: ${errorBody}` : ''}`,
+          { statusCode: response.status, responseBody: errorBody }
         );
         throw error;
       }

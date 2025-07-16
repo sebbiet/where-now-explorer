@@ -51,13 +51,116 @@ class MockGeocodingProvider implements GeocodingProvider {
       setTimeout(resolve, animations.timeouts.debounce)
     );
 
+    // Return some common place examples based on query
+    const lowerQuery = query.toLowerCase();
+
+    // Common landmarks
+    if (lowerQuery.includes('sydney opera house')) {
+      return [
+        {
+          lat: '-33.8568',
+          lon: '151.2153',
+          display_name:
+            'Sydney Opera House, Bennelong Point, Sydney NSW 2000, Australia',
+          place_id: 'fallback-opera-house',
+          type: 'tourism',
+          address: {
+            attraction: 'Sydney Opera House',
+            suburb: 'Sydney',
+            state: 'New South Wales',
+            country: 'Australia',
+          },
+        },
+      ];
+    }
+
+    if (lowerQuery.includes('eiffel tower')) {
+      return [
+        {
+          lat: '48.8584',
+          lon: '2.2945',
+          display_name:
+            'Eiffel Tower, Champ de Mars, 5 Avenue Anatole France, 75007 Paris, France',
+          place_id: 'fallback-eiffel',
+          type: 'tourism',
+          address: {
+            attraction: 'Eiffel Tower',
+            city: 'Paris',
+            country: 'France',
+          },
+        },
+      ];
+    }
+
+    // Common cities
+    if (lowerQuery.includes('sydney')) {
+      return [
+        {
+          lat: '-33.8688',
+          lon: '151.2093',
+          display_name: 'Sydney, New South Wales, Australia',
+          place_id: 'fallback-sydney',
+          type: 'city',
+          address: {
+            city: 'Sydney',
+            state: 'New South Wales',
+            country: 'Australia',
+          },
+        },
+      ];
+    }
+
+    if (lowerQuery.includes('new york')) {
+      return [
+        {
+          lat: '40.7128',
+          lon: '-74.0060',
+          display_name: 'New York City, New York, United States',
+          place_id: 'fallback-nyc',
+          type: 'city',
+          address: {
+            city: 'New York City',
+            state: 'New York',
+            country: 'United States',
+          },
+        },
+      ];
+    }
+
+    // Default fallback - provide a few generic suggestions
     return [
       {
         lat: '-33.8688',
         lon: '151.2093',
-        display_name: `${query} (Fallback Result)`,
-        place_id: 'fallback-' + Date.now(),
+        display_name: `${query} - Sydney, Australia (Example)`,
+        place_id: 'fallback-1-' + Date.now(),
         type: 'fallback',
+        address: {
+          city: 'Sydney',
+          country: 'Australia',
+        },
+      },
+      {
+        lat: '40.7128',
+        lon: '-74.0060',
+        display_name: `${query} - New York, USA (Example)`,
+        place_id: 'fallback-2-' + Date.now(),
+        type: 'fallback',
+        address: {
+          city: 'New York',
+          country: 'United States',
+        },
+      },
+      {
+        lat: '51.5074',
+        lon: '-0.1278',
+        display_name: `${query} - London, UK (Example)`,
+        place_id: 'fallback-3-' + Date.now(),
+        type: 'fallback',
+        address: {
+          city: 'London',
+          country: 'United Kingdom',
+        },
       },
     ];
   }

@@ -372,12 +372,20 @@ class GeocodingServiceImpl extends BaseService {
       // Primary operation
       const primaryOperation = async () => {
         try {
+          logger.info('Making geocoding request', {
+            url,
+            baseUrl: this.baseUrl,
+            query: sanitizedQuery,
+          });
+
           const result = await this.executeRequest<GeocodeResult[]>(url, {
             headers: GeocodingServiceImpl.DEFAULT_HEADERS,
           });
+
           logger.info('Geocoding API successful', {
             url,
             resultCount: result.length,
+            firstResult: result[0],
           });
           return result;
         } catch (error) {
@@ -387,6 +395,9 @@ class GeocodingServiceImpl extends BaseService {
             baseUrl: this.baseUrl,
             errorMessage:
               error instanceof Error ? error.message : 'Unknown error',
+            errorStack: error instanceof Error ? error.stack : undefined,
+            errorType: error?.constructor?.name,
+            errorDetails: error,
           });
           throw error;
         }
@@ -397,24 +408,67 @@ class GeocodingServiceImpl extends BaseService {
         'geocode',
         { query: sanitizedQuery },
         async () => {
-          const data = await this.executeWithFallbacks(primaryOperation, [
-            {
-              name: 'fallback-geocoding',
-              priority: 1,
-              execute: () => fallbackGeocoding.geocode(sanitizedQuery, options),
-            },
-          ]);
+          let primaryError: Error | null = null;
 
-          if (!Array.isArray(data)) {
-            throw new ValidationError(
-              getErrorMessage('GEOCODING', 'INVALID_RESPONSE')
+          try {
+            // Try primary operation first
+            const data = await primaryOperation();
+
+            if (!Array.isArray(data)) {
+              throw new ValidationError(
+                getErrorMessage('GEOCODING', 'INVALID_RESPONSE')
+              );
+            }
+
+            // Cache the result
+            GeocodingCacheService.setGeocodeCache(
+              sanitizedQuery,
+              options,
+              data
             );
+            return data;
+          } catch (error) {
+            primaryError = error as Error;
+            logger.warn('Primary geocoding failed, attempting fallback', {
+              query: sanitizedQuery,
+              error: primaryError.message,
+            });
           }
 
-          // Cache the result
-          GeocodingCacheService.setGeocodeCache(sanitizedQuery, options, data);
+          // Try fallback if primary failed
+          try {
+            const data = await fallbackGeocoding.geocode(
+              sanitizedQuery,
+              options
+            );
 
-          return data;
+            if (!Array.isArray(data)) {
+              throw new ValidationError(
+                getErrorMessage('GEOCODING', 'INVALID_RESPONSE')
+              );
+            }
+
+            logger.info('Fallback geocoding successful', {
+              query: sanitizedQuery,
+              resultCount: data.length,
+            });
+
+            // Cache the result
+            GeocodingCacheService.setGeocodeCache(
+              sanitizedQuery,
+              options,
+              data
+            );
+            return data;
+          } catch (fallbackError) {
+            logger.error('Both primary and fallback geocoding failed', {
+              query: sanitizedQuery,
+              primaryError: primaryError?.message,
+              fallbackError: (fallbackError as Error).message,
+            });
+            // Throw the original primary error
+            throw primaryError;
+          }
         }
       );
 
