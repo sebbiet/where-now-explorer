@@ -1,14 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Navigation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { useDebounce } from '@/hooks/useDebounce';
 import { getCountryCode, queryContainsCountry } from '@/lib/countryUtils';
-import { GeocodingService } from '@/services/geocoding.service';
+import { GeocodingService, GeocodeResult } from '@/services/geocoding.service';
 import { SearchInput } from './SearchInput';
 import { SuggestionsList } from './SuggestionsList';
 import {
@@ -16,27 +11,28 @@ import {
   SuggestionItem,
 } from '@/utils/addressFormatting';
 import { logger } from '@/utils/logger';
+import { ResponsiveSearch } from './ResponsiveSearch';
 
 interface DestinationSearchProps {
-  onDestinationSubmit: (destination: string) => void;
+  onDestinationSelect: (place: GeocodeResult) => void;
   isLoading: boolean;
   userCountry?: string;
 }
 
 export const DestinationSearch: React.FC<DestinationSearchProps> = ({
-  onDestinationSubmit,
+  onDestinationSelect,
   isLoading,
   userCountry,
 }) => {
-  const [destination, setDestination] = useState('');
   const [inputValue, setInputValue] = useState('');
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedSuggestion, setSelectedSuggestion] =
+    useState<SuggestionItem | null>(null);
 
-  const debouncedSearch = useDebounce(inputValue, 500);
+  const debouncedSearch = useDebounce(inputValue, 300);
 
-  // Memoize geocoding options based on user country
   const baseGeocodeOptions = useMemo(() => {
     const options: Parameters<typeof GeocodingService.geocode>[1] = {
       limit: 5,
@@ -58,32 +54,13 @@ export const DestinationSearch: React.FC<DestinationSearchProps> = ({
       if (!query || query.length < 3) return;
 
       setIsSearching(true);
-
       try {
-        logger.info('Searching for places', {
-          query,
-          baseGeocodeOptions,
-        });
-
         const data = await GeocodingService.geocode(query, baseGeocodeOptions);
-
-        logger.info('Geocoding results received', {
-          query,
-          resultCount: data.length,
-          results: data,
-        });
-
-        // Transform results using the address formatting utility
         const formattedSuggestions = data.map(createSuggestionItem);
-
         setSuggestions(formattedSuggestions);
-        setOpen(formattedSuggestions.length > 0);
+        setIsOpen(formattedSuggestions.length > 0);
       } catch (error) {
-        logger.error('Error fetching place suggestions', error as Error, {
-          component: 'DestinationSearch',
-          operation: 'searchPlaces',
-          query,
-        });
+        logger.error('Error fetching place suggestions', error as Error);
         setSuggestions([]);
       } finally {
         setIsSearching(false);
@@ -97,43 +74,58 @@ export const DestinationSearch: React.FC<DestinationSearchProps> = ({
       searchPlaces(debouncedSearch);
     } else {
       setSuggestions([]);
+      setIsOpen(false);
     }
   }, [debouncedSearch, searchPlaces]);
 
   const handleSuggestionSelect = useCallback((suggestion: SuggestionItem) => {
     setInputValue(suggestion.displayName);
-    setDestination(suggestion.displayName);
-    setOpen(false);
+    setSelectedSuggestion(suggestion);
+    setIsOpen(false);
   }, []);
 
   const handleInputChange = useCallback(
     (value: string) => {
       setInputValue(value);
-      // Open popover when user starts typing
-      if (value.length >= 3 && !open) {
-        setOpen(true);
+      setSelectedSuggestion(null);
+      if (value.length >= 3 && !isOpen) {
+        setIsOpen(true);
       }
     },
-    [open]
+    [isOpen]
   );
 
   const handleInputClear = useCallback(() => {
-    setDestination('');
+    setInputValue('');
+    setSelectedSuggestion(null);
   }, []);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      if (destination.trim()) {
-        onDestinationSubmit(destination.trim());
+      if (selectedSuggestion) {
+        onDestinationSelect(selectedSuggestion.original);
+      } else if (suggestions.length > 0) {
+        onDestinationSelect(suggestions[0].original);
       }
     },
-    [destination, onDestinationSubmit]
+    [selectedSuggestion, suggestions, onDestinationSelect]
   );
 
   const isSubmitDisabled = useMemo(
-    () => isLoading || !destination.trim(),
-    [isLoading, destination]
+    () => isLoading || (!selectedSuggestion && suggestions.length === 0),
+    [isLoading, selectedSuggestion, suggestions]
+  );
+
+  const searchBox = (
+    <SearchInput
+      value={inputValue}
+      onChange={handleInputChange}
+      onClear={handleInputClear}
+      isLoading={isLoading}
+      isOpen={isOpen}
+      isSearching={isSearching}
+    />
   );
 
   return (
@@ -176,37 +168,17 @@ export const DestinationSearch: React.FC<DestinationSearchProps> = ({
           aria-label="Destination search form"
         >
           <div className="relative w-full">
-            <Popover open={open} onOpenChange={setOpen} modal={false}>
-              <PopoverTrigger asChild>
-                <SearchInput
-                  value={inputValue}
-                  onChange={handleInputChange}
-                  onClear={handleInputClear}
-                  isLoading={isLoading}
-                  isOpen={open}
-                  isSearching={isSearching}
-                />
-              </PopoverTrigger>
-              <PopoverContent
-                className="p-0 w-[var(--radix-popover-trigger-width)] bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 rounded-xl shadow-xl z-50"
-                align="start"
-                sideOffset={5}
-                onOpenAutoFocus={(e) => e.preventDefault()}
-                onInteractOutside={(e) => {
-                  // Prevent closing when clicking on a suggestion
-                  const target = e.target as HTMLElement;
-                  if (target.closest('[role="option"]')) {
-                    e.preventDefault();
-                  }
-                }}
-              >
-                <SuggestionsList
-                  suggestions={suggestions}
-                  isSearching={isSearching}
-                  onSelect={handleSuggestionSelect}
-                />
-              </PopoverContent>
-            </Popover>
+            <ResponsiveSearch
+              searchBox={searchBox}
+              isOpen={isOpen}
+              onOpenChange={setIsOpen}
+            >
+              <SuggestionsList
+                suggestions={suggestions}
+                isSearching={isSearching}
+                onSelect={handleSuggestionSelect}
+              />
+            </ResponsiveSearch>
           </div>
 
           <p
