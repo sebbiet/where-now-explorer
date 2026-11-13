@@ -1,16 +1,18 @@
 import React from 'react';
-import { Clock, Route } from 'lucide-react';
+import { AlarmClock, Clock, Route } from 'lucide-react';
 
 interface DestinationResultProps {
   destination: string;
   distance: string;
   duration: string;
+  arrivalTime: string;
 }
 
 const DestinationResult: React.FC<DestinationResultProps> = ({
   destination,
   distance,
   duration,
+  arrivalTime,
 }) => {
   return (
     <div
@@ -42,7 +44,7 @@ const DestinationResult: React.FC<DestinationResultProps> = ({
           Trip to {destination}
         </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="flex items-center p-6 rounded-2xl bg-white/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
             <Route className="w-12 h-12 text-sky-500 dark:text-sky-400 mr-4 flex-shrink-0" />
             <div>
@@ -63,6 +65,18 @@ const DestinationResult: React.FC<DestinationResultProps> = ({
               </p>
               <p className="text-2xl font-black text-gray-800 dark:text-white">
                 {duration}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center p-6 rounded-2xl bg-white/50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+            <AlarmClock className="w-12 h-12 text-orange-500 dark:text-orange-400 mr-4 flex-shrink-0" />
+            <div>
+              <p className="text-base text-gray-600 dark:text-gray-400 font-medium">
+                Arrival
+              </p>
+              <p className="text-2xl font-black text-gray-800 dark:text-white">
+                {arrivalTime}
               </p>
             </div>
           </div>

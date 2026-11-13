@@ -9,11 +9,20 @@ interface SearchInputProps {
   isLoading: boolean;
   isOpen: boolean;
   isSearching?: boolean;
+  onFocus?: () => void;
 }
 
 export const SearchInput = React.forwardRef<HTMLDivElement, SearchInputProps>(
   (
-    { value, onChange, onClear, isLoading, isOpen, isSearching = false },
+    {
+      value,
+      onChange,
+      onClear,
+      isLoading,
+      isOpen,
+      isSearching = false,
+      onFocus,
+    },
     ref
   ) => {
     return (
@@ -30,6 +39,7 @@ export const SearchInput = React.forwardRef<HTMLDivElement, SearchInputProps>(
           placeholder="Start typing a place..."
           className="w-full p-4 sm:p-5 text-base sm:text-xl text-gray-800 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded-xl border-2 border-gray-300 dark:border-gray-600 focus:border-yellow-400 dark:focus:border-yellow-500 pr-12 bg-white/50 dark:bg-gray-800/50 touch-manipulation"
           disabled={isLoading}
+          onFocus={onFocus}
           aria-label="Destination search"
           aria-describedby="search-instructions"
           aria-autocomplete="list"

@@ -7,6 +7,8 @@ export interface DestinationHistoryItem {
   timestamp: number;
   distance?: string;
   duration?: string;
+  lat?: string;
+  lon?: string;
 }
 
 const MAX_HISTORY_ITEMS = 10;

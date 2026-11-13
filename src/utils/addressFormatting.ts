@@ -181,14 +181,16 @@ export interface SuggestionItem {
   id: string;
   name: string;
   displayName: string;
+  original: GeocodeResult;
 }
 
 export const createSuggestionItem = (result: GeocodeResult): SuggestionItem => {
   const { primaryName, fullAddress } = formatGeocodeResult(result);
 
   return {
-    id: result.place_id,
+    id: result.place_id || `${result.lat},${result.lon}`,
     name: primaryName,
     displayName: fullAddress,
+    original: result,
   };
 };
