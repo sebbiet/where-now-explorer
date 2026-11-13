@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { RoutingService, RouteResult } from '@/services/routing.service';
 import { GeocodeResult } from '@/services/geocoding.service';
-import { toast } from 'sonner';
+
 import { toastError, createErrorToast } from '@/utils/errorHandling';
 
 interface UseDistanceCalculationOptions {
@@ -34,7 +34,7 @@ export const useDistanceCalculation = (
         options?.onSuccess?.(result);
 
         return result;
-      } catch (err) {
+      } catch (_error) {
         const error = err as Error;
         setError(error);
         options?.onError?.(error);

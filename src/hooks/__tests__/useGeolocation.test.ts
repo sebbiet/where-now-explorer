@@ -100,7 +100,7 @@ describe('useGeolocation', () => {
       await act(async () => {
         try {
           await result.current.getCurrentPosition();
-        } catch (e) {
+        } catch (_error) {
           // Expected to throw
         }
       });
@@ -133,7 +133,7 @@ describe('useGeolocation', () => {
       await act(async () => {
         try {
           await result.current.getCurrentPosition();
-        } catch (e) {
+        } catch (_error) {
           // Expected to throw
         }
       });
@@ -164,7 +164,7 @@ describe('useGeolocation', () => {
       await act(async () => {
         try {
           await result.current.getCurrentPosition();
-        } catch (e) {
+        } catch (_error) {
           // Expected to throw
         }
       });
@@ -194,7 +194,7 @@ describe('useGeolocation', () => {
       await act(async () => {
         try {
           await result.current.getCurrentPosition();
-        } catch (e) {
+        } catch (_error) {
           // Expected to throw
         }
       });
@@ -221,7 +221,7 @@ describe('useGeolocation', () => {
       await act(async () => {
         try {
           await result.current.getCurrentPosition();
-        } catch (e) {
+        } catch (_error) {
           // Expected to throw
         }
       });
@@ -339,7 +339,7 @@ describe('useGeolocation', () => {
       await act(async () => {
         try {
           await result.current.getCurrentPosition();
-        } catch (e) {
+        } catch (_error) {
           // Expected to throw
         }
       });

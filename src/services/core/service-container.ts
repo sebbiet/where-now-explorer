@@ -8,7 +8,6 @@ import {
 import {
   RetryStrategy,
   ExponentialBackoffRetryStrategy,
-  NoRetryStrategy,
 } from './retry-strategy';
 import { Cache, MemoryCache, LocalStorageCache } from './cache';
 import { analytics } from '@/services/analytics.service';

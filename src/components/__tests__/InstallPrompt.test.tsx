@@ -10,7 +10,7 @@ import userEvent from '@testing-library/user-event';
 import InstallPrompt from '../InstallPrompt';
 
 // TypeScript interfaces for PWA and test mocks
-interface BeforeInstallPromptEvent extends Event {
+interface _BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
   readonly userChoice: Promise<{
     outcome: 'accepted' | 'dismissed';
@@ -35,7 +35,10 @@ interface MockSetTimeoutReturn {
   id: number;
 }
 
-type MockSetTimeoutFn = (fn: () => void, delay: number) => MockSetTimeoutReturn;
+type _MockSetTimeoutFn = (
+  fn: () => void,
+  delay: number
+) => MockSetTimeoutReturn;
 
 // Mock dependencies
 vi.mock('@/hooks/useInstallPrompt', () => ({

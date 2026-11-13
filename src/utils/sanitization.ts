@@ -150,7 +150,7 @@ export function sanitizeStorageValue(value: unknown): string {
     }
 
     return serialized;
-  } catch (error) {
+  } catch (_error) {
     throw new Error(getErrorMessage('STORAGE', 'INVALID_DATA'));
   }
 }

@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { shadows, animations } from '@/styles/constants';
+import { shadows } from '@/styles/constants';
 
 const PageTitle = memo(() => {
   return (

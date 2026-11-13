@@ -268,7 +268,7 @@ export class ProductionService {
           });
         });
         observer.observe({ entryTypes: ['largest-contentful-paint'] });
-      } catch (error) {
+      } catch (_error) {
         logger.warn('Could not observe LCP', { service: 'Production' });
       }
     }
@@ -287,7 +287,7 @@ export class ProductionService {
           });
         });
         observer.observe({ entryTypes: ['first-input'] });
-      } catch (error) {
+      } catch (_error) {
         logger.warn('Could not observe FID', { service: 'Production' });
       }
     }
@@ -314,7 +314,7 @@ export class ProductionService {
             productionAnalytics.trackPerformance('cls', clsValue);
           }
         });
-      } catch (error) {
+      } catch (_error) {
         logger.warn('Could not observe CLS', { service: 'Production' });
       }
     }
@@ -343,7 +343,7 @@ export class ProductionService {
           });
         });
         observer.observe({ entryTypes: ['resource'] });
-      } catch (error) {
+      } catch (_error) {
         logger.warn('Could not observe resource loading', {
           service: 'Production',
         });
@@ -372,7 +372,7 @@ export class ProductionService {
           });
         });
         observer.observe({ entryTypes: ['longtask'] });
-      } catch (error) {
+      } catch (_error) {
         logger.warn('Could not observe long tasks', { service: 'Production' });
       }
     }

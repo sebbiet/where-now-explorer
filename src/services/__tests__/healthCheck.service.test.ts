@@ -1,9 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   HealthCheckService,
-  healthCheck,
   createHealthEndpoint,
-  type HealthCheck,
 } from '../healthCheck.service';
 
 // Mock dependencies
@@ -57,7 +55,7 @@ global.AbortController = vi.fn(() => ({
 }));
 
 // Mock setTimeout
-global.setTimeout = vi.fn((fn, delay) => {
+global.setTimeout = vi.fn((fn, _delay) => {
   if (typeof fn === 'function') fn();
   return 123 as any;
 });

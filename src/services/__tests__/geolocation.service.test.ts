@@ -3,10 +3,8 @@ import {
   GeolocationService,
   GeolocationErrorCode,
   GeolocationError,
-  GeolocationPosition,
 } from '../geolocation.service';
 import { analytics } from '../analytics.service';
-import { getErrorMessage } from '@/utils/errorMessages';
 
 // Mock dependencies
 vi.mock('../analytics.service', () => ({

@@ -107,7 +107,7 @@ describe('useDistanceCalculation', () => {
             -74.006,
             mockDestination
           );
-        } catch (e) {
+        } catch (_error) {
           // Expected to throw
         }
       });
@@ -139,7 +139,7 @@ describe('useDistanceCalculation', () => {
             -74.006,
             mockDestination
           );
-        } catch (e) {
+        } catch (_error) {
           // Expected to throw
         }
       });
@@ -162,7 +162,7 @@ describe('useDistanceCalculation', () => {
             -74.006,
             mockDestination
           );
-        } catch (e) {
+        } catch (_error) {
           // Expected to throw
         }
       });
@@ -216,7 +216,7 @@ describe('useDistanceCalculation', () => {
             -74.006,
             invalidDestination
           );
-        } catch (e) {
+        } catch (_error) {
           // Expected to throw
         }
       });
@@ -307,7 +307,7 @@ describe('useDistanceCalculation', () => {
             -74.006,
             mockDestination
           );
-        } catch (e) {
+        } catch (_error) {
           // Expected to throw
         }
       });

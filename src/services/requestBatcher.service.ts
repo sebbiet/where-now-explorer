@@ -164,7 +164,7 @@ export class RequestBatcherService {
    */
   async batchGeocode(
     queries: string[],
-    options?: GeocodeOptions
+    _options?: GeocodeOptions
   ): Promise<GeocodeResult[][]> {
     // This would be implemented to make a single API call for multiple queries
     // For now, we'll simulate it - in real implementation, this would use
@@ -182,7 +182,7 @@ export class RequestBatcherService {
         // This would be replaced with actual batch API call
         const result: GeocodeResult[] = [];
         queryResults.set(query, result);
-      } catch (error) {
+      } catch (_error) {
         queryResults.set(query, []);
       }
     }

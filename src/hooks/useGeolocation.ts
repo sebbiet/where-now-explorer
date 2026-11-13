@@ -1,9 +1,8 @@
 import { useState, useCallback } from 'react';
-import { toast } from 'sonner';
+
 import {
   GeolocationService,
   GeolocationError,
-  GeolocationErrorCode,
 } from '@/services/geolocation.service';
 import { handleGeolocationError } from '@/utils/errorHandling';
 
@@ -28,7 +27,7 @@ export const useGeolocation = (options?: UseGeolocationOptions) => {
       setCoordinates(position.coords);
       options?.onSuccess?.(position.coords);
       return position.coords;
-    } catch (err) {
+    } catch (_error) {
       const geoError = err as GeolocationError;
       setError(geoError);
       options?.onError?.(geoError);

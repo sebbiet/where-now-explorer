@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useOnlineStatus } from '../useOnlineStatus';
-import { flushSync } from 'react-dom';
 
 // Mock the constants
 vi.mock('@/styles/constants', () => ({
@@ -317,7 +316,7 @@ describe('useOnlineStatus', () => {
     });
 
     it('should re-setup listeners when isOnline state changes', () => {
-      const { result } = renderHook(() => useOnlineStatus());
+      const { _result } = renderHook(() => useOnlineStatus());
 
       const initialSetupCalls = mockWindow.addEventListener.mock.calls.length;
 

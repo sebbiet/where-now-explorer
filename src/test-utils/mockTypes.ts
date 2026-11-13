@@ -67,9 +67,11 @@ export const createMockLocalStorage = (): MockLocalStorage => {
       store[key] = value;
     }),
     removeItem: vi.fn((key: string) => {
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
       delete store[key];
     }),
     clear: vi.fn(() => {
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
       Object.keys(store).forEach((key) => delete store[key]);
     }),
     get length() {

@@ -6,10 +6,7 @@ import {
   RouteResponse,
 } from '../routing.service';
 import { offlineMode } from '../offlineMode.service';
-import {
-  deduplicateRoutingRequest,
-  deduplicateGeocodingRequest,
-} from '@/utils/requestDeduplication';
+import { deduplicateRoutingRequest } from '@/utils/requestDeduplication';
 
 // Mock dependencies
 vi.mock('../offlineMode.service', () => ({
