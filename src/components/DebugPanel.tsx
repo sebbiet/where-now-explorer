@@ -38,18 +38,10 @@ const DebugPanel: React.FC = () => {
     { name: 'Golden Gate Bridge', lat: 37.8199, lng: -122.4783 },
   ];
 
-  // Check if debug mode is enabled via URL parameter
-  // Usage: ?debug=YOUR_SECRET_KEY (set via VITE_DEBUG_KEY env variable)
-  // This allows viewing debug panel in production for troubleshooting
-  const urlParams = new URLSearchParams(window.location.search);
-  const debugParam = urlParams.get('debug');
-  const debugKey = import.meta.env.VITE_DEBUG_KEY || 'development-only';
-  // Only enable if key is set and matches (prevents access if env var not configured)
-  const isDebugEnabled =
-    debugKey !== 'development-only' && debugParam === debugKey;
-
-  // Show in development OR when debug parameter is present
-  if (process.env.NODE_ENV !== 'development' && !isDebugEnabled) {
+  // Debug tools stay in local development only. A VITE_ debug key
+  // would be inlined into the public bundle, so production has no
+  // debug-panel bypass.
+  if (!import.meta.env.DEV) {
     return null;
   }
 
