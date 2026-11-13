@@ -1,27 +1,41 @@
 import type { Handler } from '@netlify/functions';
 
 const NOMINATIM_BASE_URL = 'https://nominatim.openstreetmap.org';
-const USER_AGENT = 'AreWeThereYetApp/1.0 (https://thereyetapp.com)';
+const USER_AGENT =
+  'ThereYetApp/1.1 (https://thereyetapp.com; family location app)';
 
-// Rate limiting configuration
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
-const MAX_REQUESTS_PER_WINDOW = 60; // 1 request per second on average
+// Nominatim public API policy: max 1 request per second.
+const MIN_INTERVAL_MS = 1000;
+const RATE_LIMIT_WINDOW = 60 * 1000;
+const MAX_REQUESTS_PER_WINDOW = 60;
+const CACHE_TTL_MS = 5 * 60 * 1000;
+const ALLOWED_ENDPOINTS = ['/search', '/reverse', '/status.php'];
+
 const requestCounts = new Map<string, { count: number; resetTime: number }>();
+const responseCache = new Map<
+  string,
+  { status: number; body: string; contentType: string; expires: number }
+>();
 
-function getRateLimitKey(ip: string): string {
-  return `rate-limit:${ip}`;
+let lastNominatimRequestAt = 0;
+let requestChain: Promise<void> = Promise.resolve();
+
+function getClientIp(event: {
+  headers: Record<string, string | undefined>;
+}): string {
+  const forwarded = event.headers['x-forwarded-for'];
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+  return event.headers['x-real-ip'] || 'unknown';
 }
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
-  const key = getRateLimitKey(ip);
-  const record = requestCounts.get(key);
+  const record = requestCounts.get(ip);
 
   if (!record || now > record.resetTime) {
-    requestCounts.set(key, {
-      count: 1,
-      resetTime: now + RATE_LIMIT_WINDOW,
-    });
+    requestCounts.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
     return true;
   }
 
@@ -29,68 +43,98 @@ function checkRateLimit(ip: string): boolean {
     return false;
   }
 
-  record.count++;
+  record.count += 1;
   return true;
 }
 
+function jsonResponse(
+  statusCode: number,
+  body: unknown,
+  extraHeaders: Record<string, string> = {}
+) {
+  return {
+    statusCode,
+    body: JSON.stringify(body),
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      ...extraHeaders,
+    },
+  };
+}
+
+async function waitForNominatimSlot(): Promise<void> {
+  const run = requestChain.then(async () => {
+    const wait = lastNominatimRequestAt + MIN_INTERVAL_MS - Date.now();
+    if (wait > 0) {
+      await new Promise((resolve) => setTimeout(resolve, wait));
+    }
+    lastNominatimRequestAt = Date.now();
+  });
+  // Keep the chain going even if a waiter fails
+  requestChain = run.then(
+    () => undefined,
+    () => undefined
+  );
+  await run;
+}
+
 export const handler: Handler = async (event) => {
-  // Only allow GET requests
-  if (event.httpMethod !== 'GET') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ error: 'Method not allowed' }),
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-    };
+  if (event.httpMethod === 'OPTIONS') {
+    return jsonResponse(204, {});
   }
 
-  // Extract IP for rate limiting
-  const ip =
-    event.headers['x-forwarded-for'] || event.headers['x-real-ip'] || 'unknown';
+  if (event.httpMethod !== 'GET') {
+    return jsonResponse(405, { error: 'Method not allowed' });
+  }
 
-  // Check rate limit
+  const ip = getClientIp(event);
   if (!checkRateLimit(ip)) {
-    return {
-      statusCode: 429,
-      body: JSON.stringify({
+    return jsonResponse(
+      429,
+      {
         error: 'Too many requests. Please try again later.',
         retryAfter: 60,
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Retry-After': '60',
       },
-    };
+      { 'Retry-After': '60' }
+    );
   }
 
-  // Extract the path after /api/geocoding/
   const path = event.path
     .replace('/.netlify/functions/geocoding-proxy', '')
     .replace('/api/geocoding', '');
 
-  // Validate the endpoint
-  const allowedEndpoints = ['/search', '/reverse', '/status.php'];
   const endpoint = path.split('?')[0];
+  if (!ALLOWED_ENDPOINTS.includes(endpoint)) {
+    return jsonResponse(400, { error: 'Invalid endpoint' });
+  }
 
-  if (!allowedEndpoints.includes(endpoint)) {
+  const cacheKey = `${path}?${event.rawQuery || ''}`;
+  const cached = responseCache.get(cacheKey);
+  if (cached && cached.expires > Date.now()) {
     return {
-      statusCode: 400,
-      body: JSON.stringify({ error: 'Invalid endpoint' }),
+      statusCode: cached.status,
+      body: cached.body,
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': cached.contentType,
         'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Cache-Control': 'public, max-age=300',
+        'X-Geocoding-Cache': 'HIT',
       },
     };
   }
 
   try {
-    // Build the Nominatim URL
-    const nominatimUrl = `${NOMINATIM_BASE_URL}${path}${event.rawQuery ? `?${event.rawQuery}` : ''}`;
+    await waitForNominatimSlot();
 
-    // Make the request to Nominatim
+    const nominatimUrl = `${NOMINATIM_BASE_URL}${path}${
+      event.rawQuery ? `?${event.rawQuery}` : ''
+    }`;
+
     const response = await fetch(nominatimUrl, {
       method: 'GET',
       headers: {
@@ -100,36 +144,38 @@ export const handler: Handler = async (event) => {
       },
     });
 
-    // Get the response body
     const data = await response.text();
+    const contentType =
+      response.headers.get('content-type') || 'application/json';
 
-    // Return the response with CORS headers
+    if (response.status === 200) {
+      responseCache.set(cacheKey, {
+        status: response.status,
+        body: data,
+        contentType,
+        expires: Date.now() + CACHE_TTL_MS,
+      });
+    }
+
     return {
       statusCode: response.status,
       body: data,
       headers: {
-        'Content-Type':
-          response.headers.get('content-type') || 'application/json',
+        'Content-Type': contentType,
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Cache-Control':
           response.status === 200 ? 'public, max-age=300' : 'no-cache',
+        'X-Geocoding-Cache': 'MISS',
       },
     };
   } catch (error) {
     console.error('Proxy error:', error);
-
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        error: 'Failed to fetch geocoding data',
-        message: error.message,
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-    };
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return jsonResponse(500, {
+      error: 'Failed to fetch geocoding data',
+      message,
+    });
   }
 };

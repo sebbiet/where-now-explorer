@@ -3,15 +3,24 @@
   publish = "dist"
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "20"
 
-# Redirect all API calls to the edge function
+[functions]
+  directory = "netlify/functions"
+
+# Proxy geocoding through a Netlify function so we can send a real
+# User-Agent and stay within Nominatim's usage policy.
 [[redirects]]
   from = "/api/geocoding/*"
   to = "/.netlify/functions/geocoding-proxy/:splat"
   status = 200
 
-# Headers for the app
+# SPA fallback
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]
@@ -19,4 +28,5 @@
     X-Content-Type-Options = "nosniff"
     X-XSS-Protection = "1; mode=block"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "camera=(), microphone=(), payment=()"
+    Permissions-Policy = "geolocation=(self), camera=(), microphone=(), payment=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"

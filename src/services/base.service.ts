@@ -208,7 +208,8 @@ export abstract class BaseService {
   /**
    * Check rate limits before executing operation
    */
-  protected checkRateLimit(): void {
+  protected async checkRateLimit(): Promise<void> {
+    await rateLimiter.waitForSlot(this.config.rateLimitKey);
     if (!rateLimiter.isAllowed(this.config.rateLimitKey)) {
       const resetTime = rateLimiter.getTimeUntilReset(this.config.rateLimitKey);
       throw new RateLimitError(
@@ -228,7 +229,7 @@ export abstract class BaseService {
   ): Promise<T> {
     // Check rate limits unless explicitly skipped
     if (!options.skipRateLimit) {
-      this.checkRateLimit();
+      await this.checkRateLimit();
     }
 
     const fetchOperation = async (): Promise<T> => {
@@ -270,7 +271,7 @@ export abstract class BaseService {
         let errorBody = '';
         try {
           errorBody = await response.text();
-        } catch (e) {
+        } catch (_error) {
           // Ignore if we can't read the body
         }
 
