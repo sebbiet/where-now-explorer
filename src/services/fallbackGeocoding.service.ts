@@ -1,425 +1,281 @@
 /**
- * Fallback Geocoding Service
- * Provides alternative geocoding providers when primary service fails
+ * Fallback geocoding via Photon (https://photon.komoot.io).
+ * Used only when the primary Nominatim proxy fails.
+ * Never invents or fabricates locations.
  */
 
-import { GeocodeResult, ReverseGeocodeResult } from './geocoding.service';
+import {
+  GeocodeResult,
+  ReverseGeocodeResult,
+  GeocodeOptions,
+} from './geocoding.service';
 import { BaseService, ServiceError, ValidationError } from './base.service';
 import { validateCoordinates } from '@/utils/sanitization';
-import { animations } from '@/styles/constants';
 import { getErrorMessage } from '@/utils/errorMessages';
+import { logger } from '@/utils/logger';
 
-export interface GeocodingProvider {
-  name: string;
-  reverseGeocode(lat: number, lon: number): Promise<ReverseGeocodeResult>;
-  geocode(query: string, options?: any): Promise<GeocodeResult[]>;
-  isAvailable(): boolean;
-  getPriority(): number;
+const PHOTON_BASE_URL = 'https://photon.komoot.io';
+
+interface PhotonFeature {
+  geometry?: { coordinates?: [number, number] };
+  properties?: {
+    osm_id?: number;
+    osm_type?: string;
+    name?: string;
+    street?: string;
+    housenumber?: string;
+    city?: string;
+    town?: string;
+    village?: string;
+    district?: string;
+    suburb?: string;
+    county?: string;
+    state?: string;
+    country?: string;
+    postcode?: string;
+    type?: string;
+  };
 }
 
-/**
- * Mock provider for demonstration - would be replaced with real providers
- */
-class MockGeocodingProvider implements GeocodingProvider {
-  constructor(
-    public name: string,
-    private priority: number = 0
-  ) {}
+interface PhotonResponse {
+  features?: PhotonFeature[];
+}
+
+function buildDisplayName(
+  properties: NonNullable<PhotonFeature['properties']>
+): string {
+  const locality =
+    properties.city ||
+    properties.town ||
+    properties.village ||
+    properties.suburb;
+  const streetParts = [properties.housenumber, properties.street]
+    .filter(Boolean)
+    .join(' ');
+  const parts = [
+    properties.name,
+    streetParts,
+    properties.suburb || properties.district,
+    locality,
+    properties.state,
+    properties.country,
+  ].filter((part, index, list) => part && list.indexOf(part) === index);
+  return parts.join(', ');
+}
+
+function mapFeatureToGeocodeResult(
+  feature: PhotonFeature
+): GeocodeResult | null {
+  const coordinates = feature.geometry?.coordinates;
+  const properties = feature.properties;
+  if (!coordinates || coordinates.length < 2 || !properties) {
+    return null;
+  }
+
+  const [lon, lat] = coordinates;
+  if (typeof lat !== 'number' || typeof lon !== 'number') {
+    return null;
+  }
+
+  const city = properties.city || properties.town || properties.village;
+  const displayName = buildDisplayName(properties);
+  if (!displayName) {
+    return null;
+  }
+
+  return {
+    lat: String(lat),
+    lon: String(lon),
+    display_name: displayName,
+    address: {
+      road: properties.street,
+      suburb: properties.suburb || properties.district,
+      city,
+      town: properties.town,
+      village: properties.village,
+      county: properties.county,
+      state: properties.state,
+      country: properties.country,
+      postcode: properties.postcode,
+    },
+    osm_id: properties.osm_id != null ? String(properties.osm_id) : undefined,
+    osm_type: properties.osm_type,
+    type: properties.type,
+  };
+}
+
+function mapFeatureToReverseResult(
+  feature: PhotonFeature,
+  latitude: number,
+  longitude: number
+): ReverseGeocodeResult | null {
+  const mapped = mapFeatureToGeocodeResult(feature);
+  if (!mapped?.address) {
+    return null;
+  }
+
+  return {
+    street: mapped.address.road,
+    suburb: mapped.address.suburb || mapped.address.neighbourhood,
+    city: mapped.address.city || mapped.address.town || mapped.address.village,
+    county: mapped.address.county,
+    state: mapped.address.state,
+    country: mapped.address.country,
+    latitude,
+    longitude,
+  };
+}
+
+class PhotonGeocodingServiceImpl extends BaseService {
+  constructor() {
+    super('fallback-geocoding', {
+      rateLimitKey: 'fallback-geocoding',
+      maxRetries: 1,
+      timeout: 10000,
+      enableMonitoring: true,
+      enableDeduplication: false,
+      enablePerformanceTracking: true,
+    });
+  }
+
+  async geocode(
+    query: string,
+    options?: GeocodeOptions
+  ): Promise<GeocodeResult[]> {
+    if (!query || typeof query !== 'string' || !query.trim()) {
+      throw new ValidationError(
+        getErrorMessage('VALIDATION', 'REQUIRED_FIELD', {
+          field: 'Search query',
+        })
+      );
+    }
+
+    const params = new URLSearchParams({
+      q: query.trim(),
+      limit: String(options?.limit ?? 5),
+      lang: 'en',
+    });
+
+    const url = `${PHOTON_BASE_URL}/api?${params.toString()}`;
+    const data = await this.executeRequest<PhotonResponse>(url, {
+      headers: { Accept: 'application/json' },
+    });
+
+    const results = (data.features || [])
+      .map(mapFeatureToGeocodeResult)
+      .filter((result): result is GeocodeResult => result !== null);
+
+    if (results.length === 0) {
+      throw new ServiceError(
+        getErrorMessage('GEOCODING', 'SERVICE_UNAVAILABLE'),
+        { code: 'NO_RESULTS', statusCode: 404 }
+      );
+    }
+
+    logger.info('Photon geocoding successful', {
+      query,
+      resultCount: results.length,
+    });
+    return results;
+  }
 
   async reverseGeocode(
     lat: number,
     lon: number
   ): Promise<ReverseGeocodeResult> {
-    // Simulate API call
-    await new Promise((resolve) =>
-      setTimeout(resolve, animations.timeouts.debounce)
+    this.validateInput(
+      { lat, lon },
+      {
+        lat: (latitude) => validateCoordinates(latitude, lon),
+        lon: (longitude) => validateCoordinates(lat, longitude),
+      }
     );
 
-    return {
-      street: 'Fallback Street',
-      city: 'Fallback City',
-      state: 'Fallback State',
-      country: 'Fallback Country',
-      latitude: lat,
-      longitude: lon,
-    };
-  }
-
-  async geocode(query: string): Promise<GeocodeResult[]> {
-    // Simulate API call
-    await new Promise((resolve) =>
-      setTimeout(resolve, animations.timeouts.debounce)
-    );
-
-    // Return some common place examples based on query
-    const lowerQuery = query.toLowerCase();
-
-    // Common landmarks
-    if (lowerQuery.includes('sydney opera house')) {
-      return [
-        {
-          lat: '-33.8568',
-          lon: '151.2153',
-          display_name:
-            'Sydney Opera House, Bennelong Point, Sydney NSW 2000, Australia',
-          place_id: 'fallback-opera-house',
-          type: 'tourism',
-          address: {
-            attraction: 'Sydney Opera House',
-            suburb: 'Sydney',
-            state: 'New South Wales',
-            country: 'Australia',
-          },
-        },
-      ];
-    }
-
-    if (lowerQuery.includes('eiffel tower')) {
-      return [
-        {
-          lat: '48.8584',
-          lon: '2.2945',
-          display_name:
-            'Eiffel Tower, Champ de Mars, 5 Avenue Anatole France, 75007 Paris, France',
-          place_id: 'fallback-eiffel',
-          type: 'tourism',
-          address: {
-            attraction: 'Eiffel Tower',
-            city: 'Paris',
-            country: 'France',
-          },
-        },
-      ];
-    }
-
-    // Common cities
-    if (lowerQuery.includes('sydney')) {
-      return [
-        {
-          lat: '-33.8688',
-          lon: '151.2093',
-          display_name: 'Sydney, New South Wales, Australia',
-          place_id: 'fallback-sydney',
-          type: 'city',
-          address: {
-            city: 'Sydney',
-            state: 'New South Wales',
-            country: 'Australia',
-          },
-        },
-      ];
-    }
-
-    if (lowerQuery.includes('new york')) {
-      return [
-        {
-          lat: '40.7128',
-          lon: '-74.0060',
-          display_name: 'New York City, New York, United States',
-          place_id: 'fallback-nyc',
-          type: 'city',
-          address: {
-            city: 'New York City',
-            state: 'New York',
-            country: 'United States',
-          },
-        },
-      ];
-    }
-
-    // Default fallback - provide a few generic suggestions
-    return [
-      {
-        lat: '-33.8688',
-        lon: '151.2093',
-        display_name: `${query} - Sydney, Australia (Example)`,
-        place_id: 'fallback-1-' + Date.now(),
-        type: 'fallback',
-        address: {
-          city: 'Sydney',
-          country: 'Australia',
-        },
-      },
-      {
-        lat: '40.7128',
-        lon: '-74.0060',
-        display_name: `${query} - New York, USA (Example)`,
-        place_id: 'fallback-2-' + Date.now(),
-        type: 'fallback',
-        address: {
-          city: 'New York',
-          country: 'United States',
-        },
-      },
-      {
-        lat: '51.5074',
-        lon: '-0.1278',
-        display_name: `${query} - London, UK (Example)`,
-        place_id: 'fallback-3-' + Date.now(),
-        type: 'fallback',
-        address: {
-          city: 'London',
-          country: 'United Kingdom',
-        },
-      },
-    ];
-  }
-
-  isAvailable(): boolean {
-    return true;
-  }
-
-  getPriority(): number {
-    return this.priority;
-  }
-}
-
-class FallbackGeocodingServiceImpl extends BaseService {
-  private providers: GeocodingProvider[] = [];
-  private providerStatus = new Map<
-    string,
-    {
-      available: boolean;
-      lastCheck: number;
-      failureCount: number;
-    }
-  >();
-
-  private static readonly STATUS_CHECK_INTERVAL = animations.timeouts.polling; // 5 minutes
-  private static readonly MAX_FAILURES = 3;
-
-  constructor() {
-    super('fallback-geocoding', {
-      rateLimitKey: 'fallback-geocoding',
-      maxRetries: 1, // Fallback service shouldn't retry as much
-      timeout: 15000,
-      enableMonitoring: true,
-      enableDeduplication: false, // Fallback already handles deduplication
-      enablePerformanceTracking: true,
+    const params = new URLSearchParams({
+      lat: String(lat),
+      lon: String(lon),
+      lang: 'en',
     });
 
-    // Initialize with mock providers - in production, these would be real providers
-    this.addProvider(new MockGeocodingProvider('MapBox', 1));
-    this.addProvider(new MockGeocodingProvider('Here', 2));
-    this.addProvider(new MockGeocodingProvider('Bing', 3));
-  }
-
-  /**
-   * Add a geocoding provider
-   */
-  addProvider(provider: GeocodingProvider): void {
-    this.providers.push(provider);
-    this.providerStatus.set(provider.name, {
-      available: true,
-      lastCheck: Date.now(),
-      failureCount: 0,
+    const url = `${PHOTON_BASE_URL}/reverse?${params.toString()}`;
+    const data = await this.executeRequest<PhotonResponse>(url, {
+      headers: { Accept: 'application/json' },
     });
 
-    // Sort by priority
-    this.providers.sort((a, b) => a.getPriority() - b.getPriority());
-  }
+    const feature = data.features?.[0];
+    const result = feature
+      ? mapFeatureToReverseResult(feature, lat, lon)
+      : null;
 
-  /**
-   * Get available providers sorted by priority
-   */
-  private getAvailableProviders(): GeocodingProvider[] {
-    return this.providers.filter((provider) => {
-      const status = this.providerStatus.get(provider.name);
-      if (!status) return false;
-
-      // Check if we should re-evaluate availability
-      if (
-        Date.now() - status.lastCheck >
-        FallbackGeocodingServiceImpl.STATUS_CHECK_INTERVAL
-      ) {
-        status.available = provider.isAvailable();
-        status.lastCheck = Date.now();
-        if (status.available) {
-          status.failureCount = 0;
-        }
-      }
-
-      return status.available;
-    });
-  }
-
-  /**
-   * Mark provider as failed
-   */
-  private markProviderFailed(providerName: string): void {
-    const status = this.providerStatus.get(providerName);
-    if (status) {
-      status.failureCount++;
-      if (status.failureCount >= FallbackGeocodingServiceImpl.MAX_FAILURES) {
-        status.available = false;
-        console.warn(
-          `Provider ${providerName} marked as unavailable after ${status.failureCount} failures`
-        );
-      }
+    if (!result || (!result.city && !result.country && !result.state)) {
+      throw new ServiceError(
+        getErrorMessage('GEOCODING', 'SERVICE_UNAVAILABLE'),
+        { code: 'NO_RESULTS', statusCode: 404 }
+      );
     }
+
+    return result;
   }
 
-  /**
-   * Reverse geocode with fallback
-   */
   async reverseGeocodeWithFallback(
     lat: number,
     lon: number,
     primaryProvider?: () => Promise<ReverseGeocodeResult>
   ): Promise<ReverseGeocodeResult> {
-    try {
-      // Validate coordinates
-      this.validateInput(
-        { lat, lon },
-        {
-          lat: (latitude) => validateCoordinates(latitude, lon),
-          lon: (longitude) => validateCoordinates(lat, longitude),
-        }
-      );
-
-      // Try primary provider first if provided
-      if (primaryProvider) {
-        try {
-          return await primaryProvider();
-        } catch (error) {
-          console.warn(
-            'Primary geocoding provider failed, trying fallbacks',
-            error
-          );
-        }
+    if (primaryProvider) {
+      try {
+        return await primaryProvider();
+      } catch (error) {
+        logger.warn('Primary reverse geocoding failed, trying Photon', {
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
-
-      // Try fallback providers
-      const providers = this.getAvailableProviders();
-      if (providers.length === 0) {
-        throw new ServiceError(
-          getErrorMessage('GEOCODING', 'SERVICE_UNAVAILABLE'),
-          { code: 'NO_PROVIDERS' }
-        );
-      }
-
-      const fallbackProviders = providers.map((provider) => ({
-        name: provider.name,
-        priority: provider.getPriority(),
-        execute: async () => {
-          const result = await provider.reverseGeocode(lat, lon);
-
-          // Validate result
-          if (!result || (!result.city && !result.country)) {
-            throw new ValidationError(`Invalid result from ${provider.name}`);
-          }
-
-          return result;
-        },
-      }));
-
-      return await this.executeWithFallbacks(async () => {
-        throw new ServiceError(
-          getErrorMessage('GEOCODING', 'SERVICE_UNAVAILABLE')
-        );
-      }, fallbackProviders);
-    } catch (error) {
-      this.handleError(error, 'reverseGeocodeWithFallback');
     }
+
+    return this.reverseGeocode(lat, lon);
   }
 
-  /**
-   * Geocode with fallback
-   */
   async geocodeWithFallback(
     query: string,
-    options?: any,
+    options?: GeocodeOptions,
     primaryProvider?: () => Promise<GeocodeResult[]>
   ): Promise<GeocodeResult[]> {
-    try {
-      // Validate query
-      if (!query || typeof query !== 'string' || !query.trim()) {
-        throw new ValidationError(
-          getErrorMessage('VALIDATION', 'REQUIRED_FIELD', {
-            field: 'Search query',
-          })
-        );
-      }
-
-      // Try primary provider first if provided
-      if (primaryProvider) {
-        try {
-          const results = await primaryProvider();
-          if (results && results.length > 0) {
-            return results;
-          }
-        } catch (error) {
-          console.warn(
-            'Primary geocoding provider failed, trying fallbacks',
-            error
-          );
-        }
-      }
-
-      // Try fallback providers
-      const providers = this.getAvailableProviders();
-      if (providers.length === 0) {
-        throw new ServiceError(
-          getErrorMessage('GEOCODING', 'SERVICE_UNAVAILABLE'),
-          { code: 'NO_PROVIDERS' }
-        );
-      }
-
-      const fallbackProviders = providers.map((provider) => ({
-        name: provider.name,
-        priority: provider.getPriority(),
-        execute: async () => {
-          const results = await provider.geocode(query, options);
-
-          // Validate results
-          if (!results || !Array.isArray(results) || results.length === 0) {
-            throw new ValidationError(`No results from ${provider.name}`);
-          }
-
+    if (primaryProvider) {
+      try {
+        const results = await primaryProvider();
+        if (results && results.length > 0) {
           return results;
-        },
-      }));
-
-      return await this.executeWithFallbacks(async () => {
-        throw new ServiceError(
-          getErrorMessage('GEOCODING', 'SERVICE_UNAVAILABLE')
-        );
-      }, fallbackProviders);
-    } catch (error) {
-      this.handleError(error, 'geocodeWithFallback');
+        }
+      } catch (error) {
+        logger.warn('Primary geocoding failed, trying Photon', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
     }
-  }
 
-  /**
-   * Get provider health status
-   */
-  getProviderHealth(): Record<string, any> {
-    const health: Record<string, any> = {};
-
-    this.providers.forEach((provider) => {
-      const status = this.providerStatus.get(provider.name);
-      health[provider.name] = {
-        available: status?.available || false,
-        failureCount: status?.failureCount || 0,
-        lastCheck: status?.lastCheck
-          ? new Date(status.lastCheck).toISOString()
-          : null,
-        priority: provider.getPriority(),
-      };
-    });
-
-    return health;
+    return this.geocode(query, options);
   }
 }
 
-// Create singleton instance
-const fallbackGeocodingInstance = new FallbackGeocodingServiceImpl();
+const fallbackGeocodingInstance = new PhotonGeocodingServiceImpl();
 
-// Export singleton instance
 export const fallbackGeocoding = fallbackGeocodingInstance;
 
-// Export class for direct instantiation if needed
 export class FallbackGeocodingService {
+  static async geocode(
+    query: string,
+    options?: GeocodeOptions
+  ): Promise<GeocodeResult[]> {
+    return fallbackGeocodingInstance.geocode(query, options);
+  }
+
+  static async reverseGeocode(
+    lat: number,
+    lon: number
+  ): Promise<ReverseGeocodeResult> {
+    return fallbackGeocodingInstance.reverseGeocode(lat, lon);
+  }
+
   static async reverseGeocodeWithFallback(
     lat: number,
     lon: number,
@@ -434,7 +290,7 @@ export class FallbackGeocodingService {
 
   static async geocodeWithFallback(
     query: string,
-    options?: any,
+    options?: GeocodeOptions,
     primaryProvider?: () => Promise<GeocodeResult[]>
   ): Promise<GeocodeResult[]> {
     return fallbackGeocodingInstance.geocodeWithFallback(
@@ -442,9 +298,5 @@ export class FallbackGeocodingService {
       options,
       primaryProvider
     );
-  }
-
-  static getProviderHealth(): Record<string, any> {
-    return fallbackGeocodingInstance.getProviderHealth();
   }
 }

@@ -2,9 +2,20 @@ import '@testing-library/jest-dom';
 import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
 
+vi.mock('sonner', () => ({
+  toast: {
+    error: vi.fn(),
+    success: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+    message: vi.fn(),
+  },
+}));
+
 // Global test setup
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
 });
 
 Object.defineProperty(window, 'matchMedia', {

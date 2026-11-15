@@ -9,11 +9,11 @@
       http-equiv="Content-Security-Policy"
       content="
       default-src 'self';
-      script-src 'self' 'unsafe-inline' https://www.googletagmanager.com;
+      script-src 'self' 'unsafe-inline';
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
       font-src 'self' https://fonts.gstatic.com;
       img-src 'self' data: https:;
-      connect-src 'self' https://nominatim.openstreetmap.org https://router.project-osrm.org https://www.google-analytics.com https://www.googletagmanager.com;
+      connect-src 'self' https://photon.komoot.io https://router.project-osrm.org;
       frame-src 'none';
       object-src 'none';
       base-uri 'self';
@@ -54,7 +54,7 @@
     <link rel="manifest" href="/manifest.json" />
 
     <!-- Preload critical resources -->
-    <link rel="dns-prefetch" href="//nominatim.openstreetmap.org" />
+    <link rel="dns-prefetch" href="//photon.komoot.io" />
     <link rel="dns-prefetch" href="//router.project-osrm.org" />
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -68,20 +68,6 @@
       rel="stylesheet"
     />
 
-    <!-- Google tag (gtag.js) -->
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=G-S9T5V0V3KZ"
-    ></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag('js', new Date());
-
-      gtag('config', 'G-S9T5V0V3KZ');
-    </script>
     <meta property="og:title" content="There yet app! - Are we there yet?" />
     <meta
       property="og:description"

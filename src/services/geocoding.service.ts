@@ -6,11 +6,7 @@
  */
 
 import { GeocodingCacheService } from './geocodingCache.service';
-import {
-  sanitizeDestination,
-  validateCoordinates,
-  validateApiResponse,
-} from '@/utils/sanitization';
+import { sanitizeDestination, validateCoordinates } from '@/utils/sanitization';
 import { fallbackGeocoding } from './fallbackGeocoding.service';
 import { BaseService, ServiceError, ValidationError } from './base.service';
 import { getErrorMessage } from '@/utils/errorMessages';

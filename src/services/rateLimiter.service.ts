@@ -16,13 +16,33 @@ interface RequestLog {
 class RateLimiterService {
   private requestLogs: RequestLog[] = [];
   private rules: Map<string, RateLimitRule> = new Map();
+  private lastRequestAt = new Map<string, number>();
+  private minIntervalMs = new Map<string, number>();
 
   constructor() {
-    // Define rate limiting rules for different endpoints
-    this.rules.set('geocoding', { maxRequests: 60, windowMs: 60000 }); // 60 requests per minute
-    this.rules.set('routing', { maxRequests: 30, windowMs: 60000 }); // 30 requests per minute
-    this.rules.set('geolocation', { maxRequests: 20, windowMs: 60000 }); // 20 requests per minute
-    this.rules.set('default', { maxRequests: 100, windowMs: 60000 }); // Default: 100 requests per minute
+    // Nominatim policy is 1 request per second. Keep a minute cap too.
+    this.rules.set('geocoding', { maxRequests: 60, windowMs: 60000 });
+    this.minIntervalMs.set('geocoding', 1000);
+    this.rules.set('fallback-geocoding', { maxRequests: 60, windowMs: 60000 });
+    this.minIntervalMs.set('fallback-geocoding', 1000);
+    this.rules.set('routing', { maxRequests: 30, windowMs: 60000 });
+    this.rules.set('geolocation', { maxRequests: 20, windowMs: 60000 });
+    this.rules.set('default', { maxRequests: 100, windowMs: 60000 });
+  }
+
+  /**
+   * Wait so requests to an endpoint are spaced at least minIntervalMs apart.
+   */
+  async waitForSlot(endpoint: string): Promise<void> {
+    const minInterval = this.minIntervalMs.get(endpoint);
+    if (!minInterval) {
+      return;
+    }
+    const last = this.lastRequestAt.get(endpoint) ?? 0;
+    const wait = last + minInterval - Date.now();
+    if (wait > 0) {
+      await new Promise((resolve) => setTimeout(resolve, wait));
+    }
   }
 
   /**
@@ -50,9 +70,11 @@ class RateLimiterService {
    * Record a request to an endpoint
    */
   recordRequest(endpoint: string): void {
+    const now = Date.now();
+    this.lastRequestAt.set(endpoint, now);
     this.requestLogs.push({
       endpoint,
-      timestamp: Date.now(),
+      timestamp: now,
     });
   }
 
@@ -102,6 +124,7 @@ class RateLimiterService {
    */
   clear(): void {
     this.requestLogs = [];
+    this.lastRequestAt.clear();
   }
 }
 

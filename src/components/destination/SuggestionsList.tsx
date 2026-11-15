@@ -12,12 +12,16 @@ interface SuggestionsListProps {
   suggestions: SuggestionItem[];
   isSearching: boolean;
   onSelect: (suggestion: SuggestionItem) => void;
+  heading?: string;
+  emptyMessage?: string;
 }
 
 export const SuggestionsList: React.FC<SuggestionsListProps> = ({
   suggestions,
   isSearching,
   onSelect,
+  heading = 'Suggestions',
+  emptyMessage = 'No results found.',
 }) => {
   return (
     <Command className="rounded-xl">
@@ -32,11 +36,11 @@ export const SuggestionsList: React.FC<SuggestionsListProps> = ({
           </CommandEmpty>
         ) : suggestions.length === 0 ? (
           <CommandEmpty className="py-4 sm:py-6 text-center text-sm sm:text-base text-gray-600 dark:text-gray-400">
-            No results found.
+            {emptyMessage}
           </CommandEmpty>
         ) : (
           <CommandGroup
-            heading="Suggestions"
+            heading={heading}
             className="p-2 text-sm font-semibold text-gray-700 dark:text-gray-300"
           >
             {suggestions.map((suggestion) => (

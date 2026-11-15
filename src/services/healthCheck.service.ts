@@ -28,7 +28,7 @@ export interface HealthCheckConfig {
   interval: number;
 }
 
-class HealthCheckService {
+export class HealthCheckService {
   private checks: Map<string, () => Promise<HealthCheck>> = new Map();
   private lastHealthStatus: HealthStatus | null = null;
   private monitoringInterval: NodeJS.Timeout | null = null;

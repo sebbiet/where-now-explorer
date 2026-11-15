@@ -1,4 +1,4 @@
-import { BaseService, ServiceError, ValidationError } from './base.service';
+import { BaseService, ServiceError } from './base.service';
 import { deduplicateRoutingRequest } from '@/utils/requestDeduplication';
 import { offlineMode } from './offlineMode.service';
 

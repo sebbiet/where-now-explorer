@@ -7,18 +7,15 @@ import React, {
   useEffect,
   useMemo,
 } from 'react';
-import { toast } from 'sonner';
-import {
-  GeolocationService,
-  GeolocationError,
-  GeolocationErrorCode,
-} from '@/services/geolocation.service';
-import { GeocodingService, GeocodingError } from '@/services/geocoding.service';
+
+import { GeolocationService } from '@/services/geolocation.service';
+import { GeocodingService } from '@/services/geocoding.service';
 import { handleLocationError } from '@/utils/errorHandling';
 import { TraditionalLandService } from '@/services/traditionalLand.service';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { analytics } from '@/services/analytics.service';
 import { logger } from '@/utils/logger';
+import { coordinatesForRequest } from '@/utils/privacy';
 
 // Define interfaces for our data structures
 export interface LocationData {
@@ -106,14 +103,23 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
         latitude = mockLocation.latitude;
         longitude = mockLocation.longitude;
       } else {
-        const position = await GeolocationService.getCurrentPosition();
+        const position = await GeolocationService.getCurrentPosition({
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: preferences.maximumAge ?? 0,
+        });
         latitude = position.coords.latitude;
         longitude = position.coords.longitude;
       }
 
+      const requestCoords = coordinatesForRequest(latitude, longitude, {
+        privacyMode: preferences.privacyMode,
+        hideExactCoordinates: preferences.hideExactCoordinates,
+      });
+
       const addressData = await GeocodingService.reverseGeocode(
-        latitude,
-        longitude,
+        requestCoords.latitude,
+        requestCoords.longitude,
         {
           minimal: true, // Only request essential fields
         }
@@ -163,7 +169,14 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
       setIsLoadingLocation(false);
       setIsRefreshingLocation(false);
     }
-  }, [locationData, useMockLocation, mockLocation]);
+  }, [
+    locationData,
+    useMockLocation,
+    mockLocation,
+    preferences.maximumAge,
+    preferences.privacyMode,
+    preferences.hideExactCoordinates,
+  ]);
 
   // Manual refresh handler that also resets the countdown
   const handleRefresh = () => {
@@ -203,6 +216,11 @@ export const LocationProvider = ({ children }: { children: ReactNode }) => {
     preferences.autoRefreshInterval,
     preferences.enableLocationTracking,
   ]);
+
+  // Keep the countdown in sync when the refresh interval changes
+  useEffect(() => {
+    setCountdown(preferences.autoRefreshInterval);
+  }, [preferences.autoRefreshInterval]);
 
   // Initial location fetch
   useEffect(() => {

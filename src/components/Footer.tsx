@@ -31,9 +31,13 @@ const Footer: React.FC = () => {
               yet?" and "Where are we?" questions. Turns out, kids are basically
               tiny GPS units that need constant location updates! This is meant
               to be a bit of fun and give you a rough guide to where you are in
-              this big, beautiful world. Don't worry, I'm not tracking your
-              adventures or collecting your data. Your location stays right with
-              you!
+              this big, beautiful world. There is no account and no analytics.
+              Your location is used on this device to show where you are and how
+              far you have to go. Approximate coordinates are sent to free map
+              services (OpenStreetMap Nominatim, Photon, and OSRM) so we can
+              name the place and estimate the trip. Nothing is stored on our
+              servers. Use Settings to hide the street address and send a less
+              precise location.
               <span className="text-2xl ml-2" role="img" aria-label="globe">
                 🌍
               </span>

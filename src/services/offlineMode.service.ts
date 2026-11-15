@@ -83,7 +83,7 @@ export class OfflineModeService {
         this.isOnline = true;
         this.notifyListeners(true);
       }
-    } catch (error) {
+    } catch (_error) {
       if (this.isOnline) {
         this.isOnline = false;
         this.notifyListeners(false);

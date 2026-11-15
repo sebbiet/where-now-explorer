@@ -33,7 +33,7 @@ export interface FeatureFlagConfig {
   refreshInterval?: number;
 }
 
-class FeatureFlagsService {
+export class FeatureFlagsService {
   private flags: Map<string, FeatureFlag> = new Map();
   private userBucket: number;
   private refreshInterval: NodeJS.Timeout | null = null;

@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { GeocodingService, GeocodeResult } from '@/services/geocoding.service';
-import { toast } from 'sonner';
+
 import { sanitizeDestination } from '@/utils/sanitization';
 import { toastError } from '@/utils/errorHandling';
 import { logger } from '@/utils/logger';

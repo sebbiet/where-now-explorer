@@ -212,7 +212,7 @@ describe('LocationContext', () => {
     });
 
     it('should show refreshing state on manual refresh', async () => {
-      const { rerender } = render(
+      const { _rerender } = render(
         <LocationProvider>
           <TestComponent />
         </LocationProvider>

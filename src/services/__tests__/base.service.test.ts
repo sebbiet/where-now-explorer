@@ -17,6 +17,7 @@ import { deduplicateGeocodingRequest } from '@/utils/requestDeduplication';
 // Mock dependencies
 vi.mock('../rateLimiter.service', () => ({
   rateLimiter: {
+    waitForSlot: vi.fn().mockResolvedValue(undefined),
     isAllowed: vi.fn(),
     recordRequest: vi.fn(),
     getTimeUntilReset: vi.fn(),
@@ -212,12 +213,10 @@ describe('BaseService', () => {
           json: vi.fn().mockResolvedValueOnce(mockResponse),
         } as any);
 
-      let attemptCount = 0;
       vi.mocked(retryWithBackoff).mockImplementation(async (fn, options) => {
         let lastError;
         for (let i = 0; i < (options?.maxAttempts || 3); i++) {
           try {
-            attemptCount++;
             const result = await fn();
             return result;
           } catch (error) {
@@ -281,6 +280,7 @@ describe('BaseService', () => {
       vi.mocked(global.fetch).mockRejectedValue(mockError);
 
       vi.mocked(retryWithBackoff).mockImplementation(async (fn) => {
+        // eslint-disable-next-line no-useless-catch
         try {
           return await fn();
         } catch (error) {
@@ -497,7 +497,7 @@ describe('BaseService', () => {
   describe('timeout handling', () => {
     it('should apply timeout to requests', async () => {
       // Arrange
-      vi.mocked(global.fetch).mockImplementation((url, options) => {
+      vi.mocked(global.fetch).mockImplementation((_url, _options) => {
         return Promise.resolve({
           ok: true,
           json: vi.fn().mockResolvedValueOnce({}),
@@ -682,6 +682,7 @@ describe('BaseService', () => {
         } as any);
 
         vi.mocked(retryWithBackoff).mockImplementation(async (fn) => {
+          // eslint-disable-next-line no-useless-catch
           try {
             return await fn();
           } catch (error) {

@@ -365,7 +365,7 @@ describe('OfflineModeService', () => {
     it('should evict least recently used routes when storage is full', () => {
       // Arrange - Create old and new routes
       const oldTime = Date.now() - 1000000; // 1 million ms ago
-      const newTime = Date.now();
+      const _newTime = Date.now();
 
       // Mock initial data with old routes
       const initialData = {
@@ -501,7 +501,7 @@ describe('OfflineModeService', () => {
       localStorageMock.getItem.mockReturnValue(JSON.stringify(initialData));
 
       // Act - Create new instance which triggers cleanup
-      const testService = new OfflineModeService();
+      const _testService = new OfflineModeService();
 
       // Assert - Old route should be removed
       const savedCall = localStorageMock.setItem.mock.calls.find(

@@ -1,5 +1,5 @@
 import { memo, ReactNode } from 'react';
-import { glassMorphism, gradients, animations } from '@/styles/constants';
+import { glassMorphism, gradients } from '@/styles/constants';
 
 interface GlassmorphicCardProps {
   children: ReactNode;

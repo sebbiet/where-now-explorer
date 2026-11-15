@@ -290,7 +290,7 @@ describe('RateLimiterService', () => {
   describe('different endpoints with different limits', () => {
     it('should maintain separate counters for each endpoint', () => {
       // Arrange & Act
-      const endpoints = ['geocoding', 'routing', 'geolocation', 'custom'];
+      const _endpoints = ['geocoding', 'routing', 'geolocation', 'custom'];
       const counts = {
         geocoding: 50,
         routing: 25,

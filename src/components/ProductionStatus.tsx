@@ -16,7 +16,6 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import { productionService } from '@/services/production.service';
-import { featureFlags } from '@/services/featureFlags.service';
 
 interface HealthCheck {
   name: string;
@@ -132,7 +131,7 @@ const ProductionStatus: React.FC = () => {
     }
   };
 
-  const getHealthStatusColor = (healthStatus: string) => {
+  const _getHealthStatusColor = (healthStatus: string) => {
     switch (healthStatus) {
       case 'healthy':
         return 'text-green-600 dark:text-green-400';

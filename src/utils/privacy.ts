@@ -164,3 +164,26 @@ export function removeSensitiveInfo(text: string): string {
 
   return cleaned;
 }
+
+/** ~100 metres. Used when the family chooses to hide the street address. */
+export const REQUEST_COORDINATE_PRECISION = 3;
+
+/**
+ * Coordinates to send to geocoding and routing services.
+ * When privacy mode or hideExactCoordinates is on, values are rounded
+ * so a precise point is never sent off the device.
+ */
+export function coordinatesForRequest(
+  latitude: number,
+  longitude: number,
+  options: { privacyMode?: boolean; hideExactCoordinates?: boolean }
+): { latitude: number; longitude: number } {
+  if (options.privacyMode || options.hideExactCoordinates) {
+    return obfuscateCoordinates(
+      latitude,
+      longitude,
+      REQUEST_COORDINATE_PRECISION
+    );
+  }
+  return { latitude, longitude };
+}

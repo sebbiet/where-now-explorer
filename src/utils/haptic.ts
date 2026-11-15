@@ -5,7 +5,7 @@
 
 import { logger } from '@/utils/logger';
 
-interface HapticOptions {
+interface _HapticOptions {
   duration?: number;
   pattern?: number[];
   type?: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft';
@@ -44,7 +44,7 @@ class HapticFeedback {
         // Android/standard vibration API
         navigator.vibrate(10);
       }
-    } catch (error) {
+    } catch (_error) {
       logger.debug('Haptic feedback not available', {
         component: 'Haptic',
         operation: 'vibrate',
@@ -65,7 +65,7 @@ class HapticFeedback {
       } else {
         navigator.vibrate(20);
       }
-    } catch (error) {
+    } catch (_error) {
       logger.debug('Haptic feedback not available', {
         component: 'Haptic',
         operation: 'vibrate',
@@ -86,7 +86,7 @@ class HapticFeedback {
       } else {
         navigator.vibrate(30);
       }
-    } catch (error) {
+    } catch (_error) {
       logger.debug('Haptic feedback not available', {
         component: 'Haptic',
         operation: 'vibrate',
@@ -108,7 +108,7 @@ class HapticFeedback {
         // Pattern: short, pause, short
         navigator.vibrate([20, 50, 20]);
       }
-    } catch (error) {
+    } catch (_error) {
       logger.debug('Haptic feedback not available', {
         component: 'Haptic',
         operation: 'vibrate',
@@ -130,7 +130,7 @@ class HapticFeedback {
         // Pattern: long vibration
         navigator.vibrate(50);
       }
-    } catch (error) {
+    } catch (_error) {
       logger.debug('Haptic feedback not available', {
         component: 'Haptic',
         operation: 'vibrate',
@@ -151,7 +151,7 @@ class HapticFeedback {
       } else {
         navigator.vibrate(5);
       }
-    } catch (error) {
+    } catch (_error) {
       logger.debug('Haptic feedback not available', {
         component: 'Haptic',
         operation: 'vibrate',
@@ -167,7 +167,7 @@ class HapticFeedback {
 
     try {
       navigator.vibrate(pattern);
-    } catch (error) {
+    } catch (_error) {
       logger.debug('Haptic feedback not available', {
         component: 'Haptic',
         operation: 'vibrate',

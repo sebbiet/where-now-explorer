@@ -1,13 +1,11 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   GeocodingService,
-  GeocodingError,
   GeocodeResult,
   ReverseGeocodeResult,
 } from '../geocoding.service';
 import { GeocodingCacheService } from '../geocodingCache.service';
-import { fallbackGeocoding } from '../fallbackGeocoding.service';
-import { getErrorMessage } from '@/utils/errorMessages';
+
 import { ValidationError } from '../base.service';
 
 // Mock dependencies

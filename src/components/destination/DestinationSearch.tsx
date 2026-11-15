@@ -12,6 +12,8 @@ import {
 } from '@/utils/addressFormatting';
 import { logger } from '@/utils/logger';
 import { ResponsiveSearch } from './ResponsiveSearch';
+import { useDestinationHistory } from '@/hooks/useDestinationHistory';
+import { DestinationHistoryItem } from '@/hooks/useDestinationHistory';
 
 interface DestinationSearchProps {
   onDestinationSelect: (place: GeocodeResult) => void;
@@ -19,17 +21,39 @@ interface DestinationSearchProps {
   userCountry?: string;
 }
 
+function historyItemToSuggestion(item: DestinationHistoryItem): SuggestionItem {
+  const original: GeocodeResult = {
+    lat: item.lat || '',
+    lon: item.lon || '',
+    display_name: item.displayName,
+    place_id: item.id,
+  };
+  return {
+    id: item.id,
+    name: item.name,
+    displayName: item.displayName,
+    original,
+  };
+}
+
 export const DestinationSearch: React.FC<DestinationSearchProps> = ({
   onDestinationSelect,
   isLoading,
   userCountry,
 }) => {
+  const { history } = useDestinationHistory();
   const [inputValue, setInputValue] = useState('');
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedSuggestion, setSelectedSuggestion] =
     useState<SuggestionItem | null>(null);
+
+  const recentSuggestions = useMemo<SuggestionItem[]>(() => {
+    return history
+      .filter((item) => item.lat && item.lon)
+      .map((item) => historyItemToSuggestion(item));
+  }, [history]);
 
   const debouncedSearch = useDebounce(inputValue, 300);
 
@@ -188,6 +212,35 @@ export const DestinationSearch: React.FC<DestinationSearchProps> = ({
             Type at least 3 letters to see suggestions. Try popular places,
             landmarks, cities, or addresses.
           </p>
+
+          {recentSuggestions.length > 0 && (
+            <div>
+              <p className="text-sm sm:text-base font-bold text-gray-700 dark:text-gray-200 mb-3">
+                Recent destinations
+              </p>
+              <ul className="space-y-2">
+                {recentSuggestions.map((item) => (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleSuggestionSelect(item);
+                        onDestinationSelect(item.original);
+                      }}
+                      className="w-full text-left min-h-12 rounded-xl px-4 py-3 bg-white/70 dark:bg-gray-800/70 border border-gray-200 dark:border-gray-600 hover:bg-yellow-50 dark:hover:bg-gray-700 touch-manipulation"
+                    >
+                      <span className="block font-bold text-gray-800 dark:text-white truncate">
+                        {item.name}
+                      </span>
+                      <span className="block text-sm text-gray-600 dark:text-gray-400 truncate">
+                        {item.displayName}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <Button
             type="submit"
